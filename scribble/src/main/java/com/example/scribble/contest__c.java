@@ -1,8 +1,9 @@
 package com.example.scribble;
 
+
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
-import javafx.event.ActionEvent;
 
 public class contest__c {
 
@@ -10,35 +11,35 @@ public class contest__c {
     private Button fantasy_button;
 
     @FXML
-    private Button mystery_button;
+    private Button thriller_mystery_button;
 
     @FXML
-    private Button fiction_button;
+    private Button youth_fiction_button;
 
     @FXML
-    private Button horror_button;
+    private Button crime_horror_button;
 
     @FXML
-    private void handleFantasyButtonAction(ActionEvent event) {
-        System.out.println("Fantasy genre selected!");
-        // Add logic to navigate to Fantasy content or start Fantasy contest
+    private void handle_fantasy_button(ActionEvent event) {
+        System.out.println("Fantasy category selected!");
+        // Add logic to handle Fantasy category selection
     }
 
     @FXML
-    private void handleMysteryButtonAction(ActionEvent event) {
-        System.out.println("Thriller Mystery genre selected!");
-        // Add logic to navigate to Thriller Mystery content or start Mystery contest
+    private void handle_thriller_mystery_button(ActionEvent event) {
+        System.out.println("Thriller Mystery category selected!");
+        // Add logic to handle Thriller Mystery category selection
     }
 
     @FXML
-    private void handleFictionButtonAction(ActionEvent event) {
-        System.out.println("Youth Fiction genre selected!");
-        // Add logic to navigate to Youth Fiction content or start Fiction contest
+    private void handle_youth_fiction_button(ActionEvent event) {
+        System.out.println("Youth Fiction category selected!");
+        // Add logic to handle Youth Fiction category selection
     }
 
     @FXML
-    private void handleHorrorButtonAction(ActionEvent event) {
-        System.out.println("Crime Horror genre selected!");
-        // Add logic to navigate to Crime Horror content or start Horror contest
+    private void handle_criime_horror_button(ActionEvent event) {
+        System.out.println("Crime Horror category selected!");
+        // Add logic to handle Crime Horror category selection
     }
 }
