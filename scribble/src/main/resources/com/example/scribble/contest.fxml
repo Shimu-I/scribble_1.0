@@ -123,7 +123,7 @@
                               </Label>
                            </children>
                         </VBox>
-                        <Button fx:id="crime_horror_button" maxHeight="-Infinity" minHeight="-Infinity" mnemonicParsing="false" onAction="#handle_criime_horror_button" prefHeight="40.0" prefWidth="200.0" style="-fx-background-color: #F4908A; -fx-background-radius: 5;" stylesheets="@../../../style/style.css" text="Start">
+                        <Button fx:id="crime_horror_button" maxHeight="-Infinity" minHeight="-Infinity" mnemonicParsing="false" onAction="#handle_crime_horror_button" prefHeight="40.0" prefWidth="200.0" style="-fx-background-color: #F4908A; -fx-background-radius: 5;" stylesheets="@../../../style/style.css" text="Start">
                            <font>
                               <Font name="System Bold" size="18.0" />
                            </font>

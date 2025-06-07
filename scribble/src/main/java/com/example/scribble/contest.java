@@ -17,7 +17,7 @@ public class contest extends Application {
         BorderPane root = loader.load();
 
 
-        Scene scene = new Scene(root, 1400, 760);
+        Scene scene = new Scene(root, 1400, 660);
         primaryStage.setScene(scene);
         primaryStage.show();
     }

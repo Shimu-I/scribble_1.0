@@ -4,6 +4,7 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
@@ -38,11 +39,11 @@
          <children>
             <HBox prefHeight="64.0" prefWidth="1400.0">
                <children>
-                  <Label fx:id="book_tittle" text="Book Name" textFill="WHITE">
+                  <TextField fx:id="book_tittle" prefHeight="51.0" prefWidth="342.0" promptText="write the tittle of this book" style="-fx-background-color: transparent;">
                      <font>
-                        <Font size="24.0" />
+                        <Font name="System Bold" size="24.0" />
                      </font>
-                  </Label>
+                  </TextField>
                   <Label fx:id="genre_name" text="(genre: crime horror)" textFill="WHITE">
                      <font>
                         <Font size="14.0" />
@@ -50,6 +51,9 @@
                      <HBox.margin>
                         <Insets left="10.0" top="8.0" />
                      </HBox.margin>
+                     <padding>
+                        <Insets top="8.0" />
+                     </padding>
                   </Label>
                </children>
                <padding>
