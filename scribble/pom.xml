@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.example</groupId>
+    <artifactId>scribble</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <name>scribble</name>
+
+    <properties>
+        <!-- The encoding for the source files -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- The version of JUnit to use in the project for testing -->
+        <junit.version>5.10.2</junit.version>
+    </properties>
+
+    <dependencies>
+        <!-- Dependency for JavaFX controls (UI components like buttons, labels, etc.) -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>17.0.6</version>
+        </dependency>
+
+        <!-- Dependency for JavaFX FXML (for separating the UI from the logic) -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-fxml</artifactId>
+            <version>17.0.6</version>
+        </dependency>
+
+        <!-- JUnit dependency for unit testing, specifically the Jupiter API -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope> <!-- This dependency is only available for tests -->
+        </dependency>
+
+        <!-- JUnit dependency for the engine to run JUnit 5 tests -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope> <!-- This dependency is only available for tests -->
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Maven plugin for compiling the project with specific Java versions -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <source>23</source> <!-- Java source code version -->
+                    <target>23</target> <!-- Java target bytecode version -->
+                </configuration>
+            </plugin>
+
+            <!-- JavaFX Maven plugin to bundle and run JavaFX applications -->
+            <plugin>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-maven-plugin</artifactId>
+                <version>0.0.8</version>
+                <executions>
+                    <execution>
+                        <!-- Default configuration for running the application with mvn clean javafx:run -->
+                        <id>default-cli</id>
+                        <configuration>
+                            <!-- Main class for the JavaFX application -->
+                            <mainClass>com.example.scribble/com.example.scribble.HelloApplication</mainClass>
+
+                            <!-- The launcher to use to start the application -->
+                            <launcher>app</launcher>
+
+                            <!-- Names for jlink image and zip output files -->
+                            <jlinkZipName>app</jlinkZipName>
+                            <jlinkImageName>app</jlinkImageName>
+
+                            <!-- Excluding man pages, debugging information, and header files in the jlink image -->
+                            <noManPages>true</noManPages>
+                            <stripDebug>true</stripDebug>
+                            <noHeaderFiles>true</noHeaderFiles>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

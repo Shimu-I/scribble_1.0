@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane prefHeight="660.0" prefWidth="1400.0" style="-fx-background-color: #005D4D;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.scribble.communityChat.ui.ChatAreaController">
+
+    <top>
+        <VBox spacing="10">
+            <padding>
+                <Insets bottom="10" left="10" right="10" top="10" />
+            </padding>
+            <Label text="Enter Group ID and User ID" textFill="WHITE">
+            <font>
+               <Font size="20.0" />
+            </font></Label>
+            <HBox spacing="10">
+                <TextField fx:id="groupIdField" prefHeight="30.0" prefWidth="200.0" promptText="Group ID">
+               <font>
+                  <Font size="14.0" />
+               </font></TextField>
+                <TextField fx:id="userIdField" prefHeight="30.0" prefWidth="200.0" promptText="User ID">
+               <font>
+                  <Font size="14.0" />
+               </font></TextField>
+                <Button onAction="#connectToServer" prefHeight="30.0" prefWidth="120.0" style="-fx-background-color: #F4908A; -fx-background-radius: 10;" text="Connect">
+               <font>
+                  <Font size="14.0" />
+               </font></Button>
+            </HBox>
+        </VBox>
+    </top>
+
+    <center>
+        <ListView fx:id="chatList" VBox.vgrow="ALWAYS" />
+    </center>
+
+    <bottom>
+        <HBox spacing="10">
+            <padding>
+                <Insets bottom="10" left="10" right="10" top="10" />
+            </padding>
+            <TextField fx:id="messageField" promptText="Enter message..." HBox.hgrow="ALWAYS">
+            <font>
+               <Font size="14.0" />
+            </font></TextField>
+            <Button onAction="#sendMessage" prefHeight="30.0" prefWidth="120.0" style="-fx-background-color: #F4908A; -fx-background-radius: 10;" text="Send">
+            <font>
+               <Font size="14.0" />
+            </font></Button>
+        </HBox>
+    </bottom>
+
+</BorderPane>

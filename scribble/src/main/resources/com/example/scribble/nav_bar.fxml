@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane fx:id="rootPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="760.0" prefWidth="1400.0" style="-fx-background-color: #005D4D;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.scribble.nav_bar__c">
+   <top>
+      <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="10.0" style="-fx-background-color: #005D4D;" BorderPane.alignment="CENTER">
+         <children>
+            <AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="80.0" prefWidth="1400.0">
+               <children>
+                  <HBox alignment="CENTER" prefHeight="80.0" prefWidth="1400.0" spacing="20.0">
+                     <children>
+                        <HBox alignment="CENTER" prefHeight="80.0" prefWidth="200.0">
+                           <children>
+                              <Label text="Scribble" textFill="WHITE">
+                                 <font>
+                                    <Font name="System Bold" size="26.0" />
+                                 </font>
+                              </Label>
+                           </children>
+                        </HBox>
+                        <HBox alignment="CENTER" prefHeight="80.0" prefWidth="1085.0">
+                           <children>
+                              <VBox alignment="CENTER" prefHeight="80.0" prefWidth="82.0">
+                                 <children>
+                                    <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@../../../images/icons/home.png" />
+                                       </image>
+                                    </ImageView>
+                                    <Button id="home" fx:id="home" mnemonicParsing="false" onAction="#action_home" prefHeight="43.0" prefWidth="79.0" style="-fx-background-color: transparent;" styleClass="white-underline-btn" stylesheets="@../../../style/style.css" text="Home" textFill="WHITE">
+                                       <font>
+                                          <Font size="18.0" />
+                                       </font>
+                                    </Button>
+                                 </children>
+                              </VBox>
+                              <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0">
+                                 <children>
+                                    <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@../../../images/icons/book2.png" />
+                                       </image>
+                                    </ImageView>
+                                    <Button fx:id="read" mnemonicParsing="false" onAction="#action_books" style="-fx-background-color: transparent;" styleClass="white-underline-btn" stylesheets="@../../../style/style.css" text="Books" textFill="WHITE">
+                                       <font>
+                                          <Font size="18.0" />
+                                       </font>
+                                       <VBox.margin>
+                                          <Insets />
+                                       </VBox.margin>
+                                    </Button>
+                                 </children>
+                              </VBox>
+                              <VBox alignment="CENTER" prefHeight="80.0" prefWidth="122.0">
+                                 <children>
+                                    <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@../../../images/icons/community2.png" />
+                                       </image>
+                                    </ImageView>
+                                    <Button fx:id="community" mnemonicParsing="false" onAction="#action_community" prefHeight="43.0" prefWidth="122.0" style="-fx-background-color: transparent;" styleClass="white-underline-btn" stylesheets="@../../../style/style.css" text="Community" textFill="WHITE">
+                                       <font>
+                                          <Font size="18.0" />
+                                       </font>
+                                    </Button>
+                                 </children>
+                              </VBox>
+                              <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0">
+                                 <children>
+                                    <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@../../../images/icons/contest2.png" />
+                                       </image>
+                                    </ImageView>
+                                    <Button fx:id="contest" mnemonicParsing="false" onAction="#action_contest" style="-fx-background-color: transparent;" styleClass="white-underline-btn" stylesheets="@../../../style/style.css" text="Contest" textFill="WHITE">
+                                       <font>
+                                          <Font size="18.0" />
+                                       </font>
+                                    </Button>
+                                 </children>
+                              </VBox>
+                              <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0">
+                                 <children>
+                                    <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@../../../images/icons/user.png" />
+                                       </image>
+                                    </ImageView>
+                                    <Button fx:id="profile" mnemonicParsing="false" onAction="#action_profile" style="-fx-background-color: transparent;" styleClass="white-underline-btn" stylesheets="@../../../style/style.css" text="Profile" textFill="WHITE">
+                                       <font>
+                                          <Font size="18.0" />
+                                       </font>
+                                    </Button>
+                                 </children>
+                              </VBox>
+                           </children>
+                        </HBox>
+                        <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0">
+                           <children>
+                              <ImageView fx:id="user_photo" fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
+                                 <image>
+                                    <Image url="@../../../images/profiles/demo_profile.png" />
+                                 </image>
+                              </ImageView>
+                              <AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="31.0" prefWidth="30.0">
+                                 <children>
+                                    <Button mnemonicParsing="false" onAction="#handle_user_sign_out" prefHeight="30.0" prefWidth="30.0" style="-fx-background-color: transparent;" stylesheets="@../../../style/style.css">
+                                       <graphic>
+                                          <ImageView fx:id="user_sign_out" fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
+                                             <image>
+                                                <Image url="@../../../images/icons/signout3.png" />
+                                             </image>
+                                          </ImageView>
+                                       </graphic>
+                                    </Button>
+                                    <Button mnemonicParsing="false" onAction="#handle_user_sign_in" prefHeight="30.0" prefWidth="30.0" style="-fx-background-color: transparent;" stylesheets="@../../../style/style.css">
+                                       <graphic>
+                                          <ImageView fx:id="user_sign_in" fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
+                                             <image>
+                                                <Image url="@../../../images/icons/signin3.png" />
+                                             </image>
+                                          </ImageView>
+                                       </graphic>
+                                    </Button>
+                                 </children>
+                                 <HBox.margin>
+                                    <Insets bottom="5.0" />
+                                 </HBox.margin>
+                              </AnchorPane>
+                           </children>
+                        </HBox>
+                     </children>
+                  </HBox>
+               </children>
+            </AnchorPane>
+         </children>
+         <BorderPane.margin>
+            <Insets />
+         </BorderPane.margin>
+      </HBox>
+   </top>
+   <center>
+      <!-- This is where the pages will be dynamically loaded -->
+      <AnchorPane fx:id="centerPane" />
+   </center>
+</BorderPane>

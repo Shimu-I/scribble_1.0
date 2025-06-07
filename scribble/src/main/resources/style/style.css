@@ -1,0 +1,172 @@
+.button {
+    -fx-background-color: #F4908A;
+    -fx-font-size: 14px;
+    -fx-text-fill: #014237;
+    -fx-font-weight: bold;
+    -fx-background-radius: 10;
+    -fx-text-fill: #014237; /* optional: ensures readability */
+    -fx-cursor: hand;
+}
+
+.button:hover {
+    -fx-background-color: #014237;
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.4), 6, 0.2, 0, 2);
+}
+
+
+
+/* CSS */
+.white-underline-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: white;
+    -fx-border-color: transparent;
+    -fx-font-size: 16px;
+    -fx-padding: 8 16 8 16;
+    -fx-border-width: 0 0 2 0;
+    -fx-border-style: none none solid none;
+    -fx-border-color: transparent;
+    -fx-cursor: hand;
+}
+
+.white-underline-btn:hover {
+    -fx-border-color: white;
+}
+
+
+
+.transparent-textfield {
+    -fx-background-color: transparent;
+    -fx-text-fill: white;
+    -fx-prompt-text-fill: rgba(255, 255, 255, 0.6); /* Optional: light white for placeholder */
+     /* Optional: white border */
+    -fx-border-radius: 5px;  /* Optional: rounded border */
+}
+
+
+/*************************************************/
+/*
+about us page hbox mouse hover
+*/
+
+/* Default style for the HBox */
+.hoverable-hbox {
+    -fx-background-color: #005D4D;
+    -fx-background-radius: 5;
+    -fx-transition: all 0.3s ease;
+}
+
+/* Hover style for the HBox */
+.hoverable-hbox:hover {
+    -fx-background-color: #00796B; /* Lighter teal on hover */
+    -fx-scale-x: 1.02; /* Slightly scale up */
+    -fx-scale-y: 1.02;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 10, 0.5, 0, 0); /* Add shadow */
+}
+
+
+/*************************************************/
+/*
+For home page css animation
+*/
+/* Shared fade-in animation for labels */
+.animated-label {
+    -fx-opacity: 0;
+    -fx-animation-name: fadeIn;
+    -fx-animation-duration: 1.5s;
+    -fx-animation-timing-function: ease-in-out;
+    -fx-animation-fill-mode: forwards;
+}
+
+/* Staggered delays for each label */
+.animated-label-1 {
+    -fx-animation-delay: 0s;
+}
+
+.animated-label-2 {
+    -fx-animation-delay: 1.0s;
+}
+
+.animated-label-3 {
+    -fx-animation-delay: 2.0s;
+}
+
+/* Hover animation for button */
+.animated-button {
+    -fx-background-color: #F4908A;
+    -fx-background-radius: 5;
+    -fx-text-fill: #014237;
+    -fx-transition: all 0.3s ease;
+}
+
+.animated-button:hover {
+    -fx-background-color: #F7A8A3;
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 10, 0.5, 0, 0);
+}
+
+/* Keyframes for fade-in animation */
+@-fx-keyframes fadeIn {
+    0% {
+        -fx-opacity: 0;
+        -fx-translate-y: 20;
+    }
+    100% {
+        -fx-opacity: 1;
+        -fx-translate-y: 0;
+    }
+}
+
+
+
+/*
+read_book css
+*/
+
+#author-label {
+                  -fx-text-fill: blue;
+                  -fx-font-size: 14px;
+                  -fx-cursor: hand;
+              }
+
+              #co-author-label {
+                  -fx-text-fill: white;
+                  -fx-font-size: 14px;
+              }
+
+              #chapter-button {
+                  -fx-background-radius: 10px;
+                  -fx-background-color: #D9D9D9;
+                  -fx-font-size: 14px;
+              }
+
+              #comment-box {
+                  -fx-padding: 5px 5px 5px 10px;
+              }
+
+              #comment-username {
+                  -fx-text-fill: white;
+                  -fx-font-size: 14px;
+              }
+
+              #comment-text {
+                  -fx-text-fill: white;
+                  -fx-font-size: 14px;
+                  -fx-padding: 0px 0px 0px 50px;
+              }
+
+              #add-comment-button {
+                  -fx-background-color: #F4908A;
+                  -fx-background-radius: 10px;
+              }
+
+              #draft-button {
+                  -fx-text-fill: white;
+              }
+
+              #add-draft-button {
+                  -fx-background-color: #F4908A;
+                  -fx-background-radius: 10px;
+              }

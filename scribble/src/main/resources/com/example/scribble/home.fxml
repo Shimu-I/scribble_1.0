@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="660.0" prefWidth="1400.0" style="-fx-background-color: #005D4D;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.scribble.home__con">
+   <center>
+      <AnchorPane prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+         <children>
+            <ImageView fitHeight="659.0" fitWidth="521.0" layoutX="879.0" layoutY="1.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../../../images/home.png" />
+               </image>
+            </ImageView>
+            <VBox layoutX="31.0" layoutY="47.0" prefHeight="442.0" prefWidth="836.0" spacing="30.0">
+               <children>
+                  <Label text="Story Sharing &#10;Platform" textFill="WHITE">
+                     <font>
+                        <Font name="Berlin Sans FB" size="96.0" />
+                     </font>
+                  </Label>
+                  <Label fx:id="label_text" text="&quot;Love your faves? They're all here—dive into the contest and &#10;vibe with the community!&quot;" textFill="WHITE" wrapText="true">
+                     <font>
+                        <Font size="24.0" />
+                     </font>
+                  </Label>
+               </children>
+               <padding>
+                  <Insets left="70.0" top="50.0" />
+               </padding>
+            </VBox>
+            <HBox layoutX="100.0" layoutY="435.0" prefHeight="100.0" prefWidth="654.0">
+               <children>
+                  <Button fx:id="read_more_button" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#handle_read_more" prefHeight="30.0" prefWidth="200.0" style="-fx-background-color: #F4908A; -fx-background-radius: 5;" stylesheets="@../../../style/style.css" text="Read More" textFill="#014237">
+                     <font>
+                        <Font name="System Bold" size="16.0" />
+                     </font>
+                  </Button>
+               </children>
+            </HBox>
+         </children>
+      </AnchorPane>
+   </center>
+</BorderPane>

@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane maxHeight="998.0" maxWidth="1400.0" minHeight="-Infinity" minWidth="-Infinity" prefHeight="660.0" prefWidth="1400.0" style="-fx-background-color: #005D4D;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.scribble.read_book__c">
+   <center>
+      <VBox prefHeight="543.0" prefWidth="1400.0" BorderPane.alignment="CENTER">
+         <children>
+            <HBox alignment="TOP_CENTER" maxHeight="-Infinity" minHeight="-Infinity" prefHeight="182.0" prefWidth="1400.0" spacing="30.0">
+               <children>
+                  <ImageView fx:id="coverImage" fitHeight="163.0" fitWidth="110.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@../../../images/book_covers/demo_cover.png" />
+                     </image>
+                  </ImageView>
+                  <VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="177.0" prefWidth="695.0" spacing="20.0">
+                     <children>
+                        <Label fx:id="bookTitleLabel" text="Book name unknown" textFill="WHITE">
+                           <font>
+                              <Font name="System Bold" size="26.0" />
+                           </font>
+                        </Label>
+                        <HBox prefHeight="62.0" prefWidth="651.0">
+                           <children>
+                              <VBox alignment="CENTER" prefHeight="200.0" prefWidth="80.0">
+                                 <children>
+                                    <HBox prefHeight="25.0" prefWidth="100.0" spacing="5.0">
+                                       <children>
+                                          <ComboBox fx:id="ratingComboBox" maxWidth="-Infinity" minWidth="-Infinity" prefHeight="27.0" prefWidth="28.0" style="-fx-background-color: transparent; -fx-border-color: #fff; -fx-border-radius: 5;" />
+                                          <Label text="Rate" textFill="WHITE" />
+                                       </children>
+                                    </HBox>
+                                    <Label fx:id="avg_ratting" alignment="CENTER" contentDisplay="CENTER" prefHeight="32.0" prefWidth="82.0" text="0" textAlignment="CENTER" textFill="WHITE">
+                                       <font>
+                                          <Font name="System Bold" size="14.0" />
+                                       </font>
+                                    </Label>
+                                 </children>
+                              </VBox>
+                              <Separator orientation="VERTICAL" prefHeight="200.0" />
+                              <VBox alignment="CENTER" maxHeight="-Infinity" minHeight="-Infinity" prefHeight="60.0" prefWidth="80.0" spacing="10.0">
+                                 <children>
+                                    <Label text="Views" textFill="WHITE" />
+                                    <Label fx:id="views" text="1" textFill="WHITE">
+                                       <font>
+                                          <Font name="System Bold" size="14.0" />
+                                       </font>
+                                    </Label>
+                                 </children>
+                              </VBox>
+                              <Separator orientation="VERTICAL" prefHeight="200.0" prefWidth="4.0" />
+                              <VBox alignment="CENTER" maxHeight="-Infinity" minHeight="-Infinity" prefHeight="60.0" prefWidth="80.0" spacing="10.0">
+                                 <children>
+                                    <Label text="Chapters" textFill="WHITE" />
+                                    <Label fx:id="chapters" text="1" textFill="WHITE">
+                                       <font>
+                                          <Font name="System Bold" size="14.0" />
+                                       </font>
+                                    </Label>
+                                 </children>
+                              </VBox>
+                              <Separator orientation="VERTICAL" prefHeight="200.0" />
+                              <VBox alignment="CENTER" maxHeight="-Infinity" minHeight="-Infinity" prefHeight="60.0" prefWidth="80.0" spacing="10.0">
+                                 <children>
+                                    <Label text="Reads" textFill="WHITE" />
+                                    <Label fx:id="reads" text="1" textFill="WHITE">
+                                       <font>
+                                          <Font name="System Bold" size="14.0" />
+                                       </font>
+                                    </Label>
+                                 </children>
+                              </VBox>
+                              <Separator orientation="VERTICAL" prefHeight="200.0" />
+                              <VBox alignment="CENTER" maxHeight="-Infinity" minHeight="-Infinity" prefHeight="60.0" prefWidth="80.0" spacing="10.0">
+                                 <children>
+                                    <Label text="Status" textFill="WHITE" />
+                                    <Label fx:id="status" text="ongoing" textFill="WHITE">
+                                       <font>
+                                          <Font name="System Bold" size="14.0" />
+                                       </font>
+                                    </Label>
+                                 </children>
+                              </VBox>
+                              <Separator orientation="VERTICAL" prefHeight="200.0" />
+                              <VBox alignment="CENTER" maxHeight="-Infinity" minHeight="-Infinity" prefHeight="60.0" prefWidth="115.0" spacing="10.0">
+                                 <children>
+                                    <Label text="Genre" textFill="WHITE" />
+                                    <Label fx:id="genre" alignment="CENTER" contentDisplay="CENTER" prefHeight="25.0" prefWidth="115.0" text="Science Fiction" textFill="WHITE">
+                                       <font>
+                                          <Font name="System Bold" size="14.0" />
+                                       </font>
+                                    </Label>
+                                 </children>
+                              </VBox>
+                           </children>
+                        </HBox>
+                        <HBox prefHeight="37.0" prefWidth="695.0" spacing="10.0">
+                           <children>
+                              <Button fx:id="read_now_button" mnemonicParsing="false" onAction="#handle_read" prefHeight="30.0" prefWidth="120.0" style="-fx-background-color: #F4908A; -fx-background-radius: 10;" stylesheets="@../../../style/style.css" text="Read Now">
+                                 <font>
+                                    <Font name="System Bold" size="12.0" />
+                                 </font>
+                              </Button>
+                              <Button fx:id="support_author_button" mnemonicParsing="false" onAction="#handle_support_author" prefHeight="30.0" prefWidth="120.0" style="-fx-background-color: #F4908A; -fx-background-radius: 10;" stylesheets="@../../../style/style.css" text="Support">
+                                 <font>
+                                    <Font name="System Bold" size="12.0" />
+                                 </font>
+                              </Button>
+                              <Button fx:id="request_collab_button" mnemonicParsing="false" onAction="#handle_request_collab" prefHeight="30.0" prefWidth="120.0" style="-fx-background-color: #F4908A; -fx-background-radius: 10;" stylesheets="@../../../style/style.css" text="Request Collab">
+                                 <font>
+                                    <Font name="System Bold" size="12.0" />
+                                 </font>
+                              </Button>
+                              <Button fx:id="saved_books_button" mnemonicParsing="false" onAction="#handle_saved_books_button" prefHeight="26.0" prefWidth="26.0" style="-fx-background-color: transparent;" stylesheets="@../../../style/style.css">
+                                 <font>
+                                    <Font name="System Bold" size="12.0" />
+                                 </font>
+                                 <graphic>
+                                    <ImageView fitHeight="26.0" fitWidth="26.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@../../../images/icons/add.png" />
+                                       </image>
+                                    </ImageView>
+                                 </graphic>
+                              </Button>
+                           </children>
+                        </HBox>
+                     </children>
+                  </VBox>
+               </children>
+            </HBox>
+            <Separator prefWidth="200.0" style="-fx-background-color: #fff;">
+               <VBox.margin>
+                  <Insets top="20.0" />
+               </VBox.margin>
+            </Separator>
+            <HBox alignment="CENTER" prefHeight="404.0" prefWidth="1400.0" spacing="50.0">
+               <children>
+                  <VBox prefHeight="391.0" prefWidth="565.0">
+                     <children>
+                        <VBox prefHeight="158.0" prefWidth="566.0" spacing="5.0">
+                           <children>
+                              <HBox prefHeight="38.0" prefWidth="523.0" spacing="10.0">
+                                 <children>
+                                    <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@../../../images/icons/author.png" />
+                                       </image>
+                                    </ImageView>
+                                    <Button fx:id="author_profile" alignment="TOP_LEFT" mnemonicParsing="false" onAction="#handle_author_profile" prefHeight="35.0" prefWidth="115.0" style="-fx-background-color: transparent;" text="author_name" textFill="WHITE">
+                                       <font>
+                                          <Font size="14.0" />
+                                       </font>
+                                    </Button>
+                                 </children>
+                              </HBox>
+                              <Label fx:id="book_description" alignment="TOP_LEFT" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="60.0" prefWidth="417.0" text="books description............." textFill="WHITE" wrapText="true">
+                                 <padding>
+                                    <Insets left="50.0" />
+                                 </padding>
+                              </Label>
+                           </children>
+                        </VBox>
+                        <VBox prefHeight="281.0" prefWidth="562.0" spacing="10.0">
+                           <children>
+                              <Label fx:id="total_comments" text="Comments" textFill="WHITE">
+                                 <font>
+                                    <Font size="16.0" />
+                                 </font>
+                                 <graphic>
+                                    <ImageView fitHeight="27.0" fitWidth="27.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@../../../images/icons/review.png" />
+                                       </image>
+                                    </ImageView>
+                                 </graphic>
+                              </Label>
+                              <Button fx:id="add_comment" mnemonicParsing="false" onAction="#handle_add_comment" style="-fx-background-color: #F5E0CD; -fx-border-color: #fff; -fx-border-radius: 5;" stylesheets="@../../../style/style.css" text="add comment" textFill="WHITE">
+                                 <font>
+                                    <Font name="System Bold" size="10.0" />
+                                 </font>
+                              </Button>
+                              <ScrollPane prefHeight="198.0" prefWidth="566.0" style="-fx-background-color: transparent;">
+                                 <content>
+                                    <VBox fx:id="commentContainer" prefHeight="492.0" prefWidth="527.0" spacing="10.0" style="-fx-background-color: #005D4D;">
+                                       <children>
+                                          <VBox prefHeight="55.0" prefWidth="331.0" spacing="5.0">
+                                             <children>
+                                                <Label fx:id="user_name" prefHeight="26.0" prefWidth="146.0" text="user_no_1" textFill="WHITE">
+                                                   <font>
+                                                      <Font size="14.0" />
+                                                   </font>
+                                                </Label>
+                                                <Label fx:id="user_comment" text="I like your content!" textFill="WHITE">
+                                                   <font>
+                                                      <Font size="14.0" />
+                                                   </font>
+                                                   <padding>
+                                                      <Insets left="50.0" />
+                                                   </padding>
+                                                </Label>
+                                             </children>
+                                             <padding>
+                                                <Insets bottom="5.0" left="10.0" right="5.0" top="5.0" />
+                                             </padding>
+                                          </VBox>
+                                       </children>
+                                    </VBox>
+                                 </content>
+                                 <padding>
+                                    <Insets left="20.0" top="10.0" />
+                                 </padding>
+                              </ScrollPane>
+                           </children>
+                        </VBox>
+                     </children>
+                  </VBox>
+                  <VBox alignment="CENTER" prefHeight="371.0" prefWidth="214.0" spacing="10.0">
+                     <children>
+                        <VBox fx:id="chapterContainer" alignment="CENTER" prefHeight="236.0" prefWidth="214.0" style="-fx-border-color: #fff; -fx-border-radius: 5;">
+                           <children>
+                              <Label text="Chapters" textFill="WHITE">
+                                 <font>
+                                    <Font name="System Bold" size="20.0" />
+                                 </font>
+                              </Label>
+                              <ScrollPane prefHeight="261.0" prefWidth="210.0" style="-fx-background-color: transparent;">
+                                 <content>
+                                    <VBox alignment="TOP_CENTER" prefHeight="251.0" prefWidth="195.0" spacing="15.0" style="-fx-background-color: #005D4D;">
+                                       <children>
+                                          <Button fx:id="add_chapter" mnemonicParsing="false" onAction="#handle_add_chapter_button" prefHeight="26.0" prefWidth="26.0" style="-fx-background-color: transparent;" stylesheets="@../../../style/style.css">
+                                             <font>
+                                                <Font name="System Bold" size="12.0" />
+                                             </font>
+                                             <graphic>
+                                                <ImageView fitHeight="26.0" fitWidth="26.0" pickOnBounds="true" preserveRatio="true">
+                                                   <image>
+                                                      <Image url="@../../../images/icons/add.png" />
+                                                   </image>
+                                                </ImageView>
+                                             </graphic>
+                                          </Button>
+                                          <Button mnemonicParsing="false" onAction="#handle_chapterContainer" prefHeight="30.0" prefWidth="120.0" style="-fx-background-color: #F5E0CD; -fx-background-radius: 10;" stylesheets="@../../../style/style.css" text="Chapter 1">
+                                             <font>
+                                                <Font size="15.0" />
+                                             </font>
+                                          </Button>
+                                       </children>
+                                       <padding>
+                                          <Insets top="15.0" />
+                                       </padding>
+                                    </VBox>
+                                 </content>
+                              </ScrollPane>
+                           </children>
+                           <padding>
+                              <Insets top="10.0" />
+                           </padding>
+                        </VBox>
+                        <VBox fx:id="draftContainer" alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="113.0" prefWidth="212.0" style="-fx-border-color: #fff; -fx-border-radius: 5;">
+                           <children>
+                              <Label text="Drafts" textFill="WHITE">
+                                 <font>
+                                    <Font name="System Bold" size="16.0" />
+                                 </font>
+                              </Label>
+                              <ScrollPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="70.0" prefWidth="200.0" style="-fx-background-color: transparent;">
+                                 <content>
+                                    <VBox alignment="TOP_CENTER" prefHeight="111.0" prefWidth="182.0" spacing="5.0" style="-fx-background-color: #005D4D;">
+                                       <children>
+                                          <Button fx:id="add_draft" mnemonicParsing="false" onAction="#handle_add_draft" prefHeight="26.0" prefWidth="26.0" style="-fx-background-color: transparent;" stylesheets="@../../../style/style.css">
+                                             <font>
+                                                <Font name="System Bold" size="12.0" />
+                                             </font>
+                                             <graphic>
+                                                <ImageView fitHeight="26.0" fitWidth="26.0" pickOnBounds="true" preserveRatio="true">
+                                                   <image>
+                                                      <Image url="@../../../images/icons/add.png" />
+                                                   </image>
+                                                </ImageView>
+                                             </graphic>
+                                          </Button>
+                                          <Button mnemonicParsing="false" onAction="#handle_draftContainer" prefHeight="26.0" prefWidth="181.0" style="-fx-background-color: transparent;" text="1. draft for chapter 7" textFill="WHITE" />
+                                       </children>
+                                       <padding>
+                                          <Insets left="5.0" right="5.0" />
+                                       </padding>
+                                    </VBox>
+                                 </content>
+                              </ScrollPane>
+                           </children>
+                           <padding>
+                              <Insets top="5.0" />
+                           </padding>
+                        </VBox>
+                     </children>
+                  </VBox>
+               </children>
+               <padding>
+                  <Insets top="20.0" />
+               </padding>
+            </HBox>
+         </children>
+      </VBox>
+   </center>
+   <top>
+      <HBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="50.0" prefWidth="1400.0" BorderPane.alignment="CENTER">
+         <padding>
+            <Insets left="100.0" right="100.0" />
+         </padding>
+         <children>
+            <Button fx:id="back_button" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#handle_back_button" prefHeight="30.0" prefWidth="120.0" style="-fx-background-color: #F4908A; -fx-background-radius: 10;" stylesheets="@../../../style/style.css" text="Back" textFill="#014237">
+               <font>
+                  <Font size="14.0" />
+               </font>
+            </Button>
+         </children>
+      </HBox>
+   </top>
+</BorderPane>
