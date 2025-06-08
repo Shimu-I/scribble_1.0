@@ -241,31 +241,31 @@
                         </VBox>
                      </children>
                   </VBox>
-                  <VBox alignment="CENTER" prefHeight="371.0" prefWidth="214.0" spacing="10.0">
+                  <VBox alignment="TOP_CENTER" prefHeight="401.0" prefWidth="214.0" spacing="10.0">
                      <children>
-                        <VBox fx:id="chapterContainer" alignment="CENTER" prefHeight="236.0" prefWidth="214.0" style="-fx-border-color: #fff; -fx-border-radius: 5;">
+                        <VBox fx:id="chapterContainer" alignment="CENTER" prefHeight="237.0" prefWidth="214.0" style="-fx-border-color: #fff; -fx-border-radius: 5;">
                            <children>
                               <Label text="Chapters" textFill="WHITE">
                                  <font>
                                     <Font name="System Bold" size="20.0" />
                                  </font>
                               </Label>
-                              <ScrollPane prefHeight="261.0" prefWidth="210.0" style="-fx-background-color: transparent;">
+                              <Button fx:id="add_chapter" mnemonicParsing="false" onAction="#handle_add_chapter_button" prefHeight="26.0" prefWidth="26.0" style="-fx-background-color: transparent;" stylesheets="@../../../style/style.css">
+                                 <font>
+                                    <Font name="System Bold" size="12.0" />
+                                 </font>
+                                 <graphic>
+                                    <ImageView fitHeight="26.0" fitWidth="26.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@../../../images/icons/add.png" />
+                                       </image>
+                                    </ImageView>
+                                 </graphic>
+                              </Button>
+                              <ScrollPane prefHeight="141.0" prefWidth="212.0" style="-fx-background-color: transparent;">
                                  <content>
                                     <VBox alignment="TOP_CENTER" prefHeight="251.0" prefWidth="195.0" spacing="15.0" style="-fx-background-color: #005D4D;">
                                        <children>
-                                          <Button fx:id="add_chapter" mnemonicParsing="false" onAction="#handle_add_chapter_button" prefHeight="26.0" prefWidth="26.0" style="-fx-background-color: transparent;" stylesheets="@../../../style/style.css">
-                                             <font>
-                                                <Font name="System Bold" size="12.0" />
-                                             </font>
-                                             <graphic>
-                                                <ImageView fitHeight="26.0" fitWidth="26.0" pickOnBounds="true" preserveRatio="true">
-                                                   <image>
-                                                      <Image url="@../../../images/icons/add.png" />
-                                                   </image>
-                                                </ImageView>
-                                             </graphic>
-                                          </Button>
                                           <Button mnemonicParsing="false" onAction="#handle_chapterContainer" prefHeight="30.0" prefWidth="120.0" style="-fx-background-color: #F5E0CD; -fx-background-radius: 10;" stylesheets="@../../../style/style.css" text="Chapter 1">
                                              <font>
                                                 <Font size="15.0" />
@@ -280,33 +280,36 @@
                               </ScrollPane>
                            </children>
                            <padding>
-                              <Insets top="10.0" />
+                              <Insets top="5.0" />
                            </padding>
                         </VBox>
-                        <VBox fx:id="draftContainer" alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="113.0" prefWidth="212.0" style="-fx-border-color: #fff; -fx-border-radius: 5;">
+                        <VBox fx:id="draftContainer" alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="127.0" prefWidth="212.0" style="-fx-border-color: #fff; -fx-border-radius: 5;">
                            <children>
                               <Label text="Drafts" textFill="WHITE">
                                  <font>
                                     <Font name="System Bold" size="16.0" />
                                  </font>
                               </Label>
-                              <ScrollPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="70.0" prefWidth="200.0" style="-fx-background-color: transparent;">
+                              <Button fx:id="add_draft" mnemonicParsing="false" onAction="#handle_add_draft" prefHeight="26.0" prefWidth="26.0" style="-fx-background-color: transparent;" stylesheets="@../../../style/style.css">
+                                 <font>
+                                    <Font name="System Bold" size="12.0" />
+                                 </font>
+                                 <graphic>
+                                    <ImageView fitHeight="26.0" fitWidth="26.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@../../../images/icons/add.png" />
+                                       </image>
+                                    </ImageView>
+                                 </graphic>
+                              </Button>
+                              <ScrollPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="60.0" prefWidth="200.0" style="-fx-background-color: transparent;">
                                  <content>
-                                    <VBox alignment="TOP_CENTER" prefHeight="111.0" prefWidth="182.0" spacing="5.0" style="-fx-background-color: #005D4D;">
+                                    <VBox fx:id="handle_draftContainer" alignment="TOP_CENTER" prefHeight="111.0" prefWidth="182.0" spacing="5.0" style="-fx-background-color: #005D4D;">
                                        <children>
-                                          <Button fx:id="add_draft" mnemonicParsing="false" onAction="#handle_add_draft" prefHeight="26.0" prefWidth="26.0" style="-fx-background-color: transparent;" stylesheets="@../../../style/style.css">
+                                          <Button fx:id="draft_no" mnemonicParsing="false" prefHeight="20.0" prefWidth="181.0" style="-fx-background-color: transparent; -fx-border-color: #fff; -fx-border-radius: 5;" text="1. draft for chapter 7" textFill="WHITE">
                                              <font>
-                                                <Font name="System Bold" size="12.0" />
-                                             </font>
-                                             <graphic>
-                                                <ImageView fitHeight="26.0" fitWidth="26.0" pickOnBounds="true" preserveRatio="true">
-                                                   <image>
-                                                      <Image url="@../../../images/icons/add.png" />
-                                                   </image>
-                                                </ImageView>
-                                             </graphic>
-                                          </Button>
-                                          <Button mnemonicParsing="false" onAction="#handle_draftContainer" prefHeight="26.0" prefWidth="181.0" style="-fx-background-color: transparent;" text="1. draft for chapter 7" textFill="WHITE" />
+                                                <Font size="11.0" />
+                                             </font></Button>
                                        </children>
                                        <padding>
                                           <Insets left="5.0" right="5.0" />
@@ -315,9 +318,6 @@
                                  </content>
                               </ScrollPane>
                            </children>
-                           <padding>
-                              <Insets top="5.0" />
-                           </padding>
                         </VBox>
                      </children>
                   </VBox>

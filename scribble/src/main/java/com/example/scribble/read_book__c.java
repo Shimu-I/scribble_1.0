@@ -337,10 +337,6 @@ public class read_book__c {
                     scrollContent.getChildren().add(chapterButton);
                 }
 
-                if (isAuthorOrCoAuthor && add_chapter != null) {
-                    scrollContent.getChildren().add(add_chapter);
-                }
-
                 if (chapters != null) chapters.setText(String.valueOf(count));
             }
         } catch (SQLException e) {
@@ -360,22 +356,39 @@ public class read_book__c {
         try (PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setInt(1, bookId);
             ResultSet rs = stmt.executeQuery();
-            draftContainer.getChildren().clear();
+            // Find the ScrollPane's inner VBox (scrollable content)
+            VBox scrollContent = null;
+            for (javafx.scene.Node node : draftContainer.getChildren()) {
+                if (node instanceof ScrollPane) {
+                    ScrollPane scrollPane = (ScrollPane) node;
+                    if (scrollPane.getContent() instanceof VBox) {
+                        scrollContent = (VBox) scrollPane.getContent();
+                    }
+                }
+            }
+
+            if (scrollContent == null) {
+                LOGGER.severe("ScrollPane or inner VBox not found in draftContainer.");
+                return;
+            }
+
+            // Clear only the scrollable content
+            scrollContent.getChildren().clear();
+
             while (rs.next()) {
                 int draftId = rs.getInt("draft_id");
                 int chapterNumber = rs.getInt("chapter_number");
                 Button draftButton = new Button("Draft for Chapter " + chapterNumber);
+                draftButton.setStyle("-fx-background-color: transparent; -fx-border-color: #fff; -fx-border-radius: 5; -fx-text-fill: #FFFFFF;");
+                draftButton.setPrefWidth(181.0);
+                draftButton.setPrefHeight(26.0);
                 draftButton.setOnAction(e -> openDraft(draftId));
-                draftContainer.getChildren().add(draftButton);
-            }
-            if (add_draft != null) {
-                draftContainer.getChildren().add(add_draft);
+                scrollContent.getChildren().add(draftButton);
             }
         } catch (SQLException e) {
             LOGGER.severe("Error loading drafts: " + e.getMessage());
         }
     }
-
     private void updateViewCount() {
         if (conn == null || !UserSession.getInstance().isLoggedIn()) return;
         try {
