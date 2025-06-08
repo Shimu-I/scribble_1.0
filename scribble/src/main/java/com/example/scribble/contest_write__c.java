@@ -13,19 +13,30 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+
+import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
+import javafx.scene.shape.Rectangle;
+import javafx.stage.Modality;
+
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.nio.file.*;
-import java.io.IOException;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 
 public class contest_write__c {
@@ -210,6 +221,7 @@ public class contest_write__c {
 
 
 
+
     @FXML
     private void handle_cover_photo_button(ActionEvent event) {
         FileChooser fileChooser = new FileChooser();
@@ -220,39 +232,129 @@ public class contest_write__c {
 
         File selectedFile = fileChooser.showOpenDialog(cover_photo_button.getScene().getWindow());
         if (selectedFile != null) {
-            Path directoryPath = Path.of("src/main/resources/images/contest_book_cover");
-            int nextNumber = 1;
-
-            // Find the highest existing number in filenames starting with "ccp_"
-            try {
-                Files.createDirectories(directoryPath);
-                DirectoryStream<Path> stream = Files.newDirectoryStream(directoryPath, "ccp_[0-9]*.{png,jpg,jpeg}");
-                for (Path file : stream) {
-                    String filename = file.getFileName().toString();
-                    String numberPart = filename.replace("ccp_", "").replaceAll("\\..*", "");
-                    try {
-                        int num = Integer.parseInt(numberPart);
-                        if (num >= nextNumber) nextNumber = num + 1;
-                    } catch (NumberFormatException ignored) {}
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            String extension = getFileExtension(selectedFile.getName());
-            String newFilename = "ccp_" + nextNumber + "." + extension;
-            Path destinationPath = directoryPath.resolve(newFilename);
-
-            try {
-                Files.copy(selectedFile.toPath(), destinationPath, StandardCopyOption.REPLACE_EXISTING);
-                selectedCoverPhotoPath = newFilename; // Store new filename for database
-                cover_photo.setImage(new Image("file:" + destinationPath.toString())); // Load full path for display
-            } catch (IOException e) {
-                e.printStackTrace();
-                showErrorAlert("Image Error", "Failed to copy the selected cover photo.");
-                selectedCoverPhotoPath = null;
-            }
+            openCropStage(selectedFile);
         }
+    }
+
+    private void openCropStage(File selectedFile) {
+        Stage cropStage = new Stage();
+        cropStage.initModality(Modality.APPLICATION_MODAL);
+        cropStage.setTitle("Crop Cover Photo");
+
+        Image originalImage = new Image(selectedFile.toURI().toString());
+        ImageView imageView = new ImageView(originalImage);
+        imageView.setPreserveRatio(true);
+
+        double displayWidth = Math.min(originalImage.getWidth(), 600);
+        double displayHeight = (displayWidth / originalImage.getWidth()) * originalImage.getHeight();
+        imageView.setFitWidth(displayWidth);
+        imageView.setFitHeight(displayHeight);
+
+        final double ASPECT_RATIO = 150.0 / 222.0; // Width / Height
+        final double MIN_WIDTH = 50.0;
+        final double MAX_WIDTH = displayWidth;
+
+        Rectangle cropRect = new Rectangle(150, 222);
+        cropRect.setArcWidth(30);
+        cropRect.setArcHeight(30);
+        cropRect.setFill(Color.TRANSPARENT);
+        cropRect.setStroke(Color.RED);
+        cropRect.setStrokeWidth(2);
+
+        Circle resizeHandle = new Circle(cropRect.getX() + cropRect.getWidth(), cropRect.getY() + cropRect.getHeight(), 5, Color.BLUE);
+
+        Pane pane = new Pane(imageView, cropRect, resizeHandle);
+        pane.setPrefSize(displayWidth, displayHeight);
+
+        double[] dragStart = new double[2];
+        cropRect.setOnMousePressed(e -> {
+            dragStart[0] = e.getX() - cropRect.getX();
+            dragStart[1] = e.getY() - cropRect.getY();
+        });
+
+        cropRect.setOnMouseDragged(e -> {
+            double newX = e.getX() - dragStart[0];
+            double newY = e.getY() - dragStart[1];
+            newX = Math.max(0, Math.min(newX, displayWidth - cropRect.getWidth()));
+            newY = Math.max(0, Math.min(newY, displayHeight - cropRect.getHeight()));
+            cropRect.setX(newX);
+            cropRect.setY(newY);
+            resizeHandle.setCenterX(newX + cropRect.getWidth());
+            resizeHandle.setCenterY(newY + cropRect.getHeight());
+        });
+
+        double[] resizeStart = new double[2];
+        AtomicReference<Double> initialWidth = new AtomicReference<>(cropRect.getWidth());
+        resizeHandle.setOnMousePressed(e -> {
+            resizeStart[0] = e.getX();
+            resizeStart[1] = e.getY();
+            initialWidth.set(cropRect.getWidth());
+        });
+
+        resizeHandle.setOnMouseDragged(e -> {
+            double deltaX = e.getX() - resizeStart[0];
+            double newWidth = initialWidth.get() + deltaX;
+            newWidth = Math.max(MIN_WIDTH, Math.min(newWidth, MAX_WIDTH));
+            double newHeight = newWidth * (222.0 / 150.0); // Correct aspect ratio: height = width * (height/width)
+            if (cropRect.getX() + newWidth <= displayWidth && cropRect.getY() + newHeight <= displayHeight) {
+                cropRect.setWidth(newWidth);
+                cropRect.setHeight(newHeight);
+                resizeHandle.setCenterX(cropRect.getX() + newWidth);
+                resizeHandle.setCenterY(cropRect.getY() + newHeight);
+            }
+        });
+
+        Button cropButton = new Button("Crop and Save");
+        cropButton.setOnAction(e -> {
+            try {
+                double scale = originalImage.getWidth() / displayWidth;
+                int cropX = (int) (cropRect.getX() * scale);
+                int cropY = (int) (cropRect.getY() * scale);
+                int cropWidth = (int) (cropRect.getWidth() * scale);
+                int cropHeight = (int) (cropRect.getHeight() * scale);
+
+                BufferedImage bufferedImage = new BufferedImage(150, 222, BufferedImage.TYPE_INT_ARGB);
+                java.awt.Graphics2D g2d = bufferedImage.createGraphics();
+                g2d.setClip(new java.awt.geom.RoundRectangle2D.Double(0, 0, 150, 222, 30, 30));
+                BufferedImage sourceImage = ImageIO.read(selectedFile);
+                g2d.drawImage(sourceImage, 0, 0, 150, 222, cropX, cropY, cropX + cropWidth, cropY + cropHeight, null);
+                g2d.dispose();
+
+                Path directoryPath = Path.of("src/main/resources/images/contest_book_cover");
+                Files.createDirectories(directoryPath);
+
+                int nextNumber = 1;
+                try (DirectoryStream<Path> stream = Files.newDirectoryStream(directoryPath, "ccp_[0-9]*.{png,jpg,jpeg}")) {
+                    for (Path file : stream) {
+                        String filename = file.getFileName().toString();
+                        String numberPart = filename.replace("ccp_", "").replaceAll("\\..*", "");
+                        try {
+                            int num = Integer.parseInt(numberPart);
+                            if (num >= nextNumber) {
+                                nextNumber = num + 1;
+                            }
+                        } catch (NumberFormatException ignored) {}
+                    }
+                }
+
+                String newFilename = "ccp_" + nextNumber + ".png";
+                Path destinationPath = directoryPath.resolve(newFilename);
+
+                ImageIO.write(bufferedImage, "png", destinationPath.toFile());
+                selectedCoverPhotoPath = newFilename;
+                cover_photo.setImage(new Image("file:" + destinationPath.toString()));
+                cropStage.close();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+                showErrorAlert("Image Error", "Failed to crop and save the cover photo.");
+            }
+        });
+
+        VBox layout = new VBox(10, pane, cropButton);
+        layout.setPadding(new javafx.geometry.Insets(10));
+        Scene cropScene = new Scene(layout);
+        cropStage.setScene(cropScene);
+        cropStage.showAndWait();
     }
 
     // Helper method to get file extension

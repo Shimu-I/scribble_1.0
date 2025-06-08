@@ -7,6 +7,7 @@
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
@@ -17,11 +18,16 @@
    <center>
       <HBox alignment="TOP_CENTER" prefHeight="100.0" prefWidth="200.0" spacing="50.0" BorderPane.alignment="CENTER">
          <children>
-            <Button fx:id="book_image_button" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#handle_book_cover" prefHeight="222.0" prefWidth="150.0">
-               <graphic>
-                  <ImageView fx:id="bookCoverImageView" fitHeight="222.0" fitWidth="150.0" pickOnBounds="true" preserveRatio="true" />
-               </graphic>
-            </Button>
+            <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" spacing="10.0">
+               <children>
+                  <ImageView fx:id="bookCoverImageView" fitHeight="222.0" fitWidth="150.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@../../../images/book_covers/demo_cover.png" />
+                     </image>
+                  </ImageView>
+                  <Button fx:id="book_image_button" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#handle_book_cover" prefHeight="30.0" prefWidth="120.0" style="-fx-background-color: transparent; -fx-border-color: #fff; -fx-border-radius: 5;" text="add cover photo" textFill="WHITE" />
+               </children>
+            </VBox>
             <VBox alignment="TOP_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="540.0" prefWidth="500.0" spacing="15.0" style="-fx-background-color: #D9D9D9; -fx-background-radius: 5;">
                <children>
                   <Label text="Details Information">

@@ -1,33 +1,40 @@
 package com.example.scribble;
 
-import javafx.fxml.FXML;
-import javafx.scene.Node;
-import javafx.scene.control.*;
 import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.*;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.stage.Stage;
-import java.io.IOException;
-
-
+import java.util.concurrent.atomic.AtomicReference;
 
 public class write__c {
 
     @FXML
     public BorderPane rootPane;
+
+    @FXML
     public Button back_to_books;
 
     @FXML
@@ -35,6 +42,7 @@ public class write__c {
 
     @FXML
     private ImageView bookCoverImageView;
+
     private String coverPhotoPath;
 
     @FXML
@@ -43,14 +51,11 @@ public class write__c {
     @FXML
     private TextArea book_description;
 
-
-
     @FXML
     private ComboBox<String> genreComboBox;
 
     @FXML
     private ComboBox<String> statusComboBox;
-
 
     @FXML
     private Button write_button;
@@ -61,16 +66,6 @@ public class write__c {
     public void setMainController(nav_bar__c mainController) {
         this.mainController = mainController;
     }
-
-
-    public void handle_back_to_books(ActionEvent actionEvent) {
-        if (mainController != null) {
-            mainController.loadFXML("reading_list.fxml"); // Navigate back to Books
-        }else {
-            System.err.println("Main controller is null in write__c.");
-        }
-    }
-
 
     @FXML
     private void initialize() {
@@ -84,8 +79,22 @@ public class write__c {
                 "Ongoing", "Complete", "Hiatus"
         );
         statusComboBox.getSelectionModel().selectFirst();
+
+        // Apply rounded corners to bookCoverImageView
+        Rectangle clip = new Rectangle(150, 222);
+        clip.setArcWidth(30);
+        clip.setArcHeight(30);
+        bookCoverImageView.setClip(clip);
     }
 
+    @FXML
+    private void handle_back_to_books(ActionEvent actionEvent) {
+        if (mainController != null) {
+            mainController.loadFXML("reading_list.fxml"); // Navigate back to Books
+        } else {
+            System.err.println("Main controller is null in write__c.");
+        }
+    }
 
     @FXML
     private void handle_book_cover(ActionEvent actionEvent) {
@@ -94,40 +103,135 @@ public class write__c {
         fileChooser.getExtensionFilters().addAll(
                 new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg")
         );
-        File selectedFile = fileChooser.showOpenDialog(null);
+        File selectedFile = fileChooser.showOpenDialog(book_image_button.getScene().getWindow());
         if (selectedFile != null) {
+            openCropStage(selectedFile);
+        }
+    }
+
+    private void openCropStage(File selectedFile) {
+        Stage cropStage = new Stage();
+        cropStage.initModality(Modality.APPLICATION_MODAL);
+        cropStage.setTitle("Crop Book Cover");
+
+        Image originalImage = new Image(selectedFile.toURI().toString());
+        ImageView imageView = new ImageView(originalImage);
+        imageView.setPreserveRatio(true);
+
+        double displayWidth = Math.min(originalImage.getWidth(), 600);
+        double displayHeight = (displayWidth / originalImage.getWidth()) * originalImage.getHeight();
+        imageView.setFitWidth(displayWidth);
+        imageView.setFitHeight(displayHeight);
+
+        final double ASPECT_RATIO = 150.0 / 222.0; // Width / Height
+        final double MIN_WIDTH = 50.0;
+        final double MAX_WIDTH = displayWidth;
+
+        Rectangle cropRect = new Rectangle(150, 222);
+        cropRect.setArcWidth(30);
+        cropRect.setArcHeight(30);
+        cropRect.setFill(Color.TRANSPARENT);
+        cropRect.setStroke(Color.RED);
+        cropRect.setStrokeWidth(2);
+
+        Circle resizeHandle = new Circle(cropRect.getX() + cropRect.getWidth(), cropRect.getY() + cropRect.getHeight(), 5, Color.BLUE);
+
+        Pane pane = new Pane(imageView, cropRect, resizeHandle);
+        pane.setPrefSize(displayWidth, displayHeight);
+
+        double[] dragStart = new double[2];
+        cropRect.setOnMousePressed(e -> {
+            dragStart[0] = e.getX() - cropRect.getX();
+            dragStart[1] = e.getY() - cropRect.getY();
+        });
+
+        cropRect.setOnMouseDragged(e -> {
+            double newX = e.getX() - dragStart[0];
+            double newY = e.getY() - dragStart[1];
+            newX = Math.max(0, Math.min(newX, displayWidth - cropRect.getWidth()));
+            newY = Math.max(0, Math.min(newY, displayHeight - cropRect.getHeight()));
+            cropRect.setX(newX);
+            cropRect.setY(newY);
+            resizeHandle.setCenterX(newX + cropRect.getWidth());
+            resizeHandle.setCenterY(newY + cropRect.getHeight());
+        });
+
+        double[] resizeStart = new double[2];
+        AtomicReference<Double> initialWidth = new AtomicReference<>(cropRect.getWidth());
+        resizeHandle.setOnMousePressed(e -> {
+            resizeStart[0] = e.getX();
+            resizeStart[1] = e.getY();
+            initialWidth.set(cropRect.getWidth());
+        });
+
+        resizeHandle.setOnMouseDragged(e -> {
+            double deltaX = e.getX() - resizeStart[0];
+            double newWidth = initialWidth.get() + deltaX;
+            newWidth = Math.max(MIN_WIDTH, Math.min(newWidth, MAX_WIDTH));
+            double newHeight = newWidth * (222.0 / 150.0); // Height = width * (height/width)
+            if (cropRect.getX() + newWidth <= displayWidth && cropRect.getY() + newHeight <= displayHeight) {
+                cropRect.setWidth(newWidth);
+                cropRect.setHeight(newHeight);
+                resizeHandle.setCenterX(cropRect.getX() + newWidth);
+                resizeHandle.setCenterY(cropRect.getY() + newHeight);
+            }
+        });
+
+        Button cropButton = new Button("Crop and Save");
+        cropButton.setOnAction(e -> {
             try {
-                // Define the target directory
-                String targetDir = "src/main/resources/images/book_covers/";
-                Path targetPath = Paths.get(targetDir);
-                if (!Files.exists(targetPath)) {
-                    Files.createDirectories(targetPath); // Create directory if it doesn't exist
+                double scale = originalImage.getWidth() / displayWidth;
+                int cropX = (int) (cropRect.getX() * scale);
+                int cropY = (int) (cropRect.getY() * scale);
+                int cropWidth = (int) (cropRect.getWidth() * scale);
+                int cropHeight = (int) (cropRect.getHeight() * scale);
+
+                BufferedImage bufferedImage = new BufferedImage(150, 222, BufferedImage.TYPE_INT_ARGB);
+                java.awt.Graphics2D g2d = bufferedImage.createGraphics();
+                g2d.setClip(new java.awt.geom.RoundRectangle2D.Double(0, 0, 150, 222, 30, 30));
+                BufferedImage sourceImage = ImageIO.read(selectedFile);
+                g2d.drawImage(sourceImage, 0, 0, 150, 222, cropX, cropY, cropX + cropWidth, cropY + cropHeight, null);
+                g2d.dispose();
+
+                Path directoryPath = Path.of("src/main/resources/images/book_covers");
+                Files.createDirectories(directoryPath);
+
+                int nextNumber = 1;
+                try (DirectoryStream<Path> stream = Files.newDirectoryStream(directoryPath, "bc_[0-9]*.png")) {
+                    for (Path file : stream) {
+                        String filename = file.getFileName().toString();
+                        String numberPart = filename.replace("bc_", "").replaceAll("\\..*", "");
+                        try {
+                            int num = Integer.parseInt(numberPart);
+                            if (num >= nextNumber) {
+                                nextNumber = num + 1;
+                            }
+                        } catch (NumberFormatException ignored) {}
+                    }
                 }
 
-                // Get the file extension
-                String extension = selectedFile.getName().substring(selectedFile.getName().lastIndexOf("."));
+                String newFilename = "bc_" + nextNumber + ".png";
+                Path destinationPath = directoryPath.resolve(newFilename);
 
-                // Find the next available numeric name (e.g., cover_1.jpg)
-                int nextNumber = 1;
-                File targetFile;
-                do {
-                    targetFile = new File(targetDir + "cover_" + nextNumber + extension);
-                    nextNumber++;
-                } while (targetFile.exists());
-
-                // Copy the file to the target directory
-                Files.copy(selectedFile.toPath(), targetFile.toPath());
-
-                // Store the relative path for database
-                coverPhotoPath = "cover_" + (nextNumber - 1) + extension;
-
-                // Display the image
-                Image bookCover = new Image(targetFile.toURI().toString());
-                bookCoverImageView.setImage(bookCover);
-            } catch (Exception e) {
-                showAlert("Error", "Failed to save or load image: " + e.getMessage());
+                ImageIO.write(bufferedImage, "png", destinationPath.toFile());
+                coverPhotoPath = newFilename;
+                bookCoverImageView.setImage(new Image("file:" + destinationPath.toString()));
+                Rectangle clip = new Rectangle(150, 222);
+                clip.setArcWidth(30);
+                clip.setArcHeight(30);
+                bookCoverImageView.setClip(clip);
+                cropStage.close();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+                showAlert("Image Error", "Failed to crop and save the cover photo.");
             }
-        }
+        });
+
+        VBox layout = new VBox(10, pane, cropButton);
+        layout.setPadding(new javafx.geometry.Insets(10));
+        Scene cropScene = new Scene(layout);
+        cropStage.setScene(cropScene);
+        cropStage.showAndWait();
     }
 
     @FXML
@@ -156,7 +260,7 @@ public class write__c {
             navigateToSignIn();
             return;
         }
-        int userId = session.getUserId(); // Dynamic user_id (int)
+        int userId = session.getUserId();
 
         // Save to database
         Connection conn = null;
@@ -193,7 +297,7 @@ public class write__c {
                     "VALUES (?, ?, 'Owner')";
             PreparedStatement authorPstmt = conn.prepareStatement(authorSql);
             authorPstmt.setInt(1, bookId);
-            authorPstmt.setInt(2, userId); // Use dynamic user_id
+            authorPstmt.setInt(2, userId);
             authorPstmt.executeUpdate();
 
             conn.commit(); // Commit transaction
@@ -221,8 +325,6 @@ public class write__c {
             }
         }
     }
-
-
 
     private void navigateToSignIn() {
         try {
@@ -262,6 +364,11 @@ public class write__c {
         genreComboBox.getSelectionModel().clearSelection();
         statusComboBox.getSelectionModel().clearSelection();
         bookCoverImageView.setImage(null);
+        coverPhotoPath = null;
+        Rectangle clip = new Rectangle(150, 222);
+        clip.setArcWidth(30);
+        clip.setArcHeight(30);
+        bookCoverImageView.setClip(clip);
     }
 
     private void showAlert(String title, String message) {
@@ -271,6 +378,4 @@ public class write__c {
         alert.setContentText(message);
         alert.showAndWait();
     }
-
-
 }
