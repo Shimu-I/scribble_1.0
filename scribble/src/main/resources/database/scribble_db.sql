@@ -1,8 +1,8 @@
--- MySQL dump 10.13  Distrib 8.0.42, for Win64 (x86_64)
+-- MySQL dump 10.13  Distrib 8.0.41, for Win64 (x86_64)
 --
--- Host: localhost    Database: scribble_db
+-- Host: 127.0.0.1    Database: scribble_db
 -- ------------------------------------------------------
--- Server version	8.0.42
+-- Server version	8.0.41
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -26,14 +26,14 @@ CREATE TABLE `book_authors` (
   `book_author_id` int NOT NULL AUTO_INCREMENT,
   `book_id` int NOT NULL,
   `user_id` int NOT NULL,
-  `role` enum('Owner','Co-Author') COLLATE utf8mb4_general_ci DEFAULT 'Owner' COMMENT 'Defines the primary author and co-authors',
+  `role` enum('Owner','Co-Author') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'Owner' COMMENT 'Defines the primary author and co-authors',
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`book_author_id`),
   UNIQUE KEY `book_id` (`book_id`,`user_id`),
   KEY `user_id` (`user_id`),
   CONSTRAINT `book_authors_ibfk_1` FOREIGN KEY (`book_id`) REFERENCES `books` (`book_id`) ON DELETE CASCADE,
   CONSTRAINT `book_authors_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=65 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=66 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -42,7 +42,7 @@ CREATE TABLE `book_authors` (
 
 LOCK TABLES `book_authors` WRITE;
 /*!40000 ALTER TABLE `book_authors` DISABLE KEYS */;
-INSERT INTO `book_authors` VALUES (1,1,9,'Owner','2025-04-01 18:04:07'),(2,1,7,'Co-Author','2025-04-01 18:04:07'),(3,2,4,'Owner','2025-04-01 18:13:27'),(4,2,5,'Co-Author','2025-04-01 18:13:27'),(5,21,24,'Owner','2025-06-04 12:54:38'),(6,11,9,'Owner','2025-06-04 13:32:25'),(7,12,9,'Owner','2025-06-04 13:32:25'),(8,13,9,'Owner','2025-06-04 13:32:25'),(9,14,9,'Owner','2025-06-04 13:32:25'),(10,15,9,'Owner','2025-06-04 13:32:25'),(11,16,9,'Owner','2025-06-04 13:32:25'),(12,17,9,'Owner','2025-06-04 13:32:25'),(13,18,9,'Owner','2025-06-04 13:32:25'),(14,19,9,'Owner','2025-06-04 13:32:25'),(15,20,9,'Owner','2025-06-04 13:32:25'),(16,22,9,'Owner','2025-06-04 13:33:02'),(17,23,24,'Owner','2025-06-04 13:35:05'),(18,24,24,'Owner','2025-06-04 13:41:39'),(19,25,24,'Owner','2025-06-04 13:47:48'),(20,26,24,'Owner','2025-06-04 13:50:44'),(21,27,24,'Owner','2025-06-04 13:55:17'),(22,28,24,'Owner','2025-06-04 13:59:58'),(24,1,3,'Co-Author','2025-06-04 20:58:00'),(25,2,6,'Co-Author','2025-06-04 20:58:00'),(36,2,7,'Co-Author','2025-06-04 21:05:01'),(52,11,10,'Co-Author','2025-06-04 21:02:00'),(53,11,1,'Co-Author','2025-06-04 21:02:00'),(54,12,2,'Co-Author','2025-06-04 21:02:00'),(55,12,5,'Co-Author','2025-06-04 21:02:00'),(56,13,1,'Co-Author','2025-06-04 21:02:00'),(57,13,3,'Co-Author','2025-06-04 21:02:00'),(59,1,1,'Co-Author','2025-06-04 20:58:00'),(60,11,3,'Co-Author','2025-06-04 20:58:00'),(62,29,26,'Owner','2025-06-04 21:45:31'),(63,30,26,'Owner','2025-06-04 21:47:09'),(64,31,26,'Owner','2025-06-05 18:25:22');
+INSERT INTO `book_authors` VALUES (1,1,9,'Owner','2025-04-01 18:04:07'),(2,1,7,'Co-Author','2025-04-01 18:04:07'),(3,2,4,'Owner','2025-04-01 18:13:27'),(4,2,5,'Co-Author','2025-04-01 18:13:27'),(5,21,24,'Owner','2025-06-04 12:54:38'),(6,11,9,'Owner','2025-06-04 13:32:25'),(7,12,9,'Owner','2025-06-04 13:32:25'),(8,13,9,'Owner','2025-06-04 13:32:25'),(9,14,9,'Owner','2025-06-04 13:32:25'),(10,15,9,'Owner','2025-06-04 13:32:25'),(11,16,9,'Owner','2025-06-04 13:32:25'),(12,17,9,'Owner','2025-06-04 13:32:25'),(13,18,9,'Owner','2025-06-04 13:32:25'),(14,19,9,'Owner','2025-06-04 13:32:25'),(15,20,9,'Owner','2025-06-04 13:32:25'),(16,22,9,'Owner','2025-06-04 13:33:02'),(17,23,24,'Owner','2025-06-04 13:35:05'),(18,24,24,'Owner','2025-06-04 13:41:39'),(19,25,24,'Owner','2025-06-04 13:47:48'),(20,26,24,'Owner','2025-06-04 13:50:44'),(21,27,24,'Owner','2025-06-04 13:55:17'),(22,28,24,'Owner','2025-06-04 13:59:58'),(24,1,3,'Co-Author','2025-06-04 20:58:00'),(25,2,6,'Co-Author','2025-06-04 20:58:00'),(36,2,7,'Co-Author','2025-06-04 21:05:01'),(52,11,10,'Co-Author','2025-06-04 21:02:00'),(53,11,1,'Co-Author','2025-06-04 21:02:00'),(54,12,2,'Co-Author','2025-06-04 21:02:00'),(55,12,5,'Co-Author','2025-06-04 21:02:00'),(56,13,1,'Co-Author','2025-06-04 21:02:00'),(57,13,3,'Co-Author','2025-06-04 21:02:00'),(59,1,1,'Co-Author','2025-06-04 20:58:00'),(60,11,3,'Co-Author','2025-06-04 20:58:00'),(62,29,26,'Owner','2025-06-04 21:45:31'),(63,30,26,'Owner','2025-06-04 21:47:09'),(64,31,26,'Owner','2025-06-05 18:25:22'),(65,32,27,'Owner','2025-06-08 15:07:33');
 /*!40000 ALTER TABLE `book_authors` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -63,7 +63,7 @@ CREATE TABLE `book_visits` (
   KEY `book_visits_ibfk_2` (`book_id`),
   CONSTRAINT `book_visits_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
   CONSTRAINT `book_visits_ibfk_2` FOREIGN KEY (`book_id`) REFERENCES `books` (`book_id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -72,7 +72,7 @@ CREATE TABLE `book_visits` (
 
 LOCK TABLES `book_visits` WRITE;
 /*!40000 ALTER TABLE `book_visits` DISABLE KEYS */;
-INSERT INTO `book_visits` VALUES (1,9,2,'2025-04-01 07:18:58'),(2,7,2,'2025-04-01 07:18:58'),(3,4,1,'2025-04-01 07:18:58'),(4,3,1,'2025-04-01 20:45:00'),(5,1,1,'2025-04-01 22:00:00'),(6,2,1,'2025-04-01 22:00:00'),(7,10,2,'2025-04-01 22:00:00'),(13,24,1,'2025-06-05 20:12:56'),(14,1,2,'2025-06-05 20:19:43'),(15,24,12,'2025-06-05 20:35:08'),(16,24,15,'2025-06-05 20:35:14'),(17,24,23,'2025-06-05 20:35:36'),(18,24,28,'2025-06-05 20:36:32'),(19,24,27,'2025-06-05 20:36:37'),(20,24,2,'2025-06-05 20:37:19'),(21,24,11,'2025-06-05 21:54:28'),(22,24,13,'2025-06-05 22:13:28'),(23,24,20,'2025-06-05 22:14:42'),(24,26,1,'2025-06-06 06:45:34');
+INSERT INTO `book_visits` VALUES (1,9,2,'2025-04-01 07:18:58'),(2,7,2,'2025-04-01 07:18:58'),(3,4,1,'2025-04-01 07:18:58'),(4,3,1,'2025-04-01 20:45:00'),(5,1,1,'2025-04-01 22:00:00'),(6,2,1,'2025-04-01 22:00:00'),(7,10,2,'2025-04-01 22:00:00'),(13,24,1,'2025-06-05 20:12:56'),(14,1,2,'2025-06-05 20:19:43'),(15,24,12,'2025-06-05 20:35:08'),(16,24,15,'2025-06-05 20:35:14'),(17,24,23,'2025-06-05 20:35:36'),(18,24,28,'2025-06-05 20:36:32'),(19,24,27,'2025-06-05 20:36:37'),(20,24,2,'2025-06-05 20:37:19'),(21,24,11,'2025-06-05 21:54:28'),(22,24,13,'2025-06-05 22:13:28'),(23,24,20,'2025-06-05 22:14:42'),(24,26,1,'2025-06-06 06:45:34'),(25,27,2,'2025-06-08 15:41:09'),(26,26,11,'2025-06-08 15:45:40'),(27,27,1,'2025-06-08 15:57:37'),(28,1,23,'2025-06-08 16:43:03');
 /*!40000 ALTER TABLE `book_visits` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -85,17 +85,17 @@ DROP TABLE IF EXISTS `books`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `books` (
   `book_id` int NOT NULL AUTO_INCREMENT,
-  `title` varchar(255) COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Book title',
-  `cover_photo` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'URL of the book cover',
-  `description` text COLLATE utf8mb4_general_ci COMMENT 'Brief description of the book',
-  `genre` enum('Fantasy','Thriller','Mystery','Thriller Mystery','Youth Fiction','Crime','Horror','Romance','Science Fiction','Adventure','Historical') COLLATE utf8mb4_general_ci NOT NULL COMMENT 'genre for each book',
-  `status` enum('Ongoing','Complete','Hiatus') COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Status of the book',
+  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Book title',
+  `cover_photo` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'URL of the book cover',
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT 'Brief description of the book',
+  `genre` enum('Fantasy','Thriller','Mystery','Thriller Mystery','Youth Fiction','Crime','Horror','Romance','Science Fiction','Adventure','Historical') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'genre for each book',
+  `status` enum('Ongoing','Complete','Hiatus') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Status of the book',
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Timestamp when book was added',
   `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Timestamp when book was last updated',
   `view_count` int DEFAULT '0' COMMENT 'view count for each book\r\n',
   `total_reads` int DEFAULT '0' COMMENT 'Total number of chapter reads for the book',
   PRIMARY KEY (`book_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=33 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -104,7 +104,7 @@ CREATE TABLE `books` (
 
 LOCK TABLES `books` WRITE;
 /*!40000 ALTER TABLE `books` DISABLE KEYS */;
-INSERT INTO `books` VALUES (1,'Bob\'s Mystery Novel','bob.png','Bob\'s Mystery Novel is a fast-paced mystery about Bob, who searches for his missing friend, Jake. A cryptic note, a hidden tunnel, and a mysterious map lead him on a thrilling chase.','Mystery','Ongoing','2025-04-01 18:03:40','2025-06-06 07:05:51',70,9),(2,'Lavender Garden','lavender.png','Lavender Garden is a magical fantasy about Emma, who discovers an enchanted garden hidden near her home. When the garden’s magic starts to fade, Emma must unlock its secrets and restore its power, encountering mystical guardians and dark forces along the way. The fate of the garden—and her world—depends on her.','Fantasy','Ongoing','2025-04-01 18:11:39','2025-06-05 21:41:45',15,3),(11,'Book 10','book10.png','A thrilling adventure in a mysterious forest.','Adventure','Ongoing','2025-06-04 06:37:00','2025-06-05 21:54:28',7,0),(12,'Book 6','book6.png','A tale of love and betrayal in a medieval kingdom.','Romance','Ongoing','2025-06-04 06:37:00','2025-06-05 22:08:22',6,0),(13,'Book 7','book7.png','A journey through a haunted mansion.','Horror','Ongoing','2025-06-04 06:37:00','2025-06-05 22:13:28',3,0),(14,'Book 8','book8.png','A detective uncovers a century-old secret.','Mystery','Ongoing','2025-06-04 06:37:00','2025-06-04 21:36:17',0,0),(15,'Book 9','book9.png','A futuristic battle for Earth\'s survival.','Science Fiction','Ongoing','2025-06-04 06:37:00','2025-06-05 20:35:14',4,0),(16,'Book 15','book15.png','A young hero discovers a magical artifact.','Fantasy','Ongoing','2025-06-04 06:37:00','2025-06-04 21:36:26',0,0),(17,'Book 25','book25.png','A historical epic of war and redemption.','Historical','Ongoing','2025-06-04 06:37:00','2025-06-05 14:35:49',1,0),(18,'Cover 1','cover_1.png','A suspenseful chase across continents.','Thriller','Ongoing','2025-06-04 06:37:00','2025-06-04 21:36:26',0,0),(19,'Cover 2','cover_2.png','A young girl\'s journey in a fantasy world.','Youth Fiction','Ongoing','2025-06-04 06:37:00','2025-06-04 21:36:26',0,0),(20,'Cover 3','cover_3.png','A crime novel with unexpected twists.','Crime','Ongoing','2025-06-04 06:37:00','2025-06-05 22:14:42',3,0),(21,'1b','cover_26.png','1bdes','Thriller Mystery','Hiatus','2025-06-04 12:54:38','2025-06-04 21:36:17',0,0),(22,'New Book',NULL,NULL,'Mystery','Ongoing','2025-06-04 13:33:02','2025-06-04 13:33:02',0,0),(23,'test 1','cover_27.png','t','Horror','Hiatus','2025-06-04 13:35:05','2025-06-06 06:42:11',19,3),(24,'test 2','cover_28.png','f','Thriller','Ongoing','2025-06-04 13:41:39','2025-06-04 13:41:39',0,0),(25,'test 3',NULL,'f','Thriller','Complete','2025-06-04 13:47:48','2025-06-04 13:47:48',0,0),(26,'test 4','cover_29.png','test 4','Thriller Mystery','Ongoing','2025-06-04 13:50:44','2025-06-04 13:50:44',0,0),(27,'test 5','cover_30.png','t','Fantasy','Ongoing','2025-06-04 13:55:17','2025-06-05 20:43:00',3,2),(28,'test 6','cover_31.png','t','Thriller','Hiatus','2025-06-04 13:59:58','2025-06-05 20:36:32',2,0),(29,'pokemon','cover_32.png','p','Science Fiction','Ongoing','2025-06-04 21:45:31','2025-06-04 21:45:31',0,0),(30,'pokemon 2','cover_33.png','p','Adventure','Ongoing','2025-06-04 21:47:09','2025-06-04 21:47:09',0,0),(31,'mastesr lil','cover_34.png','lil','Thriller Mystery','Ongoing','2025-06-05 18:25:22','2025-06-05 18:25:22',0,0);
+INSERT INTO `books` VALUES (1,'Bob\'s Mystery Novel','bob.png','Bob\'s Mystery Novel is a fast-paced mystery about Bob, who searches for his missing friend, Jake. A cryptic note, a hidden tunnel, and a mysterious map lead him on a thrilling chase.','Mystery','Ongoing','2025-04-01 18:03:40','2025-06-08 17:04:32',80,9),(2,'Lavender Garden','lavender.png','Lavender Garden is a magical fantasy about Emma, who discovers an enchanted garden hidden near her home. When the garden’s magic starts to fade, Emma must unlock its secrets and restore its power, encountering mystical guardians and dark forces along the way. The fate of the garden—and her world—depends on her.','Fantasy','Ongoing','2025-04-01 18:11:39','2025-06-08 16:33:54',24,3),(11,'Book 10','book10.png','A thrilling adventure in a mysterious forest.','Adventure','Ongoing','2025-06-04 06:37:00','2025-06-08 15:45:40',9,0),(12,'Book 6','book6.png','A tale of love and betrayal in a medieval kingdom.','Romance','Ongoing','2025-06-04 06:37:00','2025-06-05 22:08:22',6,0),(13,'Book 7','book7.png','A journey through a haunted mansion.','Horror','Ongoing','2025-06-04 06:37:00','2025-06-05 22:13:28',3,0),(14,'Book 8','book8.png','A detective uncovers a century-old secret.','Mystery','Ongoing','2025-06-04 06:37:00','2025-06-04 21:36:17',0,0),(15,'Book 9','book9.png','A futuristic battle for Earth\'s survival.','Science Fiction','Ongoing','2025-06-04 06:37:00','2025-06-05 20:35:14',4,0),(16,'Book 15','book15.png','A young hero discovers a magical artifact.','Fantasy','Ongoing','2025-06-04 06:37:00','2025-06-04 21:36:26',0,0),(17,'Book 25','book25.png','A historical epic of war and redemption.','Historical','Ongoing','2025-06-04 06:37:00','2025-06-05 14:35:49',1,0),(18,'Cover 1','cover_1.png','A suspenseful chase across continents.','Thriller','Ongoing','2025-06-04 06:37:00','2025-06-04 21:36:26',0,0),(19,'Cover 2','cover_2.png','A young girl\'s journey in a fantasy world.','Youth Fiction','Ongoing','2025-06-04 06:37:00','2025-06-04 21:36:26',0,0),(20,'Cover 3','cover_3.png','A crime novel with unexpected twists.','Crime','Ongoing','2025-06-04 06:37:00','2025-06-05 22:14:42',3,0),(21,'1b','cover_26.png','1bdes','Thriller Mystery','Hiatus','2025-06-04 12:54:38','2025-06-04 21:36:17',0,0),(22,'New Book',NULL,NULL,'Mystery','Ongoing','2025-06-04 13:33:02','2025-06-04 13:33:02',0,0),(23,'test 1','cover_27.png','t','Horror','Hiatus','2025-06-04 13:35:05','2025-06-08 16:43:03',21,3),(24,'test 2','cover_28.png','f','Thriller','Ongoing','2025-06-04 13:41:39','2025-06-04 13:41:39',0,0),(25,'test 3',NULL,'f','Thriller','Complete','2025-06-04 13:47:48','2025-06-04 13:47:48',0,0),(26,'test 4','cover_29.png','test 4','Thriller Mystery','Ongoing','2025-06-04 13:50:44','2025-06-04 13:50:44',0,0),(27,'test 5','cover_30.png','t','Fantasy','Ongoing','2025-06-04 13:55:17','2025-06-05 20:43:00',3,2),(28,'test 6','cover_31.png','t','Thriller','Hiatus','2025-06-04 13:59:58','2025-06-05 20:36:32',2,0),(29,'pokemon','cover_32.png','p','Science Fiction','Ongoing','2025-06-04 21:45:31','2025-06-04 21:45:31',0,0),(30,'pokemon 2','cover_33.png','p','Adventure','Ongoing','2025-06-04 21:47:09','2025-06-04 21:47:09',0,0),(31,'mastesr lil','cover_34.png','lil','Thriller Mystery','Ongoing','2025-06-05 18:25:22','2025-06-05 18:25:22',0,0),(32,'crop testing','bc_1.png','ct','Thriller Mystery','Ongoing','2025-06-08 15:07:33','2025-06-08 17:05:27',2,0);
 /*!40000 ALTER TABLE `books` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -125,7 +125,7 @@ CREATE TABLE `chapter_reads` (
   KEY `chapter_reads_ibfk_2` (`chapter_id`),
   CONSTRAINT `chapter_reads_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
   CONSTRAINT `chapter_reads_ibfk_2` FOREIGN KEY (`chapter_id`) REFERENCES `chapters` (`chapter_id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -150,7 +150,7 @@ CREATE TABLE `chapters` (
   `book_id` int NOT NULL,
   `author_id` int NOT NULL,
   `chapter_number` int NOT NULL,
-  `content` longtext COLLATE utf8mb4_general_ci NOT NULL,
+  `content` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`chapter_id`),
@@ -158,7 +158,7 @@ CREATE TABLE `chapters` (
   KEY `chapters_ibfk_2` (`author_id`),
   CONSTRAINT `chapters_ibfk_1` FOREIGN KEY (`book_id`) REFERENCES `books` (`book_id`) ON DELETE CASCADE,
   CONSTRAINT `chapters_ibfk_2` FOREIGN KEY (`author_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -167,7 +167,7 @@ CREATE TABLE `chapters` (
 
 LOCK TABLES `chapters` WRITE;
 /*!40000 ALTER TABLE `chapters` DISABLE KEYS */;
-INSERT INTO `chapters` VALUES (1,1,9,1,'Bob found the door ajar. His best friend, Jake, had vanished...','2025-04-01 12:07:36','2025-04-01 12:07:36'),(2,1,9,2,'Beneath the trapdoor, a tunnel stretched into darkness...','2025-04-01 12:07:36','2025-04-01 12:07:36'),(3,1,9,3,'Bob\'s hands trembled as he reached a rusted chest deep within the passage...','2025-04-01 12:07:36','2025-04-01 12:07:36'),(4,1,7,4,'The chest creaked open, revealing a faded map...','2025-04-01 12:07:36','2025-04-01 12:07:36'),(5,1,7,5,'Bob reached the cabin at dusk. It was silent, eerily so...','2025-04-01 12:07:36','2025-04-01 12:07:36'),(6,1,9,6,'Bob confronted the stranger. It was Jake—alive but terrified...','2025-04-01 12:07:36','2025-04-01 12:07:36'),(7,1,7,7,'With the red key, map, and their wits, Bob and Jake set a trap...','2025-04-01 12:07:36','2025-04-01 12:07:36'),(8,2,4,1,'Emma always felt drawn to the abandoned lavender garden near her cottage...','2025-04-01 12:21:08','2025-04-01 12:21:08'),(9,2,4,2,'Following the glowing lavender path, Emma discovered an ancient stone door...','2025-04-01 12:21:08','2025-04-01 12:21:08'),(10,2,5,3,'A mystical figure emerged—a guardian of the garden...','2025-04-01 12:21:08','2025-04-01 12:21:08'),(11,2,5,4,'Emma raced to the garden’s center, where a crystal pulsed beneath ancient roots...','2025-04-01 12:21:08','2025-04-01 12:21:08'),(12,21,24,1,'hi this is the very first draft from user 11111','2025-06-04 12:55:23','2025-06-04 12:55:23'),(13,23,24,1,'again test 1','2025-06-04 13:36:37','2025-06-05 20:51:49'),(16,24,24,1,'testing 2','2025-06-04 13:41:49','2025-06-04 13:41:49'),(17,25,24,1,'aaaaaaaaaaaaaaaaaaaaaaaaa\nbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\ncccccccccccccccccccccccccccccccccccccccccccccccc','2025-06-04 13:48:06','2025-06-04 13:48:06'),(18,26,24,1,'test 4 chapter 1','2025-06-04 13:50:55','2025-06-04 13:51:05'),(20,27,24,1,'test 5 chapter 1','2025-06-04 13:55:26','2025-06-04 13:55:26'),(21,27,24,2,'test 5 chapter 2','2025-06-04 13:55:40','2025-06-04 13:55:40'),(22,27,24,3,'test 5 chapter 3','2025-06-04 13:55:53','2025-06-04 13:55:53'),(23,28,24,1,'test 6 chapter 1','2025-06-04 14:00:08','2025-06-04 14:00:08'),(24,28,24,2,'test 6 chapter 2','2025-06-04 14:00:20','2025-06-04 14:00:20'),(25,28,24,3,'test 6 chapter 3','2025-06-04 14:00:35','2025-06-04 14:00:35'),(26,29,26,1,'chapter 1 for pokemon','2025-06-04 21:45:54','2025-06-04 21:45:54'),(27,29,26,2,'chapter 2 for pokemon','2025-06-04 21:46:10','2025-06-04 21:46:10'),(28,29,26,3,'chapter 3 pokemon','2025-06-04 21:46:31','2025-06-04 21:46:31'),(29,31,26,1,'chapter 1 master','2025-06-05 18:25:47','2025-06-05 18:25:47'),(30,31,26,2,'chapter 2 master','2025-06-05 18:25:59','2025-06-05 18:25:59'),(31,31,26,3,'chapter 3 master draft','2025-06-05 18:26:34','2025-06-05 18:26:34'),(34,23,24,2,'chapter 2 test 1','2025-06-05 20:52:16','2025-06-05 20:52:16');
+INSERT INTO `chapters` VALUES (1,1,9,1,'Bob found the door ajar. His best friend, Jake, had vanished...','2025-04-01 12:07:36','2025-04-01 12:07:36'),(2,1,9,2,'Beneath the trapdoor, a tunnel stretched into darkness...','2025-04-01 12:07:36','2025-04-01 12:07:36'),(3,1,9,3,'Bob\'s hands trembled as he reached a rusted chest deep within the passage...','2025-04-01 12:07:36','2025-04-01 12:07:36'),(4,1,7,4,'The chest creaked open, revealing a faded map...','2025-04-01 12:07:36','2025-04-01 12:07:36'),(5,1,7,5,'Bob reached the cabin at dusk. It was silent, eerily so...','2025-04-01 12:07:36','2025-04-01 12:07:36'),(6,1,9,6,'Bob confronted the stranger. It was Jake—alive but terrified...','2025-04-01 12:07:36','2025-04-01 12:07:36'),(7,1,7,7,'With the red key, map, and their wits, Bob and Jake set a trap...','2025-04-01 12:07:36','2025-04-01 12:07:36'),(8,2,4,1,'Emma always felt drawn to the abandoned lavender garden near her cottage...','2025-04-01 12:21:08','2025-04-01 12:21:08'),(9,2,4,2,'Following the glowing lavender path, Emma discovered an ancient stone door...','2025-04-01 12:21:08','2025-04-01 12:21:08'),(10,2,5,3,'A mystical figure emerged—a guardian of the garden...','2025-04-01 12:21:08','2025-04-01 12:21:08'),(11,2,5,4,'Emma raced to the garden’s center, where a crystal pulsed beneath ancient roots...','2025-04-01 12:21:08','2025-04-01 12:21:08'),(12,21,24,1,'hi this is the very first draft from user 11111','2025-06-04 12:55:23','2025-06-04 12:55:23'),(13,23,24,1,'again test 1','2025-06-04 13:36:37','2025-06-05 20:51:49'),(16,24,24,1,'testing 2','2025-06-04 13:41:49','2025-06-04 13:41:49'),(17,25,24,1,'aaaaaaaaaaaaaaaaaaaaaaaaa\nbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\ncccccccccccccccccccccccccccccccccccccccccccccccc','2025-06-04 13:48:06','2025-06-04 13:48:06'),(18,26,24,1,'test 4 chapter 1','2025-06-04 13:50:55','2025-06-04 13:51:05'),(20,27,24,1,'test 5 chapter 1','2025-06-04 13:55:26','2025-06-04 13:55:26'),(21,27,24,2,'test 5 chapter 2','2025-06-04 13:55:40','2025-06-04 13:55:40'),(22,27,24,3,'test 5 chapter 3','2025-06-04 13:55:53','2025-06-04 13:55:53'),(23,28,24,1,'test 6 chapter 1','2025-06-04 14:00:08','2025-06-04 14:00:08'),(24,28,24,2,'test 6 chapter 2','2025-06-04 14:00:20','2025-06-04 14:00:20'),(25,28,24,3,'test 6 chapter 3','2025-06-04 14:00:35','2025-06-04 14:00:35'),(26,29,26,1,'chapter 1 for pokemon','2025-06-04 21:45:54','2025-06-04 21:45:54'),(27,29,26,2,'chapter 2 for pokemon','2025-06-04 21:46:10','2025-06-04 21:46:10'),(28,29,26,3,'chapter 3 pokemon','2025-06-04 21:46:31','2025-06-04 21:46:31'),(29,31,26,1,'chapter 1 master','2025-06-05 18:25:47','2025-06-05 18:25:47'),(30,31,26,2,'chapter 2 master','2025-06-05 18:25:59','2025-06-05 18:25:59'),(31,31,26,3,'chapter 3 master draft','2025-06-05 18:26:34','2025-06-05 18:26:34'),(34,23,24,2,'chapter 2 test 1','2025-06-05 20:52:16','2025-06-05 20:52:16'),(35,32,27,1,'sunflower','2025-06-08 15:07:42','2025-06-08 15:07:42');
 /*!40000 ALTER TABLE `chapters` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -182,7 +182,7 @@ CREATE TABLE `chat_messages` (
   `message_id` int NOT NULL AUTO_INCREMENT,
   `group_id` int NOT NULL,
   `sender_id` int NOT NULL,
-  `message` text COLLATE utf8mb4_general_ci NOT NULL,
+  `message` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`message_id`),
   KEY `group_id` (`group_id`),
@@ -213,11 +213,11 @@ CREATE TABLE `collaboration_invites` (
   `invite_id` int NOT NULL AUTO_INCREMENT,
   `book_id` int NOT NULL,
   `inviter_id` int NOT NULL,
-  `invitee_email` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  `invite_code` varchar(10) COLLATE utf8mb4_general_ci NOT NULL,
-  `status` enum('Pending','Accepted','Declined') COLLATE utf8mb4_general_ci DEFAULT 'Pending',
+  `invitee_email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `invite_code` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `status` enum('Pending','Accepted','Declined') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'Pending',
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `message` text COLLATE utf8mb4_general_ci,
+  `message` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   PRIMARY KEY (`invite_id`),
   UNIQUE KEY `invite_code` (`invite_code`),
   KEY `book_id` (`book_id`),
@@ -277,8 +277,8 @@ CREATE TABLE `contest_entries` (
   `user_id` int NOT NULL COMMENT 'User ID of the participant',
   `submission_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Timestamp of submission',
   `vote_count` int DEFAULT '0' COMMENT 'Number of votes received',
-  `entry_title` varchar(255) COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Name of the content',
-  `content` longtext COLLATE utf8mb4_general_ci NOT NULL COMMENT 'The actual content of the entry (the story or written piece).',
+  `entry_title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Name of the content',
+  `content` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'The actual content of the entry (the story or written piece).',
   `cover_photo` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'URL of the contest entry cover photo',
   PRIMARY KEY (`entry_id`),
   UNIQUE KEY `unique_contest_entry_title` (`contest_id`,`entry_title`),
@@ -286,7 +286,7 @@ CREATE TABLE `contest_entries` (
   KEY `user_id` (`user_id`),
   CONSTRAINT `contest_entries_ibfk_1` FOREIGN KEY (`contest_id`) REFERENCES `contests` (`contest_id`) ON DELETE CASCADE,
   CONSTRAINT `contest_entries_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=33 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=64 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -295,7 +295,7 @@ CREATE TABLE `contest_entries` (
 
 LOCK TABLES `contest_entries` WRITE;
 /*!40000 ALTER TABLE `contest_entries` DISABLE KEYS */;
-INSERT INTO `contest_entries` VALUES (1,1,5,'2025-04-01 18:27:04',5,'The Enchanted Forest','Chapter 1: The Hidden Path – Lily stumbles upon a secret entrance in the forest...\nChapter 2: The Guardians’ Quest – Lily learns she is the chosen one destined to protect the forest...\nChapter 3: The Final Battle – Lily and her allies confront the dark sorcerer...','c.1.png'),(4,1,4,'2025-04-01 18:27:19',3,'The Crystal of Aetheria','Chapter 1: The Prophecy Unfolds – Finn learns about the ancient crystal...\nChapter 2: The Journey Begins – Finn and his companions cross dangerous lands...\nChapter 3: The Crystal’s Power – Finn faces the guardian of the crystal...','c.2.png'),(7,1,3,'2025-04-01 18:27:29',1,'The Lost Kingdom','Chapter 1: The Forgotten Map – Aria finds a map...\nChapter 2: The Awakening – Aria accidentally awakens an ancient force...\nChapter 3: The Battle for the Kingdom – Aria must fight against the evil forces...','c.3.png'),(10,2,7,'2025-04-01 18:33:11',2,'The Midnight Caller','Chapter 1: The First Call – Detective Riley receives a chilling call...\nChapter 2: The Cryptic Clue – A second call leads Riley to an eerie pattern...\nChapter 3: Chasing Shadows – Riley suspects a connection...\nChapter 4: The Confrontation – Riley corners the killer...\nChapter 5: The Final Decision – In a final showdown...','c.4.png'),(15,2,9,'2025-04-01 18:33:11',3,'The Forgotten Witness','Chapter 1: The Vanishing – Claire is called to investigate...\nChapter 2: The Mysterious Claim – An elderly man insists...\nChapter 3: Chasing Shadows – Claire discovers disturbing connections...\nChapter 4: The Hidden Link – Claire uncovers a buried conspiracy...\nChapter 5: The Final Revelation – With the clock ticking...','c.5.png'),(20,2,4,'2025-04-01 18:33:11',0,'The Vanishing Point','Chapter 1: Into the Unknown – Max begins investigating...','c.6.png'),(21,3,1,'2025-04-01 18:35:11',1,'The Secret of Pinehill','Chapter 1: The Mysterious Map – The friends find the old map...\nChapter 2: The Hidden Chamber – They race against time...','c.7.png'),(23,3,2,'2025-04-01 18:35:11',0,'The Midnight Escape','Chapter 1: The Forbidden Park – The friends sneak into an abandoned amusement park...\nChapter 2: The Escape – Realizing the park’s eerie powers...','c.8.png'),(25,3,3,'2025-04-01 18:35:11',4,'The Lost Key','Chapter 1: The Key in the Park – The three friends stumble upon an old key...\nChapter 2: The Hidden Doorway – The friends open the door to a magical world...','c.9.png'),(27,4,6,'2025-04-01 18:41:59',2,'Shattered Alibis','Chapter 1: The Accusation – Claire takes on the case of a man accused of a high-profile murder.\nChapter 2: Unraveling the Truth – Claire uncovers conflicting evidence...','c.10.png'),(29,4,7,'2025-04-01 18:41:59',2,'Crimson Lies','Chapter 1: The Robbery – Detective Carter investigates a robbery...\nChapter 2: The Trail of Lies – Alex uncovers a series of connections...\nChapter 3: Confronting the Truth – Alex faces a betrayal...',NULL),(32,4,8,'2025-04-01 18:41:59',1,'The Silent Witness','Chapter 1: The First Murder – Jenna is assigned to a case that seems like an open-and-shut murder...',NULL);
+INSERT INTO `contest_entries` VALUES (1,1,5,'2025-04-01 18:27:04',6,'The Enchanted Forest','Chapter 1: The Hidden Path – Lily stumbles upon a secret entrance in the forest...\nChapter 2: The Guardians’ Quest – Lily learns she is the chosen one destined to protect the forest...\nChapter 3: The Final Battle – Lily and her allies confront the dark sorcerer...','c_1.png'),(4,1,4,'2025-04-01 18:27:19',3,'The Crystal of Aetheria','Chapter 1: The Prophecy Unfolds – Finn learns about the ancient crystal...\nChapter 2: The Journey Begins – Finn and his companions cross dangerous lands...\nChapter 3: The Crystal’s Power – Finn faces the guardian of the crystal...','c_2.png'),(7,1,3,'2025-04-01 18:27:29',1,'The Lost Kingdom','Chapter 1: The Forgotten Map – Aria finds a map...\nChapter 2: The Awakening – Aria accidentally awakens an ancient force...\nChapter 3: The Battle for the Kingdom – Aria must fight against the evil forces...','c_3.png'),(10,2,7,'2025-04-01 18:33:11',4,'The Midnight Caller','Chapter 1: The First Call – Detective Riley receives a chilling call...\nChapter 2: The Cryptic Clue – A second call leads Riley to an eerie pattern...\nChapter 3: Chasing Shadows – Riley suspects a connection...\nChapter 4: The Confrontation – Riley corners the killer...\nChapter 5: The Final Decision – In a final showdown...','c_4.png'),(15,2,9,'2025-04-01 18:33:11',3,'The Forgotten Witness','Chapter 1: The Vanishing – Claire is called to investigate...\nChapter 2: The Mysterious Claim – An elderly man insists...\nChapter 3: Chasing Shadows – Claire discovers disturbing connections...\nChapter 4: The Hidden Link – Claire uncovers a buried conspiracy...\nChapter 5: The Final Revelation – With the clock ticking...','c_5.png'),(20,2,4,'2025-04-01 18:33:11',0,'The Vanishing Point','Chapter 1: Into the Unknown – Max begins investigating...','c_6.png'),(21,3,1,'2025-04-01 18:35:11',2,'The Secret of Pinehill','Chapter 1: The Mysterious Map – The friends find the old map...\nChapter 2: The Hidden Chamber – They race against time...','c_7.png'),(23,3,2,'2025-04-01 18:35:11',0,'The Midnight Escape','Chapter 1: The Forbidden Park – The friends sneak into an abandoned amusement park...\nChapter 2: The Escape – Realizing the park’s eerie powers...','c_8.png'),(25,3,3,'2025-04-01 18:35:11',5,'The Lost Key','Chapter 1: The Key in the Park – The three friends stumble upon an old key...\nChapter 2: The Hidden Doorway – The friends open the door to a magical world...','c_9.png'),(27,4,6,'2025-04-01 18:41:59',2,'Shattered Alibis','Chapter 1: The Accusation – Claire takes on the case of a man accused of a high-profile murder.\nChapter 2: Unraveling the Truth – Claire uncovers conflicting evidence...','c_10.png'),(29,4,7,'2025-04-01 18:41:59',2,'Crimson Lies','Chapter 1: The Robbery – Detective Carter investigates a robbery...\nChapter 2: The Trail of Lies – Alex uncovers a series of connections...\nChapter 3: Confronting the Truth – Alex faces a betrayal...',NULL),(32,4,8,'2025-04-01 18:41:59',1,'The Silent Witness','Chapter 1: The First Murder – Jenna is assigned to a case that seems like an open-and-shut murder...',NULL),(34,1,24,'2025-06-07 19:44:56',0,'book no 2','book 2 des','c_2.png'),(35,1,24,'2025-06-07 19:55:29',0,'book 1','book 1 d','c_1.png'),(37,2,24,'2025-06-07 20:10:52',1,'2','22','c_6.png'),(38,2,24,'2025-06-07 20:16:37',1,'3','33','c_3.png'),(39,3,24,'2025-06-08 07:09:19',0,'8','88','c_5.png'),(40,4,24,'2025-06-08 07:20:12',0,'8c','crime horror',NULL),(41,4,24,'2025-06-08 07:20:42',0,'10','10','c_10.png'),(42,4,24,'2025-06-08 07:36:24',0,'test','test',NULL),(43,3,24,'2025-06-08 08:38:26',0,'youth fiction 1','111',NULL),(44,3,24,'2025-06-08 08:54:18',0,'you','yout',NULL),(45,2,24,'2025-06-08 10:48:13',1,'test 1','test 11',NULL),(46,3,24,'2025-06-08 10:51:22',0,'test 2','test 22',NULL),(47,2,24,'2025-06-08 10:53:29',1,'test 3','test 33',NULL),(48,1,24,'2025-06-08 11:01:21',0,'test 3','test 33',NULL),(49,4,24,'2025-06-08 11:04:07',0,'crime horror 1','ch',NULL),(50,4,24,'2025-06-08 11:11:06',0,'crime horror 2','crime horror2',NULL),(51,1,24,'2025-06-08 11:17:40',1,'fantasy 1','fantasy1',NULL),(52,1,24,'2025-06-08 11:20:17',0,'fantasy 2','fantasy 2',NULL),(53,1,24,'2025-06-08 11:23:19',0,'fantasy 3','fantasy 3',NULL),(54,1,24,'2025-06-08 11:23:48',1,'fantasy 4','fantasy 4',NULL),(55,2,24,'2025-06-08 12:21:09',0,'photo test','photo test','fantasy.png'),(56,2,24,'2025-06-08 12:28:48',0,'photo test2','photo test','fantasy.png'),(57,2,24,'2025-06-08 12:31:34',0,'photo test 3','3','ccp_1.png'),(58,1,24,'2025-06-08 12:32:11',0,'photo test','f','ccp_2.png'),(59,3,24,'2025-06-08 13:54:42',0,'photo test','photo test','ccp_3.png'),(60,4,27,'2025-06-08 14:12:44',1,'testing 305','305 \nchapter 1\nchapter 2','ccp_4.png'),(61,2,27,'2025-06-08 14:13:53',1,'code name 333','333','ccp_5.png'),(62,2,27,'2025-06-08 14:41:05',0,'photo crop testing','pct','ccp_6.png'),(63,3,26,'2025-06-08 14:53:14',0,'crop photo testing','cpt 2','ccp_7.png');
 /*!40000 ALTER TABLE `contest_entries` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -317,7 +317,7 @@ CREATE TABLE `contest_votes` (
   KEY `user_id` (`user_id`),
   CONSTRAINT `contest_votes_ibfk_1` FOREIGN KEY (`contest_entry_id`) REFERENCES `contest_entries` (`entry_id`) ON DELETE CASCADE,
   CONSTRAINT `contest_votes_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=61 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -326,7 +326,7 @@ CREATE TABLE `contest_votes` (
 
 LOCK TABLES `contest_votes` WRITE;
 /*!40000 ALTER TABLE `contest_votes` DISABLE KEYS */;
-INSERT INTO `contest_votes` VALUES (1,1,1,1,'2025-04-01 18:27:39'),(2,1,2,1,'2025-04-01 18:27:39'),(3,1,3,1,'2025-04-01 18:27:39'),(4,1,4,1,'2025-04-01 18:27:39'),(5,1,10,1,'2025-04-01 18:27:39'),(6,4,3,1,'2025-04-01 18:28:12'),(7,4,5,1,'2025-04-01 18:28:12'),(8,4,10,1,'2025-04-01 18:28:12'),(9,7,2,1,'2025-04-01 18:28:24'),(10,10,1,1,'2025-04-01 18:33:30'),(11,10,2,1,'2025-04-01 18:33:30'),(12,15,3,1,'2025-04-01 18:33:30'),(13,15,5,1,'2025-04-01 18:33:30'),(14,15,6,1,'2025-04-01 18:33:30'),(15,21,2,1,'2025-04-01 18:35:26'),(16,25,7,1,'2025-04-01 18:35:26'),(17,25,8,1,'2025-04-01 18:35:26'),(18,25,9,1,'2025-04-01 18:35:26'),(19,25,10,1,'2025-04-01 18:35:26'),(20,27,3,1,'2025-04-01 18:42:13'),(21,27,4,1,'2025-04-01 18:42:13'),(22,29,4,1,'2025-04-01 18:42:13'),(23,29,5,1,'2025-04-01 18:42:13'),(24,32,7,1,'2025-04-01 18:42:13');
+INSERT INTO `contest_votes` VALUES (1,1,1,1,'2025-04-01 18:27:39'),(2,1,2,1,'2025-04-01 18:27:39'),(3,1,3,1,'2025-04-01 18:27:39'),(4,1,4,1,'2025-04-01 18:27:39'),(5,1,10,1,'2025-04-01 18:27:39'),(6,4,3,1,'2025-04-01 18:28:12'),(7,4,5,1,'2025-04-01 18:28:12'),(8,4,10,1,'2025-04-01 18:28:12'),(9,7,2,1,'2025-04-01 18:28:24'),(10,10,1,1,'2025-04-01 18:33:30'),(11,10,2,1,'2025-04-01 18:33:30'),(12,15,3,1,'2025-04-01 18:33:30'),(13,15,5,1,'2025-04-01 18:33:30'),(14,15,6,1,'2025-04-01 18:33:30'),(15,21,2,1,'2025-04-01 18:35:26'),(16,25,7,1,'2025-04-01 18:35:26'),(17,25,8,1,'2025-04-01 18:35:26'),(18,25,9,1,'2025-04-01 18:35:26'),(19,25,10,1,'2025-04-01 18:35:26'),(20,27,3,1,'2025-04-01 18:42:13'),(21,27,4,1,'2025-04-01 18:42:13'),(22,29,4,1,'2025-04-01 18:42:13'),(23,29,5,1,'2025-04-01 18:42:13'),(24,32,7,1,'2025-04-01 18:42:13'),(30,25,24,1,'2025-06-08 08:39:06'),(31,21,24,1,'2025-06-08 08:44:47'),(38,1,24,1,'2025-06-08 11:02:28'),(45,51,24,1,'2025-06-08 11:18:32'),(47,54,24,1,'2025-06-08 11:23:54'),(48,38,24,1,'2025-06-08 11:35:00'),(49,37,24,1,'2025-06-08 11:35:02'),(50,45,24,1,'2025-06-08 11:35:08'),(55,10,24,1,'2025-06-08 13:17:55'),(56,60,27,1,'2025-06-08 14:12:53'),(58,10,27,1,'2025-06-08 14:13:25'),(59,47,27,1,'2025-06-08 14:13:30'),(60,61,24,1,'2025-06-08 14:15:04');
 /*!40000 ALTER TABLE `contest_votes` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -339,8 +339,8 @@ DROP TABLE IF EXISTS `contests`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `contests` (
   `contest_id` int NOT NULL AUTO_INCREMENT,
-  `title` varchar(255) COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Title of the contest',
-  `genre` enum('Fantasy','Thriller Mystery','Youth Fiction','Crime Horror') COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Different sections for the contest',
+  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Title of the contest',
+  `genre` enum('Fantasy','Thriller Mystery','Youth Fiction','Crime Horror') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Different sections for the contest',
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Timestamp when contest was created',
   PRIMARY KEY (`contest_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -368,7 +368,7 @@ CREATE TABLE `draft_chapters` (
   `book_id` int NOT NULL COMMENT 'Book ID the draft chapter belongs to',
   `author_id` int NOT NULL COMMENT 'User ID of the author or co-author',
   `chapter_number` int NOT NULL COMMENT 'Sequential chapter number for the draft',
-  `content` longtext COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Draft chapter content',
+  `content` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Draft chapter content',
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Timestamp when draft was created',
   `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Timestamp when draft was last updated',
   PRIMARY KEY (`draft_id`),
@@ -401,7 +401,7 @@ CREATE TABLE `group_members` (
   `group_id` int NOT NULL COMMENT 'Group ID',
   `user_id` int NOT NULL COMMENT 'User ID of the group member',
   `joined_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Timestamp when user joined',
-  `online_status` enum('online','offline') COLLATE utf8mb4_general_ci DEFAULT 'offline',
+  `online_status` enum('online','offline') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'offline',
   `last_active` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`membership_id`),
   UNIQUE KEY `group_id` (`group_id`,`user_id`) COMMENT 'Ensures a user can only join a group once',
@@ -463,14 +463,14 @@ CREATE TABLE `ratings` (
   `book_id` int NOT NULL COMMENT 'Book ID being rated',
   `user_id` int NOT NULL COMMENT 'User ID of the reviewer',
   `rating` int DEFAULT NULL,
-  `comment` text COLLATE utf8mb4_general_ci COMMENT 'User comment or review',
+  `comment` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT 'User comment or review',
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Timestamp when rating was submitted',
   PRIMARY KEY (`rating_id`),
   UNIQUE KEY `book_id` (`book_id`,`user_id`) COMMENT 'Ensures a user can only rate a book once',
   KEY `user_id` (`user_id`),
   CONSTRAINT `ratings_ibfk_1` FOREIGN KEY (`book_id`) REFERENCES `books` (`book_id`) ON DELETE CASCADE,
   CONSTRAINT `ratings_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=161 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=168 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -479,7 +479,7 @@ CREATE TABLE `ratings` (
 
 LOCK TABLES `ratings` WRITE;
 /*!40000 ALTER TABLE `ratings` DISABLE KEYS */;
-INSERT INTO `ratings` VALUES (83,1,1,4,'Gripping mystery! The plot twists were fantastic.','2025-04-01 13:30:00'),(84,1,2,NULL,'Loved the suspense, can’t wait for the next chapter!','2025-04-02 04:15:00'),(85,1,3,5,NULL,'2025-04-03 08:20:00'),(88,2,3,4,NULL,'2025-04-06 09:10:00'),(153,1,24,NULL,'i like the book','2025-06-05 20:15:37'),(154,2,1,0,NULL,'2025-06-05 20:20:07'),(156,23,24,NULL,'i loved this','2025-06-05 20:35:45'),(158,2,24,NULL,'comment testing','2025-06-05 21:41:54'),(159,13,24,2,'i like book 7','2025-06-05 22:13:36');
+INSERT INTO `ratings` VALUES (83,1,1,4,'g','2025-04-01 13:30:00'),(84,1,2,NULL,'Loved the suspense, can’t wait for the next chapter!','2025-04-02 04:15:00'),(85,1,3,5,NULL,'2025-04-03 08:20:00'),(88,2,3,4,NULL,'2025-04-06 09:10:00'),(153,1,24,NULL,'i like the book','2025-06-05 20:15:37'),(154,2,1,0,NULL,'2025-06-05 20:20:07'),(156,23,24,NULL,'i loved this','2025-06-05 20:35:45'),(158,2,24,NULL,'comment testing','2025-06-05 21:41:54'),(159,13,24,2,'i like book 7','2025-06-05 22:13:36'),(161,2,27,2,'ct','2025-06-08 15:41:23'),(163,11,26,NULL,'writting comment from text field','2025-06-08 15:46:09'),(165,1,27,3,NULL,'2025-06-08 16:09:09'),(167,23,1,3,NULL,'2025-06-08 16:43:09');
 /*!40000 ALTER TABLE `ratings` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -494,7 +494,7 @@ CREATE TABLE `reading_list` (
   `reading_list_id` int NOT NULL AUTO_INCREMENT,
   `reader_id` int NOT NULL COMMENT 'User who added the book',
   `listed_book_id` int NOT NULL COMMENT 'Book ID being added',
-  `reading_status` enum('Reading','Completed','Dropped','SavedForLater') COLLATE utf8mb4_general_ci DEFAULT 'Reading' COMMENT 'Reading status, including saved for later',
+  `reading_status` enum('Reading','Completed','Dropped','SavedForLater') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'Reading' COMMENT 'Reading status, including saved for later',
   `added_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Timestamp when added',
   PRIMARY KEY (`reading_list_id`),
   UNIQUE KEY `user_id` (`reader_id`,`listed_book_id`) COMMENT 'Prevents duplicate book entries',
@@ -526,7 +526,7 @@ CREATE TABLE `support` (
   `user_id` int NOT NULL COMMENT 'User sending support',
   `author_id` int NOT NULL COMMENT 'Author receiving support',
   `amount` decimal(10,2) NOT NULL COMMENT 'Support amount in currency',
-  `message` text COLLATE utf8mb4_general_ci COMMENT 'Optional message from supporter',
+  `message` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT 'Optional message from supporter',
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Timestamp when support was sent',
   PRIMARY KEY (`support_id`),
   KEY `user_id` (`user_id`),
@@ -587,7 +587,7 @@ DROP TABLE IF EXISTS `user_group_status`;
 CREATE TABLE `user_group_status` (
   `user_id` int NOT NULL,
   `group_id` int NOT NULL,
-  `status` enum('joined','left') COLLATE utf8mb4_general_ci DEFAULT 'joined',
+  `status` enum('joined','left') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'joined',
   PRIMARY KEY (`user_id`,`group_id`),
   KEY `group_id` (`group_id`),
   CONSTRAINT `user_group_status_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`),
@@ -614,11 +614,11 @@ DROP TABLE IF EXISTS `users`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `users` (
   `user_id` int NOT NULL AUTO_INCREMENT,
-  `username` varchar(50) COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Unique username for login',
-  `password` varchar(255) COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Hashed password for security',
-  `email` varchar(100) COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Unique email address',
-  `role` enum('Admin','Regular User') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'Regular User',
-  `profile_picture` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Profile picture URL',
+  `username` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Unique username for login',
+  `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Hashed password for security',
+  `email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Unique email address',
+  `role` enum('Admin','Regular User') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'Regular User',
+  `profile_picture` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Profile picture URL',
   `books_read_count` int DEFAULT '0' COMMENT 'Number of books read by the user',
   `works_created_count` int DEFAULT '0' COMMENT 'Number of books created by the user',
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Account creation timestamp',
@@ -631,7 +631,7 @@ CREATE TABLE `users` (
   PRIMARY KEY (`user_id`),
   UNIQUE KEY `username` (`username`),
   UNIQUE KEY `email` (`email`)
-) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -640,7 +640,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,'alice_writer','hp12345100','alice@example.com','Regular User','alice.jpg',0,3,'2025-03-09 10:54:49',0,0,0,0,2,0),(2,'bob_novelist','hp1234522','bob@example.com','Regular User','bob.jpg',0,1,'2025-03-09 10:54:49',0,0,0,0,1,0),(3,'charlie_poet','hp1234533','charlie@example.com','Regular User','charlie.jpg',0,3,'2025-03-09 10:54:49',1,1,1,1,1,1),(4,'david_storyteller','hp1234544','david@example.com','Regular User','david.jpg',0,1,'2025-03-09 10:54:49',2,2,1,2,1,1),(5,'emma_fantasy','hp1234555','emma@example.com','Regular User','emma.jpg',0,3,'2025-03-09 10:54:49',0,0,0,0,0,0),(6,'frank_mystery','hp1234566','frank@example.com','Regular User','frank.jpg',0,1,'2025-03-09 10:54:49',0,0,0,0,0,0),(7,'grace_thriller','hp1234577','grace@example.com','Regular User','grace.jpg',1,2,'2025-03-09 10:54:49',2,1,1,2,1,1),(8,'henry_horror','hp1234588','henry@example.com','Regular User','henry.jpg',0,0,'2025-03-09 10:54:49',0,0,0,0,0,0),(9,'isabel_youth','hp1234599','isabel@example.com','Regular User','isabel.jpg',0,12,'2025-03-09 10:54:49',1,2,3,1,1,0),(10,'jack_crime','hp12345100','jack@example.com','Regular User','jack.jpg',0,2,'2025-03-09 10:54:49',0,0,0,0,1,0),(11,'demo1','demo1234566','demo1@gmail.com','Regular User',NULL,0,0,'2025-03-29 11:20:26',0,0,0,0,0,0),(12,'demo2','demo2345677','demo2@gmail.com','Regular User',NULL,0,0,'2025-03-29 11:32:28',0,0,0,0,0,0),(13,'demo3','demo3456788','demo3@gmail.com','Regular User',NULL,0,0,'2025-03-29 11:35:37',0,0,0,0,0,0),(24,'111123','1111','1@gmail.com','Regular User','profile_24_1749137954904.png',3,7,'2025-06-04 12:54:06',3,0,0,3,10,3),(26,'2222244','22222','2@gmail.com','Regular User','profile_26_1749135062589.png',0,3,'2025-06-04 21:44:42',0,0,0,0,1,0);
+INSERT INTO `users` VALUES (1,'alice_writer','hp12345100','alice@example.com','Regular User','alice.jpg',0,3,'2025-03-09 10:54:49',0,0,0,0,2,0),(2,'bob_novelist','hp1234522','bob@example.com','Regular User','bob.jpg',0,1,'2025-03-09 10:54:49',0,0,0,0,1,0),(3,'charlie_poet','hp1234533','charlie@example.com','Regular User','charlie.jpg',0,3,'2025-03-09 10:54:49',1,1,1,1,1,1),(4,'david_storyteller','hp1234544','david@example.com','Regular User','david.jpg',0,1,'2025-03-09 10:54:49',2,2,1,2,1,1),(5,'emma_fantasy','hp1234555','emma@example.com','Regular User','emma.jpg',0,3,'2025-03-09 10:54:49',0,0,0,0,0,0),(6,'frank_mystery','hp1234566','frank@example.com','Regular User','frank.jpg',0,1,'2025-03-09 10:54:49',0,0,0,0,0,0),(7,'grace_thriller','hp1234577','grace@example.com','Regular User','grace.jpg',1,2,'2025-03-09 10:54:49',2,1,1,2,1,1),(8,'henry_horror','hp1234588','henry@example.com','Regular User','henry.jpg',0,0,'2025-03-09 10:54:49',0,0,0,0,0,0),(9,'isabel_youth','hp1234599','isabel@example.com','Regular User','isabel.jpg',0,12,'2025-03-09 10:54:49',1,2,3,1,1,0),(10,'jack_crime','hp12345100','jack@example.com','Regular User','jack.jpg',0,2,'2025-03-09 10:54:49',0,0,0,0,1,0),(11,'demo1','demo1234566','demo1@gmail.com','Regular User',NULL,0,0,'2025-03-29 11:20:26',0,0,0,0,0,0),(12,'demo2','demo2345677','demo2@gmail.com','Regular User',NULL,0,0,'2025-03-29 11:32:28',0,0,0,0,0,0),(13,'demo3','demo3456788','demo3@gmail.com','Regular User',NULL,0,0,'2025-03-29 11:35:37',0,0,0,0,0,0),(24,'111123','1111','1@gmail.com','Regular User','profile_24_1749137954904.png',3,7,'2025-06-04 12:54:06',3,0,0,3,10,3),(26,'2222244','22222','2@gmail.com','Regular User','profile_26_1749135062589.png',0,3,'2025-06-04 21:44:42',0,0,0,0,1,0),(27,'33333','33333','3@gmail.com','Regular User','/images/profiles/demo_profile.png',0,0,'2025-06-08 14:11:54',0,0,0,0,0,0);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -653,4 +653,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-06-06 17:07:49
+-- Dump completed on 2025-06-08 23:08:58
