@@ -175,10 +175,13 @@
                                     </Button>
                                  </children>
                               </HBox>
-                              <Label fx:id="book_description" alignment="TOP_LEFT" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="60.0" prefWidth="417.0" text="books description............." textFill="WHITE" wrapText="true">
+                              <Label fx:id="book_description" alignment="TOP_LEFT" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="46.0" prefWidth="552.0" style="-fx-border-color: #fff; -fx-border-radius: 5;" text="books description............." textFill="WHITE" wrapText="true">
                                  <padding>
-                                    <Insets left="50.0" />
+                                    <Insets bottom="2.0" left="35.0" right="35.0" top="2.0" />
                                  </padding>
+                                 <VBox.margin>
+                                    <Insets left="10.0" />
+                                 </VBox.margin>
                               </Label>
                            </children>
                         </VBox>
@@ -203,12 +206,12 @@
                                           <Font name="System Bold" size="10.0" />
                                        </font>
                                     </Button>
-                                    <TextField fx:id="comment_box" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="30.0" prefWidth="300.0" promptText="type your comment" style="-fx-background-color: transparent; -fx-border-color: #fff; -fx-border-radius: 10; -fx-text-fill: #fff;" />
+                                    <TextField fx:id="comment_box" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="30.0" prefWidth="432.0" promptText="type your comment" style="-fx-background-color: transparent; -fx-border-color: #fff; -fx-border-radius: 10; -fx-text-fill: #fff;" />
                                  </children>
                               </HBox>
-                              <ScrollPane fx:id="comment_scrollpane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="193.0" prefWidth="560.0" style="-fx-border-color: #fff; -fx-border-radius: 5; -fx-background-color: transparent;">
+                              <ScrollPane fx:id="comment_scrollpane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="193.0" prefWidth="563.0" style="-fx-border-color: #fff; -fx-border-radius: 5; -fx-background-color: transparent;">
                                  <content>
-                                    <VBox fx:id="commentContainer" prefHeight="492.0" prefWidth="522.0" spacing="10.0" style="-fx-background-color: #005D4D;">
+                                    <VBox fx:id="commentContainer" prefHeight="492.0" prefWidth="525.0" spacing="10.0" style="-fx-background-color: #005D4D;">
                                        <children>
                                           <VBox prefHeight="55.0" prefWidth="331.0" spacing="5.0">
                                              <children>
