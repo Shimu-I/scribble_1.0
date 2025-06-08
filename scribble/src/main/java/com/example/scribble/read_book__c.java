@@ -36,6 +36,7 @@ public class read_book__c {
     @FXML private VBox chapterContainer, commentContainer, draftContainer;
     @FXML private HBox authorContainer;
     @FXML private ImageView coverImage;
+    @FXML private TextField comment_box;
 
     private nav_bar__c mainController;
 
@@ -83,6 +84,7 @@ public class read_book__c {
         if (draftContainer == null) LOGGER.severe("draftContainer VBox is null");
         if (authorContainer == null) LOGGER.severe("authorContainer HBox is null");
         if (coverImage == null) LOGGER.severe("coverImage ImageView is null");
+        if (comment_box == null) LOGGER.severe("comment_box TextField is null");
     }
 
     private void connectToDatabase() {
@@ -825,26 +827,31 @@ public class read_book__c {
             showAlert(Alert.AlertType.WARNING, "Login Required", "Please log in to add a comment.");
             return;
         }
-        TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Add Comment");
-        dialog.setHeaderText("Enter your comment:");
-        dialog.setContentText("Comment:");
-        dialog.showAndWait().ifPresent(comment -> {
-            try (PreparedStatement stmt = conn.prepareStatement(
-                    "INSERT INTO ratings (book_id, user_id, comment) VALUES (?, ?, ?) " +
-                            "ON DUPLICATE KEY UPDATE comment = ?")) {
-                stmt.setInt(1, bookId);
-                stmt.setInt(2, UserSession.getInstance().getCurrentUserId());
-                stmt.setString(3, comment);
-                stmt.setString(4, comment);
-                stmt.executeUpdate();
-                loadComments();
-                LOGGER.info("Comment added for bookId: " + bookId);
-            } catch (SQLException e) {
-                LOGGER.severe("Error adding comment: " + e.getMessage());
-                showAlert(Alert.AlertType.ERROR, "Error", "Failed to add comment.");
-            }
-        });
+        if (comment_box == null) {
+            LOGGER.severe("comment_box is null, cannot add comment.");
+            showAlert(Alert.AlertType.ERROR, "Error", "Comment input field is not available.");
+            return;
+        }
+        String comment = comment_box.getText().trim();
+        if (comment.isEmpty()) {
+            showAlert(Alert.AlertType.WARNING, "Invalid Input", "Please enter a comment.");
+            return;
+        }
+        try (PreparedStatement stmt = conn.prepareStatement(
+                "INSERT INTO ratings (book_id, user_id, comment) VALUES (?, ?, ?) " +
+                        "ON DUPLICATE KEY UPDATE comment = ?")) {
+            stmt.setInt(1, bookId);
+            stmt.setInt(2, UserSession.getInstance().getCurrentUserId());
+            stmt.setString(3, comment);
+            stmt.setString(4, comment);
+            stmt.executeUpdate();
+            comment_box.clear(); // Clear the TextField after submission
+            loadComments();
+            LOGGER.info("Comment added for bookId: " + bookId);
+        } catch (SQLException e) {
+            LOGGER.severe("Error adding comment: " + e.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Error", "Failed to add comment.");
+        }
     }
 
     @FXML
