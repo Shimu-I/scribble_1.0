@@ -24,6 +24,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.nio.file.*;
+import java.io.IOException;
+
 
 public class contest_write__c {
 
@@ -205,6 +208,8 @@ public class contest_write__c {
         }
     }
 
+
+
     @FXML
     private void handle_cover_photo_button(ActionEvent event) {
         FileChooser fileChooser = new FileChooser();
@@ -215,13 +220,32 @@ public class contest_write__c {
 
         File selectedFile = fileChooser.showOpenDialog(cover_photo_button.getScene().getWindow());
         if (selectedFile != null) {
-            String filename = selectedFile.getName();
-            Path destinationPath = Path.of(System.getProperty("user.home"), "scribble/uploads", filename);
+            Path directoryPath = Path.of("src/main/resources/images/contest_book_cover");
+            int nextNumber = 1;
+
+            // Find the highest existing number in filenames starting with "ccp_"
+            try {
+                Files.createDirectories(directoryPath);
+                DirectoryStream<Path> stream = Files.newDirectoryStream(directoryPath, "ccp_[0-9]*.{png,jpg,jpeg}");
+                for (Path file : stream) {
+                    String filename = file.getFileName().toString();
+                    String numberPart = filename.replace("ccp_", "").replaceAll("\\..*", "");
+                    try {
+                        int num = Integer.parseInt(numberPart);
+                        if (num >= nextNumber) nextNumber = num + 1;
+                    } catch (NumberFormatException ignored) {}
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            String extension = getFileExtension(selectedFile.getName());
+            String newFilename = "ccp_" + nextNumber + "." + extension;
+            Path destinationPath = directoryPath.resolve(newFilename);
 
             try {
-                Files.createDirectories(destinationPath.getParent());
                 Files.copy(selectedFile.toPath(), destinationPath, StandardCopyOption.REPLACE_EXISTING);
-                selectedCoverPhotoPath = filename; // Store filename only
+                selectedCoverPhotoPath = newFilename; // Store new filename for database
                 cover_photo.setImage(new Image("file:" + destinationPath.toString())); // Load full path for display
             } catch (IOException e) {
                 e.printStackTrace();
@@ -230,6 +254,13 @@ public class contest_write__c {
             }
         }
     }
+
+    // Helper method to get file extension
+    private String getFileExtension(String filename) {
+        int lastDotIndex = filename.lastIndexOf('.');
+        return (lastDotIndex == -1) ? "png" : filename.substring(lastDotIndex + 1).toLowerCase();
+    }
+
 
     private void clearForm() {
         book_tittle.setText("");

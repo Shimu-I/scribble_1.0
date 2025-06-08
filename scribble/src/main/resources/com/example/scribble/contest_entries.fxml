@@ -50,7 +50,7 @@
             </HBox>
             <HBox alignment="CENTER_LEFT" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="50.0" prefWidth="1030.0" style="-fx-background-radius: 10;">
                <children>
-                  <Button fx:id="add_entry" mnemonicParsing="false" onAction="#handle_add_entry" prefHeight="40.0" prefWidth="40.0" style="-fx-background-color: transparent;">
+                  <Button fx:id="add_entry" mnemonicParsing="false" onAction="#handle_add_entry" prefHeight="40.0" prefWidth="40.0" style="-fx-background-color: transparent;" stylesheets="@../../../style/style.css">
                      <graphic>
                         <ImageView fitHeight="40.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true">
                            <image>

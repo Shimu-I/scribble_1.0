@@ -253,7 +253,7 @@ public class contest_entries__c {
         voteButtonsPane.setAlignment(javafx.geometry.Pos.CENTER);
         voteButtonsPane.setPrefHeight(30.0); // Height of one button
         voteButtonsPane.setPrefWidth(30.0); // Width of one button
-        voteButtonsPane.setStyle("-fx-pref-height: 30.0; -fx-pref-width: 60.0; -fx-max-height: -Infinity; -fx-max-width: -Infinity; -fx-min-height: -Infinity; -fx-min-width: -Infinity;");
+        voteButtonsPane.setStyle("-fx-pref-height: 30.0; -fx-pref-width: 30.0; -fx-max-height: 30.0; -fx-max-width: 30.0;");
 
         Button notVotedButton = new Button();
         ImageView notVotedIcon = new ImageView(new Image(getClass().getResource("/images/icons/star5.png").toExternalForm()));
@@ -287,10 +287,18 @@ public class contest_entries__c {
         Button openButton = new Button("open");
         openButton.setPrefHeight(30.0); // Match FXML
         openButton.setPrefWidth(120.0); // Match FXML
-        openButton.setStyle("-fx-background-color: #F5E0CD; -fx-background-radius: 5;"); // Fixed
+        openButton.setStyle("-fx-background-color: #F5E0CD; -fx-background-radius: 5;" +
+                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0, 0, 0);" +
+                "-fx-translate-y: 0;" +
+                "-fx-translate-y: -2px; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 10, 0, 0, 1);");
         openButton.setTextFill(javafx.scene.paint.Color.valueOf("#014237"));
         openButton.setFont(new Font("System Bold", 14.0));
         openButton.setOnAction(e -> openEntryPage(entryId));
+        // Add hover effect
+        openButton.setOnMouseEntered(e -> openButton.setStyle("-fx-background-color: #F5E0CD; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 10, 0, 0, 1); -fx-translate-y: -2px;"));
+        openButton.setOnMouseExited(e -> openButton.setStyle("-fx-background-color: #F5E0CD; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0, 0, 0); -fx-translate-y: 0;"));
+
+
 
         hbox.getChildren().addAll(numberBox, titleAuthorBox, dateLabel, voteBox, openButton);
         hbox.getProperties().put("entryId", entryId);
