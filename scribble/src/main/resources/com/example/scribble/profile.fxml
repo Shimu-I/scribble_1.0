@@ -40,11 +40,15 @@
                <children>
                   <HBox alignment="CENTER" prefHeight="210.0" prefWidth="200.0" spacing="50.0">
                      <children>
-                        <ImageView fx:id="cover_photo" fitHeight="150.0" fitWidth="150.0" pickOnBounds="true" preserveRatio="true">
-                           <image>
-                              <Image url="@../../../images/profiles/demo_profile.png" />
-                           </image>
-                        </ImageView>
+                        <VBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="150.0" prefWidth="150.0" style="-fx-border-color: #fff; -fx-border-radius: 500; -fx-border-width: 2;">
+                           <children>
+                              <ImageView fx:id="cover_photo" fitHeight="140.0" fitWidth="140.0" pickOnBounds="true" preserveRatio="true">
+                                 <image>
+                                    <Image url="@../../../images/profiles/demo_profile.png" />
+                                 </image>
+                              </ImageView>
+                           </children>
+                        </VBox>
                         <VBox alignment="CENTER_LEFT" prefHeight="210.0" prefWidth="410.0" spacing="5.0">
                            <children>
                               <HBox prefHeight="36.0" prefWidth="410.0">

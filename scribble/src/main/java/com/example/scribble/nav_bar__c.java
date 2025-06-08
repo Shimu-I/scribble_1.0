@@ -73,36 +73,30 @@ public class nav_bar__c {
             user_photo.setVisible(isLoggedIn);
             if (isLoggedIn) {
                 String photoPath = UserSession.getInstance().getUserPhotoPath();
-                if (photoPath != null && !photoPath.isEmpty()) {
+                // Use hollow_circle2.png as default if photoPath is null, empty, or set to demo_profile.png
+                if (photoPath == null || photoPath.isEmpty() || photoPath.equals("demo_profile.png") || photoPath.equals("/images/profiles/demo_profile.png")) {
+                    photoPath = "/images/profiles/hollow_circle2.png";
+                    System.out.println("Using default photo: " + photoPath);
+                } else {
                     // Normalize path: prepend /images/profiles/ if it's a filename
                     if (!photoPath.startsWith("/")) {
                         photoPath = "/images/profiles/" + photoPath;
                     }
-                    System.out.println("Attempting to load photoPath: " + photoPath);
-                    Image image = loadImage(photoPath);
-                    if (image != null) {
-                        user_photo.setImage(image);
-                        System.out.println("User photo set to: " + photoPath);
-                    } else {
-                        System.err.println("Failed to load user photo: " + photoPath);
-                        // Fallback to default image
-                        image = loadImage("/images/profiles/demo_profile.png");
-                        if (image != null) {
-                            user_photo.setImage(image);
-                            System.out.println("Fallback to default photo: /images/profiles/demo_profile.png");
-                        } else {
-                            System.err.println("Failed to load fallback photo: /images/profiles/demo_profile.png");
-                        }
-                    }
+                    System.out.println("Attempting to load user photoPath: " + photoPath);
+                }
+                Image image = loadImage(photoPath);
+                if (image != null) {
+                    user_photo.setImage(image);
+                    System.out.println("User photo set to: " + photoPath);
                 } else {
-                    System.out.println("No user photo path set in UserSession");
-                    // Fallback to default image
-                    Image image = loadImage("/images/profiles/demo_profile.png");
+                    System.err.println("Failed to load user photo: " + photoPath);
+                    // Fallback to hollow_circle2.png
+                    image = loadImage("/images/profiles/hollow_circle2.png");
                     if (image != null) {
                         user_photo.setImage(image);
-                        System.out.println("Fallback to default photo: /images/profiles/demo_profile.png");
+                        System.out.println("Fallback to default photo: /images/profiles/hollow_circle2.png");
                     } else {
-                        System.err.println("Failed to load fallback photo: /images/profiles/demo_profile.png");
+                        System.err.println("Failed to load fallback photo: /images/profiles/hollow_circle2.png");
                     }
                 }
             }

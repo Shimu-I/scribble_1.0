@@ -109,7 +109,7 @@
                            <children>
                               <ImageView fx:id="user_photo" fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
                                  <image>
-                                    <Image url="@../../../images/profiles/demo_profile.png" />
+                                    <Image url="@../../../images/profiles/hollow_circle2.png" />
                                  </image>
                               </ImageView>
                               <AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="31.0" prefWidth="30.0">
