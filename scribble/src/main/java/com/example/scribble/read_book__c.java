@@ -130,16 +130,15 @@ public class read_book__c {
         }
 
         String query = """
-                SELECT b.book_id, b.title, b.genre, b.status, b.view_count, b.total_reads, b.description, b.cover_photo,
-                       COALESCE((SELECT AVG(rating) FROM ratings WHERE book_id = b.book_id), 0.0) AS avg_rating,
-                       (SELECT rating FROM ratings WHERE book_id = b.book_id AND user_id = ?) AS user_rating
-                FROM books b
-                WHERE b.book_id = ?
-                """;
+            SELECT b.book_id, b.title, b.genre, b.status, b.view_count, b.total_reads, b.description, b.cover_photo,
+                   COALESCE((SELECT AVG(rating * 1.0) FROM ratings WHERE book_id = b.book_id AND rating IS NOT NULL), 0.0) AS avg_rating,
+                   (SELECT COUNT(*) FROM ratings WHERE book_id = b.book_id AND rating IS NOT NULL) AS rater_count
+            FROM books b
+            WHERE b.book_id = ?
+            """;
 
         try (PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setInt(1, UserSession.getInstance().getCurrentUserId());
-            pstmt.setInt(2, bookId);
+            pstmt.setInt(1, bookId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
                     if (bookTitleLabel != null) bookTitleLabel.setText(rs.getString("title") != null ? rs.getString("title") : "Unknown");
@@ -163,8 +162,11 @@ public class read_book__c {
                         }
                     }
                     double avgRating = rs.getDouble("avg_rating");
-                    int userRating = rs.wasNull() ? 0 : rs.getInt("user_rating");
-                    if (avg_ratting != null) avg_ratting.setText(userRating + " / " + String.format("%.1f", avgRating));
+                    int raterCount = rs.getInt("rater_count");
+                    if (avg_ratting != null) {
+                        avg_ratting.setText(String.format("%.1f / %d", avgRating, raterCount));
+                        LOGGER.info("Rating for bookId " + bookId + ": " + String.format("%.1f / %d", avgRating, raterCount));
+                    }
                 } else {
                     LOGGER.warning("No book found for bookId: " + bookId);
                     setDefaultLabels();
