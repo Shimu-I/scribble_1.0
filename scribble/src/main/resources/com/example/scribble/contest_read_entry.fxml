@@ -29,26 +29,26 @@
     <center>
         <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
             <children>
-                <HBox prefHeight="64.0" prefWidth="1400.0">
-                    <children>
-                        <Label fx:id="book_tittle" text="Book Name" textFill="WHITE">
+            <VBox prefHeight="64.0" prefWidth="100.0">
+               <children>
+                        <Label fx:id="book_tittle" prefHeight="35.0" prefWidth="700.0" text="Book Name" textFill="WHITE">
                             <font>
                                 <Font size="24.0" />
                             </font>
                         </Label>
-                        <Label fx:id="genre_name" text="(genre: crime horror)" textFill="WHITE">
+                        <Label fx:id="genre_name" prefHeight="20.0" prefWidth="325.0" text="(genre: crime horror)" textFill="WHITE">
                             <font>
                                 <Font size="14.0" />
                             </font>
-                            <HBox.margin>
-                                <Insets left="10.0" top="8.0" />
-                            </HBox.margin>
                         </Label>
-                    </children>
-                    <padding>
-                        <Insets left="270.0" />
-                    </padding>
-                </HBox>
+               </children>
+               <padding>
+                  <Insets left="270.0" />
+               </padding>
+               <VBox.margin>
+                  <Insets bottom="10.0" />
+               </VBox.margin>
+            </VBox>
                 <HBox alignment="TOP_CENTER" prefHeight="582.0" prefWidth="1400.0" spacing="20.0">
                     <children>
                         <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0">
@@ -60,7 +60,7 @@
                                 </ImageView>
                             </children>
                         </VBox>
-                        <TextArea fx:id="writing_area" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="500.0" prefWidth="1000.0" promptText="start your writing form here" style="-fx-background-color: #fff; -fx-background-radius: 5;">
+                        <TextArea fx:id="writing_area" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="500.0" prefWidth="1000.0" promptText="start your writing form here" style="-fx-background-color: #fff; -fx-background-radius: 5;" wrapText="true">
                             <HBox.margin>
                                 <Insets />
                             </HBox.margin>

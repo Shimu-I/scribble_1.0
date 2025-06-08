@@ -27,7 +27,9 @@ public class contest_read_entry__c {
 
     @FXML
     private void handle_back_button(ActionEvent event) {
-        System.out.println("Back button clicked!");
-        // Add logic to navigate back to the previous screen
+
+    }
+
+    public void initData(int entryId) {
     }
 }

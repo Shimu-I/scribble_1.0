@@ -36,7 +36,7 @@
                         <Font size="20.0" />
                      </font>
                   </Label>
-                  <Label text="&quot;Genre Name&quot;" textFill="WHITE">
+                  <Label fx:id="genre_name" text="&quot;Genre Name&quot;" textFill="WHITE">
                      <font>
                         <Font name="System Bold" size="32.0" />
                      </font>
@@ -65,14 +65,17 @@
                      </font>
                   </Label>
                </children>
+               <VBox.margin>
+                  <Insets bottom="10.0" top="10.0" />
+               </VBox.margin>
             </HBox>
-            <ScrollPane prefHeight="463.0" prefWidth="1400.0" style="-fx-background-color: transparent;">
+            <ScrollPane prefHeight="427.0" prefWidth="1400.0" style="-fx-background-color: transparent;">
                <content>
                   <VBox fx:id="entryContainer" alignment="TOP_CENTER" prefHeight="496.0" prefWidth="1384.0" spacing="15.0" style="-fx-background-color: #005D4D;">
                      <children>
-                        <HBox fx:id="entry" alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="95.0" prefWidth="1030.0" spacing="25.0" style="-fx-background-color: #F4908A; -fx-background-radius: 10;">
+                        <HBox fx:id="entry_hbox" alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="95.0" prefWidth="1030.0" spacing="25.0" style="-fx-background-color: #F4908A; -fx-background-radius: 10;">
                            <children>
-                              <HBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="58.0" prefWidth="58.0" style="-fx-background-color: #014237; -fx-background-radius: 20;">
+                              <HBox fx:id="entry_no_hbox" alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="58.0" prefWidth="58.0" style="-fx-background-color: #014237; -fx-background-radius: 20;">
                                  <children>
                                     <Label fx:id="entry_no" text="1" textFill="WHITE">
                                        <font>

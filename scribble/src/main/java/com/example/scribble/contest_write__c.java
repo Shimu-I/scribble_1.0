@@ -1,5 +1,6 @@
 package com.example.scribble;
 
+
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -62,7 +63,9 @@ public class contest_write__c {
         this.userPhotoPath = userPhotoPath;
 
         book_tittle.setText("");
-        book_tittle.setPromptText("write the tittle of this book");
+        book_tittle.setPromptText("write the title of this book");
+
+        book_tittle.setStyle("-fx-background-color: transparent; -fx-text-fill: white;");
         genre_name.setText("(genre: " + genre.toLowerCase() + ")");
         selectedCoverPhotoPath = null;
         try {
@@ -112,6 +115,14 @@ public class contest_write__c {
 
         if (!UserSession.getInstance().isLoggedIn()) {
             showErrorAlert("Session Error", "You must be logged in to submit an entry.");
+            System.out.println("Validation failed: User not logged in");
+            return;
+        }
+
+        // Validate that userId matches the logged-in user's ID
+        if (userId != UserSession.getInstance().getUserId()) {
+            showErrorAlert("Session Error", "User ID mismatch. Please log in with the correct account.");
+            System.out.println("Validation failed: userId " + userId + " does not match session userId " + UserSession.getInstance().getUserId());
             return;
         }
 
@@ -119,14 +130,35 @@ public class contest_write__c {
             System.out.println("Database connection established: " + (conn != null));
             conn.setAutoCommit(false);
 
-            int contestId = getOrCreateContestId(conn, genre);
-            if (contestId == -1) {
-                conn.rollback();
-                showErrorAlert("Contest Error", "Failed to retrieve or create contest for genre: " + genre);
-                System.out.println("Contest creation failed, rolling back");
-                return;
+            // Validate contestId exists and matches genre
+            String validateContestSQL = "SELECT contest_id FROM contests WHERE contest_id = ? AND genre = ? COLLATE utf8mb4_bin";
+            try (PreparedStatement validateStmt = conn.prepareStatement(validateContestSQL)) {
+                validateStmt.setInt(1, contestId);
+                validateStmt.setString(2, genre);
+                ResultSet rs = validateStmt.executeQuery();
+                if (!rs.next()) {
+                    conn.rollback();
+                    showErrorAlert("Contest Error", "Invalid contest ID or genre mismatch.");
+                    System.out.println("Validation failed: Contest ID " + contestId + " not found or genre mismatch for genre " + genre);
+                    return;
+                }
             }
 
+            // Check for duplicate entry title for this contest
+            String checkDuplicateSQL = "SELECT entry_id FROM contest_entries WHERE contest_id = ? AND entry_title = ?";
+            try (PreparedStatement checkStmt = conn.prepareStatement(checkDuplicateSQL)) {
+                checkStmt.setInt(1, contestId);
+                checkStmt.setString(2, entryTitle);
+                ResultSet rs = checkStmt.executeQuery();
+                if (rs.next()) {
+                    conn.rollback();
+                    showErrorAlert("Input Error", "An entry with this title already exists for this contest.");
+                    System.out.println("Validation failed: Duplicate entry title '" + entryTitle + "' for contestId " + contestId);
+                    return;
+                }
+            }
+
+            // Insert entry
             String insertEntrySQL = "INSERT INTO contest_entries (contest_id, user_id, entry_title, content, cover_photo) VALUES (?, ?, ?, ?, ?)";
             try (PreparedStatement stmt = conn.prepareStatement(insertEntrySQL)) {
                 stmt.setInt(1, contestId);
@@ -143,54 +175,34 @@ public class contest_write__c {
             System.out.println("Transaction committed successfully");
             showInfoAlert("Success", "Your entry has been submitted successfully!");
             clearForm();
+
+            // Navigate to contest_entries page with initialized data
+            try {
+                java.net.URL resource = getClass().getResource("/com/example/scribble/contest_entries.fxml");
+                if (resource == null) {
+                    System.err.println("Resource not found: /com/example/scribble/contest_entries.fxml");
+                    showErrorAlert("Resource Error", "Contest entries FXML file not found. Check the file path in src/main/resources.");
+                    return;
+                }
+                System.out.println("Resource found at: " + resource);
+                FXMLLoader loader = new FXMLLoader(resource);
+                Parent root = loader.load();
+                contest_entries__c controller = loader.getController();
+                controller.initData(contestId, genre, userId, username); // Pass data to new controller
+                Stage stage = (Stage) upload_button.getScene().getWindow();
+                Scene scene = new Scene(root);
+                stage.setScene(scene);
+                stage.setTitle("Contest Entries");
+                stage.show();
+            } catch (IOException e) {
+                e.printStackTrace();
+                showErrorAlert("Navigation Error", "Failed to load the contest entries page: " + e.getMessage());
+            }
         } catch (SQLException e) {
             e.printStackTrace();
             showErrorAlert("Database Error", "Failed to submit your entry. Error: " + e.getMessage());
             System.out.println("SQLException caught: " + e.getMessage());
         }
-    }
-
-    private int getOrCreateContestId(Connection conn, String genre) throws SQLException {
-        int contestId = -1;
-        String selectSQL = "SELECT contest_id FROM contests WHERE genre = ? COLLATE utf8mb4_bin"; // Case-sensitive
-        try (PreparedStatement selectStmt = conn.prepareStatement(selectSQL)) {
-            selectStmt.setString(1, genre);
-            System.out.println("Checking for existing contest with genre: " + genre);
-            ResultSet rs = selectStmt.executeQuery();
-            if (rs.next()) {
-                contestId = rs.getInt("contest_id");
-                System.out.println("Found existing contestId: " + contestId + " for genre: " + genre);
-            } else {
-                System.out.println("No existing contest found for genre: " + genre + ", attempting insertion");
-                String insertSQL = "INSERT INTO contests (title, genre, created_at) VALUES (?, ?, NOW())";
-                try (PreparedStatement insertStmt = conn.prepareStatement(insertSQL, PreparedStatement.RETURN_GENERATED_KEYS)) {
-                    insertStmt.setString(1, genre + " Writing Contest");
-                    insertStmt.setString(2, genre);
-                    System.out.println("Executing insert for new contest: " + genre + " Writing Contest");
-                    int rowsAffected = insertStmt.executeUpdate();
-                    System.out.println("Rows affected by insert: " + rowsAffected);
-                    if (rowsAffected > 0) {
-                        try (ResultSet generatedKeys = insertStmt.getGeneratedKeys()) {
-                            if (generatedKeys.next()) {
-                                contestId = generatedKeys.getInt(1);
-                                System.out.println("New contestId created: " + contestId);
-                            } else {
-                                System.out.println("Error: No generated keys returned after insert");
-                            }
-                        }
-                    } else {
-                        System.out.println("Error: Insert failed, no rows affected");
-                    }
-                } catch (SQLException e) {
-                    System.out.println("SQL Exception during insert: " + e.getMessage());
-                    throw e; // Re-throw to be caught by the outer try-catch
-                }
-            }
-        }
-        if (contestId == -1) {
-            System.out.println("Warning: Returning default contestId -1");
-        }
-        return contestId;
     }
 
     @FXML

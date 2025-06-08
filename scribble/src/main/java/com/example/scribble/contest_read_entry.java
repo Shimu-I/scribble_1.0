@@ -26,4 +26,7 @@ public class contest_read_entry  extends Application {
     public static void main(String[] args) {
         launch(args);
     }
+
+    public void initData(int entryId) {
+    }
 }
