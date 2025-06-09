@@ -3,7 +3,7 @@ package com.example.scribble;
 import java.sql.*;
 
 public class db_connect {
-    private static final String url = "jdbc:mysql://127.0.0.1:3306/scribble_db";
+    private static final String url = "jdbc:mysql://127.0.0.1:3306/scribble_db_2";
     private static final String username = "root";
     private static final String password = "admin";
 
