@@ -18,11 +18,20 @@
                <children>
                   <VBox alignment="TOP_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="320.0" prefWidth="330.0" spacing="5.0" style="-fx-border-color: #fff; -fx-border-radius: 5; -fx-border-width: 2;">
                      <children>
-                        <Label text="My Works" textFill="WHITE">
-                           <font>
-                              <Font name="System Bold" size="16.0" />
-                           </font>
-                        </Label>
+                        <HBox alignment="CENTER" prefHeight="40.0" prefWidth="200.0" spacing="2.0">
+                           <children>
+                              <Label fx:id="my_works_label" text="My Works" textFill="WHITE">
+                                 <font>
+                                    <Font name="System Bold" size="16.0" />
+                                 </font>
+                              </Label>
+                              <Label fx:id="total_my_works_record" text="(10)" textFill="WHITE">
+                                 <font>
+                                    <Font name="System Bold" size="16.0" />
+                                 </font>
+                              </Label>
+                           </children>
+                        </HBox>
                         <ScrollPane prefHeight="269.0" prefWidth="335.0" style="-fx-background-color: transparent;">
                            <content>
                               <VBox fx:id="myWorkContainer" alignment="TOP_CENTER" prefHeight="289.0" prefWidth="307.0" spacing="10.0" style="-fx-background-color: #005D4D;">
@@ -57,11 +66,20 @@
                   </VBox>
                   <VBox alignment="TOP_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="320.0" prefWidth="330.0" spacing="5.0" style="-fx-border-color: #fff; -fx-border-radius: 5; -fx-border-width: 2;">
                      <children>
-                        <Label text="My Drafts" textFill="WHITE">
-                           <font>
-                              <Font name="System Bold" size="16.0" />
-                           </font>
-                        </Label>
+                        <HBox alignment="CENTER" prefHeight="40.0" prefWidth="200.0" spacing="2.0">
+                           <children>
+                              <Label fx:id="my_drafts_label" text="My Drafts" textFill="WHITE">
+                                 <font>
+                                    <Font name="System Bold" size="16.0" />
+                                 </font>
+                              </Label>
+                              <Label fx:id="total_my_drafts_record" text="(10)" textFill="WHITE">
+                                 <font>
+                                    <Font name="System Bold" size="16.0" />
+                                 </font>
+                              </Label>
+                           </children>
+                        </HBox>
                         <ScrollPane prefHeight="269.0" prefWidth="335.0" style="-fx-background-color: transparent;">
                            <content>
                               <VBox fx:id="myDraftContainer" alignment="TOP_CENTER" prefHeight="289.0" prefWidth="307.0" spacing="10.0" style="-fx-background-color: #005D4D;">
@@ -73,10 +91,10 @@
                                                 <Image url="@../../../images/book_covers/hollow_rectangle.png" />
                                              </image>
                                           </ImageView>
-                                          <VBox alignment="TOP_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="76.0" prefWidth="133.0" spacing="5.0">
+                                          <VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="76.0" prefWidth="133.0" spacing="5.0">
                                              <children>
                                                 <Label maxHeight="-Infinity" maxWidth="-Infinity" minWidth="-Infinity" prefHeight="37.0" prefWidth="122.0" text="Book name 1&#10;lojse" textFill="WHITE" wrapText="true" />
-                                                <Button fx:id="open_draft" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#handle_open_draft" prefHeight="20.0" prefWidth="83.0" style="-fx-border-radius: 5; -fx-border-color: #fff; -fx-background-color: transparent;" text="Chapter 1" textFill="WHITE">
+                                                <Button fx:id="open_draft" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#handle_open_draft" prefHeight="18.0" prefWidth="80.0" style="-fx-border-radius: 5; -fx-border-color: #fff;" text="Chapter 1">
                                                    <font>
                                                       <Font size="8.0" />
                                                    </font>

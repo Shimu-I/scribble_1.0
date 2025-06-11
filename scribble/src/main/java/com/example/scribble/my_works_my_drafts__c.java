@@ -4,6 +4,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -43,9 +44,46 @@ public class my_works_my_drafts__c implements nav_bar__cAware {
     private Button groups_joined_owned_button;
     @FXML
     private Button open_draft;
+    @FXML
+    private Label total_my_works_record;
+    @FXML
+    private Label total_my_drafts_record;
 
     private nav_bar__c mainController;
     private int userId;
+
+    private int[] getRecordCounts() {
+        int worksCount = 0;
+        int draftsCount = 0;
+
+        try (Connection conn = db_connect.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(
+                     "SELECT COUNT(*) FROM book_authors WHERE user_id = ?")) {
+            stmt.setInt(1, userId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                worksCount = rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            LOGGER.severe("Failed to count My Works records: " + e.getMessage());
+            showAlert("Error", "Failed to count My Works records: " + e.getMessage());
+        }
+
+        try (Connection conn = db_connect.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(
+                     "SELECT COUNT(*) FROM draft_chapters WHERE author_id = ?")) {
+            stmt.setInt(1, userId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                draftsCount = rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            LOGGER.severe("Failed to count My Drafts records: " + e.getMessage());
+            showAlert("Error", "Failed to count My Drafts records: " + e.getMessage());
+        }
+
+        return new int[]{worksCount, draftsCount};
+    }
 
     @FXML
     public void initialize() {
@@ -54,11 +92,16 @@ public class my_works_my_drafts__c implements nav_bar__cAware {
             showAlert("Error", "No user logged in");
             return;
         }
-        // Apply additional styling if needed (FXML styles are already set)
         my_work_my_draft__vbox.setStyle("-fx-background-color: #005D4D;");
         myWorkContainer.setStyle("-fx-background-color: #005D4D;");
         myDraftContainer.setStyle("-fx-background-color: #005D4D;");
         LOGGER.info("Initialized my_work_my_draft__vbox and containers with FXML styles");
+
+        int[] counts = getRecordCounts();
+        total_my_works_record.setText("(" + counts[0] + ")");
+        total_my_drafts_record.setText("(" + counts[1] + ")");
+        LOGGER.info("Record counts: My Works (" + counts[0] + "), My Drafts (" + counts[1] + ")");
+
         populateMyWorks();
         populateMyDrafts();
     }
@@ -111,7 +154,7 @@ public class my_works_my_drafts__c implements nav_bar__cAware {
 
     private HBox createBookCard(int bookId, String title, String coverPath, String date, String dateLabel) {
         HBox card = new HBox();
-        card.setAlignment(javafx.geometry.Pos.CENTER);
+        card.setAlignment(Pos.CENTER);
         card.setStyle("-fx-background-color: #005D4D; -fx-border-color: white; -fx-border-radius: 5; -fx-background-radius: 5;");
         card.setPrefHeight(105.0);
         card.setPrefWidth(270.0);
@@ -152,7 +195,7 @@ public class my_works_my_drafts__c implements nav_bar__cAware {
         textBox.setPrefWidth(133.0);
         textBox.setSpacing(5.0);
         textBox.setPadding(new Insets(0, 10.0, 0, 10.0));
-        textBox.setAlignment(javafx.geometry.Pos.CENTER);
+        textBox.setAlignment(Pos.CENTER);
 
         Label titleLabel = new Label(title);
         titleLabel.setMaxHeight(Double.NEGATIVE_INFINITY);
@@ -181,7 +224,7 @@ public class my_works_my_drafts__c implements nav_bar__cAware {
 
     private HBox createDraftCard(int bookId, String title, String coverPath, int chapterNumber, String date) {
         HBox card = new HBox();
-        card.setAlignment(javafx.geometry.Pos.CENTER);
+        card.setAlignment(Pos.CENTER);
         card.setStyle("-fx-background-color: #005D4D; -fx-border-color: white; -fx-border-radius: 5; -fx-background-radius: 5;");
         card.setPrefHeight(105.0);
         card.setPrefWidth(270.0);
@@ -220,7 +263,7 @@ public class my_works_my_drafts__c implements nav_bar__cAware {
         textBox.setPrefWidth(133.0);
         textBox.setSpacing(5.0);
         textBox.setPadding(new Insets(0, 10.0, 0, 10.0));
-        textBox.setAlignment(javafx.geometry.Pos.TOP_CENTER);
+        textBox.setAlignment(Pos.TOP_LEFT);
 
         Label titleLabel = new Label(title);
         titleLabel.setMaxHeight(Double.NEGATIVE_INFINITY);
@@ -232,20 +275,27 @@ public class my_works_my_drafts__c implements nav_bar__cAware {
         titleLabel.setWrapText(true);
         titleLabel.setFont(Font.font("System", FontWeight.BOLD, 12.0));
 
+        Label dateLabel = new Label("Updated on " + date);
+        dateLabel.setPrefHeight(24.0);
+        dateLabel.setPrefWidth(122.0);
+        dateLabel.setTextAlignment(TextAlignment.LEFT);
+        dateLabel.setTextFill(javafx.scene.paint.Color.WHITE);
+        dateLabel.setWrapText(true);
+        dateLabel.setFont(new Font(10.0));
+
         Button openDraftButton = new Button("Chapter " + chapterNumber);
         openDraftButton.setMaxHeight(Double.NEGATIVE_INFINITY);
         openDraftButton.setMaxWidth(Double.NEGATIVE_INFINITY);
         openDraftButton.setMinHeight(Double.NEGATIVE_INFINITY);
         openDraftButton.setMinWidth(Double.NEGATIVE_INFINITY);
-        openDraftButton.setPrefHeight(20.0);
-        openDraftButton.setPrefWidth(83.0);
-        openDraftButton.setStyle("-fx-border-radius: 5; -fx-border-color: #fff; -fx-background-color: transparent;");
+        openDraftButton.setPrefHeight(18.0);
+        openDraftButton.setPrefWidth(80.0);
+        openDraftButton.setStyle("-fx-border-radius: 5; -fx-border-color: #fff;-fx-text-fill: black;");
         openDraftButton.setTextFill(javafx.scene.paint.Color.WHITE);
-        openDraftButton.setFont(new Font(10.0));
+        openDraftButton.setFont(new Font(8.0));
         openDraftButton.setOnAction(event -> openDraft(bookId, chapterNumber));
-        VBox.setMargin(openDraftButton, new Insets(10.0, 0, 0, 0));
 
-        textBox.getChildren().addAll(titleLabel, openDraftButton);
+        textBox.getChildren().addAll(titleLabel, dateLabel, openDraftButton);
         card.getChildren().addAll(coverImage, textBox);
 
         LOGGER.info("Created draft card for book_id: " + bookId + ", chapter: " + chapterNumber);
@@ -273,9 +323,6 @@ public class my_works_my_drafts__c implements nav_bar__cAware {
 
     @FXML
     private void handle_open_draft(ActionEvent event) {
-        // Since open_draft button is dynamically created in createDraftCard,
-        // this method is a fallback for the FXML-defined button (if used).
-        // Typically, the dynamic buttons in createDraftCard handle specific bookId and chapterNumber.
         showAlert("Info", "Please click the specific chapter button in the draft card to open a draft.");
     }
 
@@ -287,8 +334,6 @@ public class my_works_my_drafts__c implements nav_bar__cAware {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/draft_edit.fxml"));
             Parent draftEditPage = loader.load();
-            // Assuming a controller for editing drafts exists (e.g., draft_edit__c)
-            // You may need to set bookId and chapterNumber in the controller
             mainController.loadFXML(String.valueOf(draftEditPage));
             Stage stage = (Stage) my_work_my_draft__vbox.getScene().getWindow();
             stage.setResizable(true);
@@ -315,8 +360,7 @@ public class my_works_my_drafts__c implements nav_bar__cAware {
     }
 
     @FXML
-    private void my_work_my_draft_button(ActionEvent event) {
-        // Already on this page, no action needed
+    private void handle_my_work_my_draft(ActionEvent event) {
         LOGGER.info("My Works & My Drafts button clicked, already on this page");
     }
 

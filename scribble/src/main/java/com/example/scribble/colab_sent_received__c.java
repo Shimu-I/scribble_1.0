@@ -27,6 +27,44 @@ public class colab_sent_received__c {
 
     @FXML private VBox colabSentContainer;
     @FXML private VBox colabReceivedContainer;
+    @FXML private Label total_sent_record; // Added to match FXML
+    @FXML private Label total_received_record; // Added to match FXML
+
+
+    // New method to get counts
+    private int[] getRecordCounts() {
+        int sentCount = 0;
+        int receivedCount = 0;
+        int currentUserId = UserSession.getInstance().getCurrentUserId();
+
+        // Count Sent requests
+        try (PreparedStatement stmt = conn.prepareStatement(
+                "SELECT COUNT(*) FROM collaboration_invites WHERE inviter_id = ?")) {
+            stmt.setInt(1, currentUserId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                sentCount = rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            LOGGER.severe("Failed to count Sent requests: " + e.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Error", "Failed to count Sent requests: " + e.getMessage());
+        }
+
+        // Count Received requests
+        try (PreparedStatement stmt = conn.prepareStatement(
+                "SELECT COUNT(*) FROM collaboration_invites WHERE invitee_email = (SELECT email FROM users WHERE user_id = ?)")) {
+            stmt.setInt(1, currentUserId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                receivedCount = rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            LOGGER.severe("Failed to count Received requests: " + e.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Error", "Failed to count Received requests: " + e.getMessage());
+        }
+
+        return new int[]{sentCount, receivedCount};
+    }
 
     @FXML
     public void initialize() {
@@ -39,9 +77,17 @@ public class colab_sent_received__c {
             showAlert(Alert.AlertType.ERROR, "Database Error", "Failed to connect to the database.");
             return;
         }
+
+        // Get and set record counts
+        int[] counts = getRecordCounts();
+        total_sent_record.setText("(" + counts[0] + ")");
+        total_received_record.setText("(" + counts[1] + ")");
+        LOGGER.info("Record counts: Sent (" + counts[0] + "), Received (" + counts[1] + ")");
+
         loadSentRequests();
         loadReceivedRequests();
     }
+
 
     public void setConnection(Connection conn) {
         this.conn = conn;

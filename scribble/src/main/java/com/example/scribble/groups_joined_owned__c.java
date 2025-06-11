@@ -35,8 +35,16 @@ public class groups_joined_owned__c {
     @FXML
     private Label ownedLabel; // Not used due to missing fx:id in FXML
 
+    @FXML
+    private Label total_joined_record; // Renamed to match FXML
+    @FXML
+    private Label total_owned_record; // Renamed to match FXML
+
     private int joinedCount;
     private int ownedCount;
+
+
+
 
     @FXML
     private void initialize() {
@@ -46,10 +54,13 @@ public class groups_joined_owned__c {
             System.out.println("groupJoinedContainer and groupOwnedContainer initialized successfully.");
         }
 
+        LOGGER.info("groupJoinedContainer and groupOwnedContainer initialized successfully.");
         fetchGroupCounts();
         updateLabels();
         loadJoinedGroups();
         loadOwnedGroups();
+
+        LOGGER.info("Record counts: Joined (" + joinedCount + "), Owned (" + ownedCount + ")");
 
         System.out.println("Joined Groups: " + joinedCount);
         System.out.println("Owned Groups: " + ownedCount);
@@ -57,14 +68,12 @@ public class groups_joined_owned__c {
 
     private void fetchGroupCounts() {
         int userId = UserSession.getInstance().getUserId();
-        System.out.println("Fetching counts for user ID: " + userId);
+        LOGGER.info("Fetching counts for user ID: " + userId);
 
-        String joinedQuery = "SELECT COUNT(DISTINCT ugs.group_id) AS joined_count, GROUP_CONCAT(DISTINCT ugs.group_id) AS group_ids " +
+        // Count Joined groups
+        String joinedQuery = "SELECT COUNT(DISTINCT ugs.group_id) AS joined_count " +
                 "FROM user_group_status ugs " +
                 "JOIN community_groups cg ON ugs.group_id = cg.group_id " +
-                "JOIN books b ON cg.book_id = b.book_id " +
-                "LEFT JOIN book_authors ba ON b.book_id = ba.book_id " +
-                "LEFT JOIN users u ON ba.user_id = u.user_id " +
                 "WHERE ugs.user_id = ? AND ugs.status = 'joined' AND cg.admin_id != ?";
         try (Connection conn = db_connect.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(joinedQuery)) {
@@ -73,16 +82,15 @@ public class groups_joined_owned__c {
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
                 joinedCount = rs.getInt("joined_count");
-                String groupIds = rs.getString("group_ids");
-                System.out.println("Joined groups count query returned: " + joinedCount + ", Group IDs: " + (groupIds != null ? groupIds : "none"));
+                LOGGER.info("Joined groups count: " + joinedCount);
             } else {
-                System.out.println("Joined groups count query returned no results.");
+                LOGGER.info("Joined groups count query returned no results.");
             }
         } catch (SQLException e) {
-            System.err.println("SQL error fetching joined groups count: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe("SQL error fetching joined groups count: " + e.getMessage());
         }
 
+        // Count Owned groups
         String ownedQuery = "SELECT COUNT(*) AS owned_count " +
                 "FROM community_groups cg " +
                 "WHERE cg.admin_id = ?";
@@ -92,25 +100,27 @@ public class groups_joined_owned__c {
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
                 ownedCount = rs.getInt("owned_count");
-                System.out.println("Owned groups count query returned: " + ownedCount);
+                LOGGER.info("Owned groups count: " + ownedCount);
             } else {
-                System.out.println("Owned groups count query returned no results.");
+                LOGGER.info("Owned groups count query returned no results.");
             }
         } catch (SQLException e) {
-            System.err.println("SQL error fetching owned groups count: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe("SQL error fetching owned groups count: " + e.getMessage());
         }
     }
 
     private void updateLabels() {
-        if (joinedLabel != null) {
-            joinedLabel.setText("Joined (" + joinedCount + ")");
+        if (total_joined_record != null) {
+            total_joined_record.setText("(" + joinedCount + ")");
+        } else {
+            LOGGER.warning("total_joined_label is null. Check FXML fx:id.");
         }
-        if (ownedLabel != null) {
-            ownedLabel.setText("Owned (" + ownedCount + ")");
+        if (total_owned_record != null) {
+            total_owned_record.setText("(" + ownedCount + ")");
+        } else {
+            LOGGER.warning("total_owned_record is null. Check FXML fx:id.");
         }
-        System.out.println("joinedLabel is " + (joinedLabel == null ? "null" : "set to Joined (" + joinedCount + ")"));
-        System.out.println("ownedLabel is " + (ownedLabel == null ? "null" : "set to Owned (" + ownedCount + ")"));
+        LOGGER.info("Updated labels: Joined (" + joinedCount + "), Owned (" + ownedCount + ")");
     }
 
     private void loadJoinedGroups() {

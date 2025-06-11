@@ -17,11 +17,20 @@
                     <children>
                         <VBox alignment="TOP_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="320.0" prefWidth="330.0" spacing="5.0" style="-fx-border-color: #fff; -fx-border-radius: 5; -fx-border-width: 2;">
                             <children>
-                                <Label text="History" textFill="WHITE">
-                                    <font>
-                                        <Font name="System Bold" size="16.0" />
-                                    </font>
-                                </Label>
+                        <HBox alignment="CENTER" prefHeight="40.0" prefWidth="326.0" spacing="2.0">
+                           <children>
+                                      <Label fx:id="history_label" text="History" textFill="WHITE">
+                                          <font>
+                                              <Font name="System Bold" size="16.0" />
+                                          </font>
+                                      </Label>
+                              <Label fx:id="total_history_record" text="(10)" textFill="WHITE">
+                                 <font>
+                                    <Font name="System Bold" size="16.0" />
+                                 </font>
+                              </Label>
+                           </children>
+                        </HBox>
                                 <ScrollPane prefHeight="269.0" prefWidth="335.0" style="-fx-background-color: transparent;">
                                     <content>
                                         <VBox fx:id="historyContainer" alignment="TOP_CENTER" prefHeight="289.0" prefWidth="307.0" spacing="10.0" style="-fx-background-color: #005D4D;">
@@ -59,11 +68,20 @@
                         </VBox>
                         <VBox alignment="TOP_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="320.0" prefWidth="330.0" spacing="5.0" style="-fx-border-color: #fff; -fx-border-radius: 5; -fx-border-width: 2;">
                             <children>
-                                <Label text="Library" textFill="WHITE">
-                                    <font>
-                                        <Font name="System Bold" size="16.0" />
-                                    </font>
-                                </Label>
+                        <HBox alignment="CENTER" prefHeight="40.0" prefWidth="200.0" spacing="2.0">
+                           <children>
+                                      <Label fx:id="library_label" text="Library" textFill="WHITE">
+                                          <font>
+                                              <Font name="System Bold" size="16.0" />
+                                          </font>
+                                      </Label>
+                              <Label fx:id="total_library_record" text="(10)" textFill="WHITE">
+                                 <font>
+                                    <Font name="System Bold" size="16.0" />
+                                 </font>
+                              </Label>
+                           </children>
+                        </HBox>
                                 <ScrollPane prefHeight="269.0" prefWidth="335.0" style="-fx-background-color: transparent;">
                                     <content>
                                         <VBox fx:id="libraryContainer" alignment="TOP_CENTER" prefHeight="289.0" prefWidth="307.0" spacing="10.0" style="-fx-background-color: #005D4D;">

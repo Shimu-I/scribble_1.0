@@ -32,8 +32,51 @@ public class history_library__c implements nav_bar__cAware {
     @FXML
     private VBox libraryContainer;
 
+    @FXML
+    private Label total_history_record; // Added to match FXML
+    @FXML
+    private Label total_library_record; // Added to match FXML
+
     private nav_bar__c mainController;
     private int userId;
+
+
+    // Modified to return counts separately
+    private int[] getRecordCounts() {
+        int historyCount = 0;
+        int libraryCount = 0;
+
+        // Count history records
+        try (Connection conn = db_connect.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(
+                     "SELECT COUNT(*) FROM book_visits WHERE user_id = ?")) {
+            stmt.setInt(1, userId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                historyCount = rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            LOGGER.severe("Failed to count history records: " + e.getMessage());
+            showAlert("Error", "Failed to count history records: " + e.getMessage());
+        }
+
+        // Count library records
+        try (Connection conn = db_connect.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(
+                     "SELECT COUNT(*) FROM reading_list WHERE reader_id = ?")) {
+            stmt.setInt(1, userId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                libraryCount = rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            LOGGER.severe("Failed to count library records: " + e.getMessage());
+            showAlert("Error", "Failed to count library records: " + e.getMessage());
+        }
+
+        return new int[]{historyCount, libraryCount};
+    }
+
 
     @FXML
     public void initialize() {
@@ -62,6 +105,13 @@ public class history_library__c implements nav_bar__cAware {
         libraryContainer.setSpacing(10.0);
 
         LOGGER.info("Initialized history_library_vbox and containers with FXML styles");
+
+        // Get and set record counts
+        int[] counts = getRecordCounts();
+        total_history_record.setText("(" + counts[0] + ")");
+        total_library_record.setText("(" + counts[1] + ")");
+        LOGGER.info("Record counts: History (" + counts[0] + "), Library (" + counts[1] + ")");
+
         populateHistory();
         populateLibrary();
     }

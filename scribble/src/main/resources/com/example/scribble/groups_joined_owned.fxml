@@ -18,11 +18,20 @@
                     <children>
                         <VBox alignment="TOP_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="320.0" prefWidth="330.0" spacing="5.0" style="-fx-border-color: #fff; -fx-border-radius: 5; -fx-border-width: 2;">
                             <children>
-                                <Label text="Joined" textFill="WHITE">
-                                    <font>
-                                        <Font name="System Bold" size="16.0" />
-                                    </font>
-                                </Label>
+                        <HBox alignment="CENTER" prefHeight="40.0" prefWidth="200.0" spacing="2.0">
+                           <children>
+                                      <Label fx:id="joined_label" text="Joined" textFill="WHITE">
+                                          <font>
+                                              <Font name="System Bold" size="16.0" />
+                                          </font>
+                                      </Label>
+                              <Label fx:id="total_joined_record" text="(10)" textFill="WHITE">
+                                 <font>
+                                    <Font name="System Bold" size="16.0" />
+                                 </font>
+                              </Label>
+                           </children>
+                        </HBox>
                                 <ScrollPane prefHeight="269.0" prefWidth="335.0" style="-fx-background-color: transparent;">
                                     <content>
                                         <VBox fx:id="groupJoinedContainer" alignment="TOP_CENTER" prefHeight="289.0" prefWidth="307.0" spacing="10.0" style="-fx-background-color: #005D4D;">
@@ -65,11 +74,20 @@
                         </VBox>
                         <VBox alignment="TOP_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="320.0" prefWidth="330.0" spacing="5.0" style="-fx-border-color: #fff; -fx-border-radius: 5; -fx-border-width: 2;">
                             <children>
-                                <Label text="Owned" textFill="WHITE">
-                                    <font>
-                                        <Font name="System Bold" size="16.0" />
-                                    </font>
-                                </Label>
+                        <HBox alignment="CENTER" prefHeight="40.0" prefWidth="200.0" spacing="2.0">
+                           <children>
+                                      <Label fx:id="owned_label" text="Owned" textFill="WHITE">
+                                          <font>
+                                              <Font name="System Bold" size="16.0" />
+                                          </font>
+                                      </Label>
+                              <Label fx:id="total_owned_record" text="(10)" textFill="WHITE">
+                                 <font>
+                                    <Font name="System Bold" size="16.0" />
+                                 </font>
+                              </Label>
+                           </children>
+                        </HBox>
                                 <ScrollPane prefHeight="269.0" prefWidth="335.0" style="-fx-background-color: transparent;">
                                     <content>
                                         <VBox fx:id="groupOwnedContainer" alignment="TOP_CENTER" prefHeight="289.0" prefWidth="307.0" spacing="10.0" style="-fx-background-color: #005D4D;">
