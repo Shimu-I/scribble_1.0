@@ -14,7 +14,6 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.geometry.Insets;
 
-import java.io.File;
 import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
@@ -52,9 +51,13 @@ public class read_book__c {
             LOGGER.severe("ratingComboBox is null");
         }
 
+
         checkNullElements();
         updateAddChapterButtonVisibility();
         updateDraftContainerVisibility();
+
+
+
     }
 
     private void checkNullElements() {
@@ -651,69 +654,84 @@ public class read_book__c {
             return;
         }
 
-        try {
-            if (conn == null || conn.isClosed()) {
-                showAlert(Alert.AlertType.ERROR, "Error", "Database connection lost.");
-                LOGGER.severe("Save attempt failed: Database connection is null or closed.");
-                return;
-            }
-            LOGGER.info("Database connection state: Connected");
-
-            // Validate userId and bookId
-            try (PreparedStatement checkUser = conn.prepareStatement("SELECT user_id FROM users WHERE user_id = ?")) {
-                checkUser.setInt(1, userId);
-                if (!checkUser.executeQuery().next()) {
-                    showAlert(Alert.AlertType.ERROR, "Error", "User does not exist.");
-                    LOGGER.severe("Save attempt failed: User ID " + userId + " not found in users table.");
+        // Show ChoiceDialog to select reading status
+        ChoiceDialog<String> statusDialog = new ChoiceDialog<>("SavedForLater",
+                new ArrayList<>(List.of("Reading", "Completed", "Dropped", "SavedForLater")));
+        statusDialog.setTitle("Select Reading Status");
+        statusDialog.setHeaderText("Choose a status for the book:");
+        statusDialog.setContentText("Status:");
+        statusDialog.showAndWait().ifPresentOrElse(selectedStatus -> {
+            try {
+                if (conn == null || conn.isClosed()) {
+                    showAlert(Alert.AlertType.ERROR, "Error", "Database connection lost.");
+                    LOGGER.severe("Save attempt failed: Database connection is null or closed.");
                     return;
                 }
-            }
+                LOGGER.info("Database connection state: Connected");
 
-            try (PreparedStatement checkBook = conn.prepareStatement("SELECT book_id FROM books WHERE book_id = ?")) {
-                checkBook.setInt(1, bookId);
-                if (!checkBook.executeQuery().next()) {
-                    showAlert(Alert.AlertType.ERROR, "Error", "Book does not exist.");
-                    LOGGER.severe("Save attempt failed: Book ID " + bookId + " not found in books table.");
-                    return;
+                // Validate userId and bookId
+                try (PreparedStatement checkUser = conn.prepareStatement("SELECT user_id FROM users WHERE user_id = ?")) {
+                    checkUser.setInt(1, userId);
+                    if (!checkUser.executeQuery().next()) {
+                        showAlert(Alert.AlertType.ERROR, "Error", "User does not exist.");
+                        LOGGER.severe("Save attempt failed: User ID " + userId + " not found in users table.");
+                        return;
+                    }
                 }
-            }
 
-            try (PreparedStatement pstmt = conn.prepareStatement(
-                    "INSERT INTO reading_list (reader_id, listed_book_id, reading_status) VALUES (?, ?, 'SavedForLater') " +
-                            "ON DUPLICATE KEY UPDATE reading_status = 'SavedForLater'")) {
-                pstmt.setInt(1, userId);
-                pstmt.setInt(2, bookId);
-                int rowsAffected = pstmt.executeUpdate();
-                if (rowsAffected > 0) {
-                    LOGGER.info("Book saved for later: bookId=" + bookId + ", userId=" + userId);
-                    showAlert(Alert.AlertType.INFORMATION, "Success", "Book saved for later!");
+                try (PreparedStatement checkBook = conn.prepareStatement("SELECT book_id FROM books WHERE book_id = ?")) {
+                    checkBook.setInt(1, bookId);
+                    if (!checkBook.executeQuery().next()) {
+                        showAlert(Alert.AlertType.ERROR, "Error", "Book does not exist.");
+                        LOGGER.severe("Save attempt failed: Book ID " + bookId + " not found in books table.");
+                        return;
+                    }
+                }
+
+                // Insert or update reading_list with selected status
+                try (PreparedStatement pstmt = conn.prepareStatement(
+                        "INSERT INTO reading_list (reader_id, listed_book_id, reading_status) VALUES (?, ?, ?) " +
+                                "ON DUPLICATE KEY UPDATE reading_status = ?")) {
+                    pstmt.setInt(1, userId);
+                    pstmt.setInt(2, bookId);
+                    pstmt.setString(3, selectedStatus);
+                    pstmt.setString(4, selectedStatus);
+                    int rowsAffected = pstmt.executeUpdate();
+                    if (rowsAffected > 0) {
+                        LOGGER.info("Book saved with status '" + selectedStatus + "': bookId=" + bookId + ", userId=" + userId);
+                        showAlert(Alert.AlertType.INFORMATION, "Success", "Book saved with status: " + selectedStatus + "!");
+                    } else {
+                        LOGGER.warning("No rows affected when saving bookId=" + bookId + " for userId=" + userId + " with status=" + selectedStatus);
+                        showAlert(Alert.AlertType.WARNING, "Warning", "Book could not be saved. Please try again.");
+                    }
+                }
+            } catch (SQLException e) {
+                String errorMsg = String.format("Error saving book: %s, SQLState: %s, ErrorCode: %d",
+                        e.getMessage(), e.getSQLState(), e.getErrorCode());
+                LOGGER.severe(errorMsg);
+                String userMsg = "Failed to save book: ";
+                if (e.getMessage().contains("foreign key constraint")) {
+                    userMsg += "Invalid user or book ID.";
+                } else if (e.getMessage().contains("Connection")) {
+                    userMsg += "Database connection error.";
+                } else if (e.getMessage().contains("Access denied")) {
+                    userMsg += "Database permission error.";
+                } else if (e.getMessage().contains("Incorrect string value") || e.getMessage().contains("ENUM")) {
+                    userMsg += "Invalid reading status value.";
                 } else {
-                    LOGGER.warning("No rows affected when saving bookId=" + bookId + " for userId=" + userId);
-                    showAlert(Alert.AlertType.WARNING, "Warning", "Book could not be saved. Please try again.");
+                    userMsg += "Database error occurred.";
                 }
+                showAlert(Alert.AlertType.ERROR, "Error", userMsg);
+            } catch (Exception e) {
+                LOGGER.severe("Unexpected error in handle_saved_books_button: " + e.getMessage());
+                showAlert(Alert.AlertType.ERROR, "Error", "An unexpected error occurred. Please try again.");
             }
-        } catch (SQLException e) {
-            String errorMsg = String.format("Error saving book: %s, SQLState: %s, ErrorCode: %d",
-                    e.getMessage(), e.getSQLState(), e.getErrorCode());
-            LOGGER.severe(errorMsg);
-            String userMsg = "Failed to save book: ";
-            if (e.getMessage().contains("foreign key constraint")) {
-                userMsg += "Invalid user or book ID.";
-            } else if (e.getMessage().contains("Connection")) {
-                userMsg += "Database connection error.";
-            } else if (e.getMessage().contains("Access denied")) {
-                userMsg += "Database permission error.";
-            } else if (e.getMessage().contains("Incorrect string value") || e.getMessage().contains("ENUM")) {
-                userMsg += "Invalid reading status value.";
-            } else {
-                userMsg += "Database error occurred.";
-            }
-            showAlert(Alert.AlertType.ERROR, "Error", userMsg);
-        } catch (Exception e) {
-            LOGGER.severe("Unexpected error in handle_saved_books_button: " + e.getMessage());
-            showAlert(Alert.AlertType.ERROR, "Error", "An unexpected error occurred. Please try again.");
-        }
+        }, () -> {
+            LOGGER.info("Reading status selection cancelled by user");
+        });
     }
+
+
     @FXML
     private void handle_add_chapter_button(ActionEvent event) {
         if (!UserSession.getInstance().isLoggedIn()) {

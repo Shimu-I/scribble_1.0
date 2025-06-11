@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.net.URL?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.Image?>
@@ -15,322 +15,108 @@
 <?import javafx.scene.text.Font?>
 
 <BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="660.0" prefWidth="1400.0" style="-fx-background-color: #005D4D;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.scribble.profile__c">
-   <top>
-      <HBox prefHeight="50.0" prefWidth="1400.0" BorderPane.alignment="CENTER">
-         <children>
-            <StackPane prefHeight="50.0" prefWidth="1429.0">
-               <children>
-                  <Label text="Profile Information" textFill="WHITE">
-                     <font>
-                        <Font size="32.0" />
-                     </font>
-                  </Label>
-               </children>
-            </StackPane>
-         </children>
-         <padding>
-            <Insets left="100.0" right="100.0" />
-         </padding>
-      </HBox>
-   </top>
-   <center>
-      <ScrollPane prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: transparent;" BorderPane.alignment="CENTER">
-         <content>
-            <VBox prefHeight="854.0" prefWidth="1383.0" style="-fx-background-color: #005D4D;">
-               <children>
-                  <HBox alignment="CENTER" prefHeight="210.0" prefWidth="200.0" spacing="50.0">
-                     <children>
-                        <VBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="150.0" prefWidth="150.0" style="-fx-border-color: #fff; -fx-border-radius: 500; -fx-border-width: 2;">
-                           <children>
-                              <ImageView fx:id="cover_photo" fitHeight="140.0" fitWidth="140.0" pickOnBounds="true" preserveRatio="true">
-                                 <image>
-                                    <Image url="@../../../images/profiles/demo_profile.png" />
-                                 </image>
-                              </ImageView>
-                           </children>
+    <top>
+        <HBox prefHeight="50.0" prefWidth="1400.0" BorderPane.alignment="CENTER">
+            <children>
+                <StackPane prefHeight="50.0" prefWidth="1429.0">
+                    <children>
+                        <Label text="Profile Information" textFill="WHITE">
+                            <font>
+                                <Font size="32.0" />
+                            </font>
+                        </Label>
+                    </children>
+                </StackPane>
+            </children>
+            <padding>
+                <Insets left="100.0" right="100.0" />
+            </padding>
+        </HBox>
+    </top>
+    <center>
+        <VBox prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
+            <children>
+                <HBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="166.0" prefWidth="1400.0" spacing="10.0">
+                    <children>
+                        <VBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="110.0" prefWidth="110.0" style="-fx-border-color: #fff; -fx-border-radius: 500; -fx-border-width: 2;">
+                            <children>
+                                <ImageView fx:id="cover_photo" fitHeight="100.0" fitWidth="100.0" pickOnBounds="true" preserveRatio="true">
+                                    <image>
+                                        <Image url="@../../../images/profiles/hollow_circle.png" />
+                                    </image>
+                                </ImageView>
+                            </children>
                         </VBox>
-                        <VBox alignment="CENTER_LEFT" prefHeight="210.0" prefWidth="410.0" spacing="5.0">
-                           <children>
-                              <HBox prefHeight="36.0" prefWidth="410.0">
-                                 <children>
-                                    <Label fx:id="user_name" text="23 : user_name" textFill="WHITE">
-                                       <font>
-                                          <Font name="System Bold" size="24.0" />
-                                       </font>
-                                    </Label>
-                                    <Button fx:id="edit_profile" mnemonicParsing="false" onAction="#handle_edit_profile" prefHeight="30.0" prefWidth="30.0" style="-fx-background-color: transparent;" stylesheets="@../../../style/style.css">
-                                       <graphic>
-                                          <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
-                                             <image>
-                                                <Image url="@../../../images/icons/edit.png" />
-                                             </image>
-                                          </ImageView>
-                                       </graphic>
-                                    </Button>
-                                 </children>
-                              </HBox>
-                              <Label fx:id="user_email" text="user@gmail.com" textFill="WHITE">
-                                 <font>
-                                    <Font size="16.0" />
-                                 </font>
-                              </Label>
-                              <Label fx:id="joined_at" text="member since june 1, 2025" textFill="WHITE">
-                                 <font>
-                                    <Font size="16.0" />
-                                 </font>
-                              </Label>
-                           </children>
+                        <VBox alignment="CENTER_LEFT" prefHeight="210.0" prefWidth="325.0" spacing="5.0">
+                            <children>
+                                <HBox prefHeight="36.0" prefWidth="410.0">
+                                    <children>
+                                        <Label fx:id="user_name" text="23 : user_name" textFill="WHITE">
+                                            <font>
+                                                <Font name="System Bold" size="20.0" />
+                                            </font>
+                                        </Label>
+                                        <Button fx:id="edit_profile" mnemonicParsing="false" onAction="#handle_edit_profile" prefHeight="30.0" prefWidth="30.0" style="-fx-background-color: transparent;">
+                                            <graphic>
+                                                <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
+                                                    <image>
+                                                        <Image url="@../../../images/icons/edit.png" />
+                                                    </image>
+                                                </ImageView>
+                                            </graphic>
+                                            <stylesheets>
+                                                <URL value="@../../../style/style.css" />
+                                                <URL value="@../../../style/style.css" />
+                                            </stylesheets>
+                                        </Button>
+                                    </children>
+                                </HBox>
+                                <Label fx:id="user_email" text="user@gmail.com" textFill="WHITE">
+                                    <font>
+                                        <Font size="14.0" />
+                                    </font>
+                                </Label>
+                                <Label fx:id="joined_at" text="member since june 1, 2025" textFill="WHITE">
+                                    <font>
+                                        <Font size="14.0" />
+                                    </font>
+                                </Label>
+                            </children>
+                            <padding>
+                                <Insets left="20.0" />
+                            </padding>
                         </VBox>
                         <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" spacing="10.0">
-                           <children>
-                              <Label text="Earning amount" textFill="WHITE">
-                                 <font>
-                                    <Font size="16.0" />
-                                 </font>
-                              </Label>
-                              <TextField fx:id="earning_amount" alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onAction="#handle_earning_amount" prefHeight="37.0" prefWidth="116.0" promptText="\$0" style="-fx-background-color: #fff; -fx-border-radius: 5;">
-                                 <font>
-                                    <Font size="24.0" />
-                                 </font>
-                              </TextField>
-                           </children>
+                            <children>
+                                <Label text="Earning amount" textFill="WHITE">
+                                    <font>
+                                        <Font size="16.0" />
+                                    </font>
+                                </Label>
+                                <TextField fx:id="earning_amount" alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onAction="#handle_earning_amount" prefHeight="30.0" prefWidth="116.0" promptText="\$0" style="-fx-background-color: #fff; -fx-border-radius: 5;">
+                                    <font>
+                                        <Font size="18.0" />
+                                    </font>
+                                </TextField>
+                            </children>
                         </VBox>
-                     </children>
-                  </HBox>
-                  <Separator prefWidth="200.0" />
-                  <StackPane prefHeight="50.0" prefWidth="1400.0">
-                     <children>
-                        <Label text="Your Activity" textFill="WHITE">
-                           <font>
-                              <Font size="24.0" />
-                           </font>
-                        </Label>
-                     </children>
-                  </StackPane>
-                  <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="30.0">
-                     <children>
-                        <VBox alignment="TOP_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="250.0" prefWidth="300.0" spacing="10.0" style="-fx-background-color: #AABFB9; -fx-background-radius: 5;">
-                           <children>
-                              <Label text="History">
-                                 <font>
-                                    <Font size="24.0" />
-                                 </font>
-                              </Label>
-                              <ScrollPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="168.0" prefWidth="300.0" style="-fx-background-color: transparent;">
-                                 <content>
-                                    <HBox fx:id="historyContainer" alignment="CENTER_LEFT" prefHeight="149.0" prefWidth="328.0" spacing="15.0" style="-fx-background-color: #AABFB9;">
-                                       <children>
-                                          <VBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="144.0" prefWidth="96.0" style="-fx-background-color: #005D4D; -fx-background-radius: 5;">
-                                             <children>
-                                                <ImageView fx:id="book_cover_photo" fitHeight="96.0" fitWidth="65.0" pickOnBounds="true" preserveRatio="true">
-                                                   <image>
-                                                      <Image url="@../../../images/book_covers/demo_cover.png" />
-                                                   </image>
-                                                </ImageView>
-                                                <Label fx:id="book_name" text="Book_name&#10;_unknown" textFill="WHITE">
-                                                   <font>
-                                                      <Font size="10.0" />
-                                                   </font>
-                                                </Label>
-                                             </children>
-                                          </VBox>
-                                       </children>
-                                       <padding>
-                                          <Insets left="20.0" right="20.0" />
-                                       </padding>
-                                    </HBox>
-                                 </content>
-                              </ScrollPane>
-                           </children>
-                           <padding>
-                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                           </padding>
-                        </VBox>
-                        <VBox alignment="TOP_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="250.0" prefWidth="300.0" spacing="10.0" style="-fx-background-color: #AABFB9; -fx-background-radius: 5;">
-                           <children>
-                              <Label text="Saved">
-                                 <font>
-                                    <Font size="24.0" />
-                                 </font>
-                              </Label>
-                              <ScrollPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="168.0" prefWidth="300.0" style="-fx-background-color: transparent;">
-                                 <content>
-                                    <HBox fx:id="savedContainer" alignment="CENTER_LEFT" prefHeight="150.0" prefWidth="328.0" spacing="15.0" style="-fx-background-color: #AABFB9;">
-                                       <padding>
-                                          <Insets left="20.0" right="20.0" />
-                                       </padding>
-                                       <children>
-                                          <VBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="144.0" prefWidth="96.0" style="-fx-background-color: #005D4D; -fx-background-radius: 5;">
-                                             <children>
-                                                <ImageView fx:id="book_cover_photo1" fitHeight="96.0" fitWidth="65.0" pickOnBounds="true" preserveRatio="true">
-                                                   <image>
-                                                      <Image url="@../../../images/book_covers/demo_cover.png" />
-                                                   </image>
-                                                </ImageView>
-                                                <Label fx:id="book_name1" text="Book_name&#10;_unknown" textFill="WHITE">
-                                                   <font>
-                                                      <Font size="10.0" />
-                                                   </font>
-                                                </Label>
-                                             </children>
-                                          </VBox>
-                                       </children>
-                                    </HBox>
-                                 </content>
-                              </ScrollPane>
-                           </children>
-                           <padding>
-                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                           </padding>
-                        </VBox>
-                        <VBox alignment="TOP_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="250.0" prefWidth="300.0" spacing="10.0" style="-fx-background-color: #AABFB9; -fx-background-radius: 5;">
-                           <children>
-                              <Label text="My work">
-                                 <font>
-                                    <Font size="24.0" />
-                                 </font>
-                              </Label>
-                              <ScrollPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="168.0" prefWidth="300.0" style="-fx-background-color: transparent;">
-                                 <content>
-                                    <HBox fx:id="workContainer" alignment="CENTER_LEFT" prefHeight="150.0" prefWidth="328.0" spacing="15.0" style="-fx-background-color: #AABFB9;">
-                                       <padding>
-                                          <Insets left="20.0" right="20.0" />
-                                       </padding>
-                                       <children>
-                                          <VBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="144.0" prefWidth="96.0" style="-fx-background-color: #005D4D; -fx-background-radius: 5;">
-                                             <children>
-                                                <ImageView fx:id="book_cover_photo2" fitHeight="96.0" fitWidth="65.0" pickOnBounds="true" preserveRatio="true">
-                                                   <image>
-                                                      <Image url="@../../../images/book_covers/demo_cover.png" />
-                                                   </image>
-                                                </ImageView>
-                                                <Label fx:id="book_name11" text="Book_name&#10;_unknown" textFill="WHITE">
-                                                   <font>
-                                                      <Font size="10.0" />
-                                                   </font>
-                                                </Label>
-                                             </children>
-                                          </VBox>
-                                       </children>
-                                    </HBox>
-                                 </content>
-                              </ScrollPane>
-                           </children>
-                           <padding>
-                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                           </padding>
-                        </VBox>
-                     </children>
-                  </HBox>
-                  <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="30.0">
-                     <children>
-                        <VBox alignment="TOP_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="250.0" prefWidth="300.0" spacing="10.0" style="-fx-background-color: #AABFB9; -fx-background-radius: 5;">
-                           <children>
-                              <Label text="Draft">
-                                 <font>
-                                    <Font size="24.0" />
-                                 </font>
-                              </Label>
-                              <ScrollPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="168.0" prefWidth="300.0" style="-fx-background-color: transparent;">
-                                 <content>
-                                    <VBox fx:id="draftContrainer" prefHeight="181.0" prefWidth="281.0" spacing="5.0" style="-fx-background-color: #AABFB9;">
-                                       <children>
-                                          <Label text="1. Draft 1">
-                                             <font>
-                                                <Font size="20.0" />
-                                             </font>
-                                          </Label>
-                                          <Label text="2. Draft 1">
-                                             <font>
-                                                <Font size="20.0" />
-                                             </font>
-                                          </Label>
-                                       </children>
-                                       <padding>
-                                          <Insets bottom="5.0" left="30.0" right="20.0" top="5.0" />
-                                       </padding>
-                                    </VBox>
-                                 </content>
-                              </ScrollPane>
-                           </children>
-                           <padding>
-                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                           </padding>
-                        </VBox>
-                        <VBox alignment="TOP_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="250.0" prefWidth="300.0" spacing="10.0" style="-fx-background-color: #AABFB9; -fx-background-radius: 5;">
-                           <children>
-                              <Label text="Colab request">
-                                 <font>
-                                    <Font size="24.0" />
-                                 </font>
-                              </Label>
-                              <ScrollPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="168.0" prefWidth="300.0" style="-fx-background-color: transparent;">
-                                 <content>
-                                    <VBox fx:id="colabContainer" prefHeight="181.0" prefWidth="281.0" spacing="5.0" style="-fx-background-color: #AABFB9;">
-                                       <children>
-                                          <Label text="1. request for lavelder garden">
-                                             <font>
-                                                <Font size="20.0" />
-                                             </font>
-                                          </Label>
-                                          <Label text="2. request for demo1">
-                                             <font>
-                                                <Font size="20.0" />
-                                             </font>
-                                          </Label>
-                                       </children>
-                                       <padding>
-                                          <Insets bottom="5.0" left="30.0" right="20.0" top="5.0" />
-                                       </padding>
-                                    </VBox>
-                                 </content>
-                              </ScrollPane>
-                           </children>
-                           <padding>
-                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                           </padding>
-                        </VBox>
-                        <VBox alignment="TOP_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="250.0" prefWidth="300.0" spacing="10.0" style="-fx-background-color: #AABFB9; -fx-background-radius: 5;">
-                           <children>
-                              <Label text="Join Group">
-                                 <font>
-                                    <Font size="24.0" />
-                                 </font>
-                              </Label>
-                              <ScrollPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="168.0" prefWidth="300.0" style="-fx-background-color: transparent;">
-                                 <content>
-                                    <VBox fx:id="join_groupContainer" prefHeight="181.0" prefWidth="281.0" spacing="5.0" style="-fx-background-color: #AABFB9;">
-                                       <children>
-                                          <Label text="1. joined lavender garden">
-                                             <font>
-                                                <Font size="20.0" />
-                                             </font>
-                                          </Label>
-                                          <Label text="2. joined demo1">
-                                             <font>
-                                                <Font size="20.0" />
-                                             </font>
-                                          </Label>
-                                       </children>
-                                       <padding>
-                                          <Insets bottom="5.0" left="30.0" right="20.0" top="5.0" />
-                                       </padding>
-                                    </VBox>
-                                 </content>
-                              </ScrollPane>
-                           </children>
-                           <padding>
-                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                           </padding>
-                        </VBox>
-                     </children>
-                     <VBox.margin>
-                        <Insets bottom="30.0" top="30.0" />
-                     </VBox.margin>
-                  </HBox>
-               </children>
-            </VBox>
-         </content>
-      </ScrollPane>
-   </center>
+                    </children>
+                </HBox>
+                <Separator prefWidth="200.0" />
+                <VBox fx:id="all_button_work" prefHeight="441.0" prefWidth="1400.0">
+                    <children>
+                        <HBox alignment="CENTER" maxHeight="-Infinity" minHeight="-Infinity" prefHeight="50.0" prefWidth="1400.0" spacing="10.0">
+                            <children>
+                                <Button fx:id="history_library_button" mnemonicParsing="false" onAction="#handle_history_library" prefHeight="30.0" prefWidth="230.0" style="-fx-background-color: #F8E9D4; -fx-background-radius: 5;" text="History &amp; Library" />
+                                <Button fx:id="my_work_my_draft_button" mnemonicParsing="false" onAction="#handle_my_work_my_draft" prefHeight="30.0" prefWidth="230.0" style="-fx-background-color: #F8E9D4; -fx-background-radius: 5;" text="My works &amp; My Drafts" />
+                                <Button fx:id="colab_sent_received_button" mnemonicParsing="false" onAction="#handle_colab_sent_received" prefHeight="30.0" prefWidth="230.0" style="-fx-background-color: #F8E9D4; -fx-background-radius: 5;" text="Colab Sent &amp; Received" />
+                                <Button fx:id="groups_joined_owned_button" mnemonicParsing="false" onAction="#handle_groups_joined_owned" prefHeight="30.0" prefWidth="230.0" style="-fx-background-color: #F8E9D4; -fx-background-radius: 5;" text="Groups Joined &amp; Owned" />
+                            </children>
+                        </HBox>
+                        <VBox fx:id="vbox_container" alignment="TOP_CENTER" maxHeight="-Infinity" minHeight="-Infinity" prefHeight="390.0" prefWidth="100.0" />
+                    </children>
+                </VBox>
+            </children>
+        </VBox>
+    </center>
 </BorderPane>

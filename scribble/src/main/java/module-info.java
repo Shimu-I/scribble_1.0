@@ -13,4 +13,6 @@ module com.example.scribble {
     // Allow other modules to use these public classes
     exports com.example.scribble;
     exports com.example.scribble.communityChat.chat;
+
+
 }
