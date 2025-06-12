@@ -3,294 +3,333 @@ package com.example.scribble;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
-import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
-
 import java.io.IOException;
-import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
-public class author_profile__c implements nav_bar__cAware {
-
+public class author_profile__c {
     private static final Logger LOGGER = Logger.getLogger(author_profile__c.class.getName());
 
+    @FXML private Button back_button;
     @FXML private ImageView cover_photo;
     @FXML private Label author_name;
     @FXML private Label author_email;
     @FXML private Label joined_at;
     @FXML private Label total_number_of_author_works;
+    @FXML private VBox all_button_work;
     @FXML private VBox vbox_container;
-    @FXML private Button back_button;
+    @FXML private HBox book_card_container;
+    @FXML private HBox book_card_hbox;
+    @FXML private ImageView book_cover;
+    @FXML private VBox label_vbox;
+    @FXML private Label book_name;
+    @FXML private Label post_on_date;
 
-    private int authorId;
-    private int userId;
-    private int previousBookId; // Store the bookId to return to
-    private boolean userIdSetExternally = false;
-
+    private int authorId = 0;
+    private int bookId = 0;
     private nav_bar__c mainController;
+    private Author author;
+    private List<Book> books;
+
+    // Database connection
+    private final db_connect db_connect = new db_connect();
+
+    // Setters
+    public void setAuthorId(int authorId) {
+        this.authorId = authorId;
+        LOGGER.info("setAuthorId called with authorId: " + authorId);
+        if (authorId > 0) {
+            fetchAuthorData();
+            fetchAuthorBooks();
+            displayAuthorData();
+            displayAuthorBooks();
+        }
+    }
+
+    public void setBookId(int bookId) {
+        this.bookId = bookId;
+        LOGGER.info("setBookId called with bookId: " + bookId);
+    }
+
+    public void setMainController(nav_bar__c mainController) {
+        this.mainController = mainController;
+        LOGGER.info("setMainController called with mainController: " + (mainController != null ? "non-null" : "null"));
+    }
 
     @FXML
     public void initialize() {
-        if (!userIdSetExternally) {
-            userId = UserSession.getInstance().getUserId();
-            LOGGER.info("Using UserSession userId: " + userId);
-        }
+        LOGGER.info("Initializing author_profile__c for authorId: " + authorId + ", bookId: " + bookId);
 
-        if (userId == 0) {
-            showAlert("Error", "No user specified");
+        // Log each FXML element to identify null injections
+        logFXMLInjections();
+
+        // Verify FXML injections
+        if (back_button == null || cover_photo == null || author_name == null || author_email == null ||
+                joined_at == null || total_number_of_author_works == null || all_button_work == null ||
+                vbox_container == null || book_card_container == null || book_card_hbox == null ||
+                book_cover == null || label_vbox == null || book_name == null || post_on_date == null) {
+            LOGGER.severe("One or more FXML elements are null. Check fx:id mappings in author_profile.fxml");
+            showAlert(Alert.AlertType.ERROR, "Initialization Error", "Failed to initialize author profile UI.");
             return;
         }
 
-        loadAuthorInfo();
-        populateAuthorWorks();
-    }
-
-    public void setUserId(int userId) {
-        this.userId = userId;
-        this.userIdSetExternally = true;
-        LOGGER.info("setUserId called with user_id: " + userId);
-        if (author_name != null) {
-            loadAuthorInfo();
-            populateAuthorWorks();
+        // Defer data fetching until setAuthorId is called
+        if (authorId <= 0) {
+            LOGGER.info("Waiting for valid authorId to fetch data");
+            author_name.setText("Loading...");
+            author_email.setText("");
+            joined_at.setText("");
+            total_number_of_author_works.setText("(0)");
         }
     }
 
-    public void setAuthorId(int authorId) {
-        this.authorId = authorId;
-        this.userId = authorId; // Sync userId with authorId
-        this.userIdSetExternally = true;
-        LOGGER.info("setAuthorId called with authorId: " + authorId + ", setting userId to " + userId);
-        if (author_name != null) {
-            loadAuthorInfo();
-            populateAuthorWorks();
+    private void logFXMLInjections() {
+        LOGGER.info("FXML Injection Status:");
+        LOGGER.info("back_button: " + (back_button != null ? "injected" : "null"));
+        LOGGER.info("cover_photo: " + (cover_photo != null ? "injected" : "null"));
+        LOGGER.info("author_name: " + (author_name != null ? "injected" : "null"));
+        LOGGER.info("author_email: " + (author_email != null ? "injected" : "null"));
+        LOGGER.info("joined_at: " + (joined_at != null ? "injected" : "null"));
+        LOGGER.info("total_number_of_author_works: " + (total_number_of_author_works != null ? "injected" : "null"));
+        LOGGER.info("all_button_work: " + (all_button_work != null ? "injected" : "null"));
+        LOGGER.info("vbox_container: " + (vbox_container != null ? "injected" : "null"));
+        LOGGER.info("book_card_container: " + (book_card_container != null ? "injected" : "null"));
+        LOGGER.info("book_card_hbox: " + (book_card_hbox != null ? "injected" : "null"));
+        LOGGER.info("book_cover: " + (book_cover != null ? "injected" : "null"));
+        LOGGER.info("label_vbox: " + (label_vbox != null ? "injected" : "null"));
+        LOGGER.info("book_name: " + (book_name != null ? "injected" : "null"));
+        LOGGER.info("post_on_date: " + (post_on_date != null ? "injected" : "null"));
+    }
+
+    private void fetchAuthorData() {
+        if (authorId <= 0) {
+            LOGGER.warning("Invalid authorId: " + authorId);
+            return;
         }
-    }
 
-    public void setPreviousBookId(int previousBookId) {
-        this.previousBookId = previousBookId;
-        LOGGER.info("setPreviousBookId called with bookId: " + previousBookId);
-    }
-
-    private void loadAuthorInfo() {
+        String sql = "SELECT user_id, username, email, profile_picture, created_at FROM users WHERE user_id = ?";
         try (Connection conn = db_connect.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(
-                     "SELECT username, email, created_at FROM users WHERE user_id = ?")) { // Removed profile_photo
-            stmt.setInt(1, userId);
-            ResultSet rs = stmt.executeQuery();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, authorId);
+            ResultSet rs = pstmt.executeQuery();
+            LOGGER.info("Executing query for authorId: " + authorId);
             if (rs.next()) {
-                author_name.setText(rs.getString("username"));
-                author_email.setText(rs.getString("email"));
-                String joinDate = new SimpleDateFormat("MMMM d, yyyy").format(rs.getTimestamp("created_at"));
-                joined_at.setText("Member since " + joinDate);
-
-                // Default image since profile_photo column is missing
-                cover_photo.setImage(new Image(getClass().getResource("/images/profiles/hollow_circle.png").toExternalForm()));
-                LOGGER.info("Loaded default profile photo for user_id " + userId + ": hollow_circle.png");
+                author = new Author(
+                        rs.getInt("user_id"),
+                        rs.getString("username"),
+                        rs.getString("email"),
+                        rs.getString("profile_picture"),
+                        rs.getTimestamp("created_at")
+                );
+                LOGGER.info("Found author: " + author.username + " (user_id: " + author.userId + ")");
             } else {
-                showAlert("Error", "User not found for ID: " + userId);
-                author_name.setText("Unknown User");
+                LOGGER.warning("No author found for authorId: " + authorId);
             }
         } catch (SQLException e) {
-            LOGGER.severe("Failed to load author info for user_id " + userId + ": " + e.getMessage());
-            showAlert("Error", "Failed to load author info: " + e.getMessage());
+            LOGGER.severe("Failed to fetch author data: " + e.getMessage());
         }
     }
 
-    private void populateAuthorWorks() {
-        vbox_container.getChildren().clear();
-        int worksCount = 0;
+    private void fetchAuthorBooks() {
+        if (authorId <= 0) {
+            LOGGER.warning("Invalid authorId: " + authorId);
+            return;
+        }
 
+        String sql = "SELECT b.book_id, b.title, b.cover_photo, b.created_at " +
+                "FROM books b JOIN book_authors ba ON b.book_id = ba.book_id " +
+                "WHERE ba.user_id = ? ORDER BY b.created_at DESC";
+        books = new ArrayList<>();
         try (Connection conn = db_connect.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(
-                     "SELECT b.book_id, b.title, b.cover_photo, b.created_at " +
-                             "FROM book_authors ba JOIN books b ON ba.book_id = b.book_id " +
-                             "WHERE ba.user_id = ? ORDER BY b.created_at DESC")) {
-            stmt.setInt(1, userId);
-            ResultSet rs = stmt.executeQuery();
-            HBox currentRow = null;
-            int columnCount = 0;
-
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, authorId);
+            ResultSet rs = pstmt.executeQuery();
+            LOGGER.info("Executing query for author books with authorId: " + authorId);
             while (rs.next()) {
-                if (columnCount == 0 || columnCount >= 3) {
-                    currentRow = new HBox();
-                    currentRow.setAlignment(Pos.CENTER_LEFT);
-                    currentRow.setSpacing(30.0);
-                    currentRow.setPadding(new Insets(0, 20.0, 0, 20.0));
-                    currentRow.setStyle("-fx-background-color: #005D4D;");
-                    vbox_container.getChildren().add(currentRow);
-                    columnCount = 0;
-                }
-
-                HBox bookCard = createBookCard(
+                Book book = new Book(
                         rs.getInt("book_id"),
                         rs.getString("title"),
                         rs.getString("cover_photo"),
-                        new SimpleDateFormat("dd/MM/yyyy").format(rs.getTimestamp("created_at"))
+                        rs.getTimestamp("created_at")
                 );
-                currentRow.getChildren().add(bookCard);
-                columnCount++;
-                worksCount++;
+                books.add(book);
+                LOGGER.info("Found book: " + book.title + " (book_id: " + book.bookId + ")");
             }
-
-            total_number_of_author_works.setText("(" + worksCount + ")");
-            LOGGER.info("Loaded " + worksCount + " author works for user_id " + userId);
+            if (books.isEmpty()) {
+                LOGGER.warning("No books found for authorId: " + authorId);
+            }
         } catch (SQLException e) {
-            LOGGER.severe("Failed to load author works for user_id " + userId + ": " + e.getMessage());
-            showAlert("Error", "Failed to load author works: " + e.getMessage());
+            LOGGER.severe("Failed to fetch author books: " + e.getMessage());
         }
     }
 
-    private HBox createBookCard(int bookId, String title, String coverPath, String date) {
-        HBox card = new HBox();
-        card.setAlignment(Pos.CENTER);
-        card.setStyle("-fx-background-color: #005D4D; -fx-border-color: white; -fx-border-radius: 5; -fx-background-radius: 5;");
-        card.setPrefHeight(154.0);
-        card.setPrefWidth(306.0);
-        card.setMaxHeight(Double.NEGATIVE_INFINITY);
-        card.setMaxWidth(Double.NEGATIVE_INFINITY);
-        card.setMinHeight(Double.NEGATIVE_INFINITY);
-        card.setMinWidth(Double.NEGATIVE_INFINITY);
-        card.setSpacing(10.0);
-
-        ImageView coverImage = new ImageView();
-        coverImage.setFitWidth(80.0);
-        coverImage.setFitHeight(118.0);
-        coverImage.setPreserveRatio(true);
-        coverImage.setPickOnBounds(true);
-        if (coverPath != null && !coverPath.isEmpty()) {
-            try {
-                URL url = getClass().getResource("/images/book_covers/" + coverPath);
-                if (url == null) {
-                    LOGGER.warning("Book cover URL not found: /images/book_covers/" + coverPath);
-                }
-                coverImage.setImage(new Image(url.toExternalForm()));
-                LOGGER.info("Loaded book cover for book_id " + bookId + ": " + coverPath);
-            } catch (Exception e) {
-                LOGGER.warning("Book cover not found for book_id " + bookId + ": " + coverPath + ", error: " + e.getMessage());
-                coverImage.setImage(new Image(getClass().getResource("/images/book_covers/hollow_rectangle.png").toExternalForm()));
-            }
-        } else {
-            coverImage.setImage(new Image(getClass().getResource("/images/book_covers/hollow_rectangle.png").toExternalForm()));
-            LOGGER.info("Loaded default book cover for book_id " + bookId + ": hollow_rectangle.png");
-        }
-
-        coverImage.setOnMouseClicked(event -> openBook(bookId));
-
-        VBox textBox = new VBox();
-        textBox.setStyle("-fx-background-color: transparent;");
-        textBox.setMaxHeight(Double.NEGATIVE_INFINITY);
-        textBox.setMaxWidth(Double.NEGATIVE_INFINITY);
-        textBox.setMinHeight(Double.NEGATIVE_INFINITY);
-        textBox.setMinWidth(Double.NEGATIVE_INFINITY);
-        textBox.setPrefHeight(114.0);
-        textBox.setPrefWidth(182.0);
-        textBox.setSpacing(5.0);
-        textBox.setPadding(new Insets(0, 10.0, 0, 10.0));
-        textBox.setAlignment(Pos.CENTER);
-
-        Label titleLabel = new Label(title);
-        titleLabel.setMaxHeight(Double.NEGATIVE_INFINITY);
-        titleLabel.setMaxWidth(Double.NEGATIVE_INFINITY);
-        titleLabel.setMinWidth(Double.NEGATIVE_INFINITY);
-        titleLabel.setPrefHeight(57.0);
-        titleLabel.setPrefWidth(122.0);
-        titleLabel.setTextFill(javafx.scene.paint.Color.WHITE);
-        titleLabel.setWrapText(true);
-        titleLabel.setFont(Font.font("System", FontWeight.BOLD, 18.0));
-
-        Label dateLabel = new Label("posted on " + date);
-        dateLabel.setPrefHeight(42.0);
-        dateLabel.setPrefWidth(160.0);
-        dateLabel.setTextAlignment(TextAlignment.CENTER);
-        dateLabel.setTextFill(javafx.scene.paint.Color.WHITE);
-        dateLabel.setWrapText(true);
-        dateLabel.setFont(new Font(12.0));
-
-        textBox.getChildren().addAll(titleLabel, dateLabel);
-        card.getChildren().addAll(coverImage, textBox);
-
-        LOGGER.info("Created book card for book_id: " + bookId);
-        return card;
-    }
-
-    private void openBook(int bookId) {
-        if (mainController == null) {
-            showAlert("Error", "Navigation failed: mainController is null");
+    private void displayAuthorData() {
+        if (author == null) {
+            LOGGER.warning("No author data to display for authorId: " + authorId);
+            author_name.setText("Unknown Author");
+            author_email.setText("N/A");
+            joined_at.setText("N/A");
             return;
         }
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/read_book__c.fxml"));
-            Parent readBookPage = loader.load();
-            read_book__c readBookController = loader.getController();
-            readBookController.setBookId(bookId);
-            mainController.loadFXML(String.valueOf(readBookPage)); // Adjust based on nav_bar__c implementation
-            Stage stage = (Stage) cover_photo.getScene().getWindow();
-            stage.setResizable(true);
-            LOGGER.info("Navigated to read_book__c.fxml for book_id: " + bookId);
-        } catch (IOException e) {
-            LOGGER.severe("Failed to open book_id " + bookId + ": " + e.getMessage());
-            showAlert("Error", "Failed to open book: " + e.getMessage());
+
+        author_name.setText(author.username);
+        author_email.setText(author.email);
+        SimpleDateFormat sdf = new SimpleDateFormat("MMMM d, yyyy");
+        joined_at.setText("Member since " + sdf.format(author.createdAt));
+
+        if (author.profilePicture != null && !author.profilePicture.isEmpty()) {
+            try {
+                cover_photo.setImage(new Image(getClass().getResource("/images/profiles/" + author.profilePicture).toExternalForm()));
+            } catch (Exception e) {
+                LOGGER.warning("Failed to load profile picture: " + author.profilePicture);
+                cover_photo.setImage(new Image(getClass().getResource("/images/profiles/hollow_circle.png").toExternalForm()));
+            }
+        }
+    }
+
+    private void displayAuthorBooks() {
+        if (books == null) {
+            books = new ArrayList<>();
+        }
+        total_number_of_author_works.setText("(" + books.size() + ")");
+
+        book_card_container.getChildren().clear();
+
+        for (Book book : books) {
+            // Clone the template book card structure
+            HBox bookHBox = new HBox();
+            bookHBox.setAlignment(javafx.geometry.Pos.CENTER);
+
+
+            bookHBox.setPrefSize(306, 154);
+            bookHBox.setMaxSize(306, 154);
+            bookHBox.setMinSize(306, 154);
+            bookHBox.setStyle("-fx-background-color: #005D4D; -fx-background-radius: 5; -fx-border-color: #FFFFFF; -fx-border-radius: 5;");
+
+            ImageView bookCover = new ImageView();
+            bookCover.setFitHeight(118.0);
+            bookCover.setFitWidth(80.0);
+            bookCover.setPickOnBounds(true);
+            bookCover.setPreserveRatio(true);
+            if (book.coverPhoto != null && !book.coverPhoto.isEmpty()) {
+                try {
+                    bookCover.setImage(new Image(getClass().getResource("/images/book_covers/" + book.coverPhoto).toExternalForm()));
+                } catch (Exception e) {
+                    LOGGER.warning("Failed to load book cover: " + book.coverPhoto);
+                    bookCover.setImage(new Image(getClass().getResource("/images/book_covers/hollow_rectangle.png").toExternalForm()));
+                }
+            }
+
+            VBox labelVBox = new VBox();
+
+
+            labelVBox.setPrefSize(182, 114);
+            labelVBox.setMaxSize(182, 114);
+            labelVBox.setMinSize(182, 114);
+
+            labelVBox.setSpacing(5.0);
+            labelVBox.setPadding(new javafx.geometry.Insets(0, 10, 0, 10));
+
+            Label bookName = new Label(book.title);
+            bookName.setPrefHeight(57.0);
+            bookName.setPrefWidth(122.0);
+            bookName.setWrapText(true);
+            bookName.setTextFill(javafx.scene.paint.Color.WHITE);
+            bookName.setFont(javafx.scene.text.Font.font("System", javafx.scene.text.FontWeight.BOLD, 18));
+
+            Label postDate = new Label("Posted on " + new SimpleDateFormat("dd/MM/yyyy").format(book.createdAt));
+            postDate.setPrefHeight(42.0);
+            postDate.setPrefWidth(160.0);
+            postDate.setWrapText(true);
+            postDate.setTextFill(javafx.scene.paint.Color.WHITE);
+            postDate.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+
+            labelVBox.getChildren().addAll(bookName, postDate);
+            bookHBox.getChildren().addAll(bookCover, labelVBox);
+            book_card_container.getChildren().add(bookHBox);
         }
     }
 
     @FXML
     private void handle_back_button(ActionEvent event) {
-        if (mainController != null) {
-            try {
-                if (previousBookId == 0) {
-                    LOGGER.warning("No previous bookId set, using default 1");
-                    previousBookId = 1; // Fallback if not set
-                }
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/read_book__c.fxml"));
-                Parent readBookPage = loader.load();
-                read_book__c readBookController = loader.getController();
-                readBookController.setBookId(previousBookId);
-                mainController.loadFXML(String.valueOf(readBookPage));
-                LOGGER.info("Navigated back to read_book__c.fxml for bookId: " + previousBookId + " from author profile for authorId: " + authorId);
-            } catch (IOException e) {
-                LOGGER.severe("Failed to navigate back to read_book__c.fxml: " + e.getMessage());
-                showAlert("Error", "Failed to navigate back: " + e.getMessage());
+        try {
+            // Store bookId in AppState
+            AppState.getInstance().setCurrentBookId(bookId > 0 ? bookId : 1);
+            LOGGER.info("Stored bookId in AppState: " + (bookId > 0 ? bookId : 1));
+
+            if (mainController != null) {
+                mainController.loadFXML("read_book.fxml");
+                LOGGER.info("Navigated back to read_book__c for authorId: " + authorId + ", bookId: " + bookId);
+            } else {
+                LOGGER.warning("mainController is null, falling back to direct navigation");
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/read_book.fxml"));
+                Parent content = loader.load();
+                read_book__c controller = loader.getController();
+                controller.setBookId(bookId > 0 ? bookId : 1);
+                controller.setMainController(mainController);
+                Scene scene = new Scene(content);
+                Stage stage = (Stage) back_button.getScene().getWindow();
+                stage.setScene(scene);
+                LOGGER.info("Navigated back to read_book__c for authorId: " + authorId + ", bookId: " + (bookId > 0 ? bookId : 1));
             }
-        } else {
-            LOGGER.warning("Cannot navigate back: mainController is null");
-            showAlert("Error", "Navigation failed: mainController is null");
+        } catch (IOException e) {
+            LOGGER.severe("Failed to navigate back: " + e.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Navigation Error", "Failed to navigate back.");
         }
     }
 
-    @Override
-    public void setMainController(nav_bar__c mainController) {
-        this.mainController = mainController;
-        LOGGER.info("setMainController called with: " + (mainController != null ? "set" : "null"));
-        // Apply background color
-        BorderPane root = (BorderPane) back_button.getScene().getRoot();
-        if (root != null) {
-            root.setStyle("-fx-background-color: #005D4D;");
-        }
-    }
-
-    private void showAlert(String title, String content) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
+    private void showAlert(Alert.AlertType alertType, String title, String message) {
+        Alert alert = new Alert(alertType);
         alert.setTitle(title);
         alert.setHeaderText(null);
-        alert.setContentText(content);
+        alert.setContentText(message);
         alert.showAndWait();
+    }
+
+    // Inner classes for data
+    private static class Author {
+        int userId;
+        String username;
+        String email;
+        String profilePicture;
+        java.sql.Timestamp createdAt;
+
+        Author(int userId, String username, String email, String profilePicture, java.sql.Timestamp createdAt) {
+            this.userId = userId;
+            this.username = username;
+            this.email = email;
+            this.profilePicture = profilePicture;
+            this.createdAt = createdAt;
+        }
+    }
+
+    private static class Book {
+        int bookId;
+        String title;
+        String coverPhoto;
+        java.sql.Timestamp createdAt;
+
+        Book(int bookId, String title, String coverPhoto, java.sql.Timestamp createdAt) {
+            this.bookId = bookId;
+            this.title = title;
+            this.coverPhoto = coverPhoto;
+            this.createdAt = createdAt;
+        }
     }
 }

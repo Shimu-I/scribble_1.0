@@ -93,16 +93,16 @@
                      <children>
                         <ScrollPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="239.0" prefWidth="1018.0" style="-fx-background-color: transparent;">
                            <content>
-                              <HBox alignment="CENTER_LEFT" prefHeight="220.0" prefWidth="1158.0" spacing="30.0" style="-fx-background-color: #005D4D;">
+                              <HBox fx:id="book_card_container" alignment="CENTER_LEFT" prefHeight="220.0" prefWidth="1158.0" spacing="30.0" style="-fx-background-color: #005D4D;">
                                  <children>
-                                    <HBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="154.0" prefWidth="306.0" style="-fx-background-color: # #005D4D; -fx-background-radius: 5; -fx-border-color: #fff; -fx-border-radius: 5;">
+                                    <HBox fx:id="book_card_hbox" alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="154.0" prefWidth="306.0" style="-fx-background-color: # #005D4D; -fx-background-radius: 5; -fx-border-color: #fff; -fx-border-radius: 5;">
                                        <children>
                                           <ImageView fx:id="book_cover" fitHeight="118.0" fitWidth="80.0" pickOnBounds="true" preserveRatio="true">
                                              <image>
                                                 <Image url="@../../../images/book_covers/hollow_rectangle.png" />
                                              </image>
                                           </ImageView>
-                                          <VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="114.0" prefWidth="182.0" spacing="5.0">
+                                          <VBox fx:id="label_vbox" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="114.0" prefWidth="182.0" spacing="5.0">
                                              <children>
                                                 <Label fx:id="book_name" maxHeight="-Infinity" maxWidth="-Infinity" minWidth="-Infinity" prefHeight="57.0" prefWidth="122.0" text="Book name 1&#10;lojse" textFill="WHITE" wrapText="true">
                                                    <font>

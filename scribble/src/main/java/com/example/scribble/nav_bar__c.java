@@ -226,9 +226,6 @@ public class nav_bar__c {
             } else if (controller instanceof read_book__c) {
                 System.out.println("Injecting main controller into read_book__c");
                 ((read_book__c) controller).setMainController(this);
-            } else if (controller instanceof support_author__c) {
-                System.out.println("Injecting main controller into support_author__c");
-                ((support_author__c) controller).setMainController(this);
             } else if (controller instanceof home__con) {
                 System.out.println("Injecting main controller into home__con");
                 ((home__con) controller).setMainController(this);
@@ -238,6 +235,12 @@ public class nav_bar__c {
             } else if (controller instanceof profile__c) {
                 System.out.println("Injecting main controller into profile__c");
                 ((profile__c) controller).setMainController(this);
+            } else if (controller instanceof author_profile__c) {
+                System.out.println("Injecting main controller into author_profile__c");
+                ((author_profile__c) controller).setMainController(this);
+            } else if (controller instanceof support_author__c) {
+                System.out.println("Injecting main controller into support_author__c");
+                ((support_author__c) controller).setMainController(this);
             } else {
                 System.out.println("No matching controller for " + fxmlFile);
             }

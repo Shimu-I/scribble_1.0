@@ -52,6 +52,20 @@ public class read_book__c {
             LOGGER.severe("ratingComboBox is null");
         }
 
+        // Proceed with initialization
+        isAuthorOrCoAuthor = isUserAuthorOrCoAuthor();
+        checkNullElements();
+        if (bookId > 0) {
+            fetchBookDetails();
+            loadChapters();
+            loadComments();
+            loadDrafts();
+            updateViewCount();
+        } else {
+            LOGGER.warning("No valid bookId set, using default behavior.");
+            setDefaultLabels();
+        }
+
 
         checkNullElements();
         updateAddChapterButtonVisibility();
@@ -112,6 +126,11 @@ public class read_book__c {
         this.bookId = bookId;
         LOGGER.info("setBookId called with bookId: " + bookId);
         isAuthorOrCoAuthor = isUserAuthorOrCoAuthor();
+        if (bookId <= 0) {
+            LOGGER.warning("Invalid bookId: " + bookId + ". Using default behavior.");
+            setDefaultLabels();
+            return;
+        }
         fetchBookDetails();
         loadChapters();
         loadComments();
@@ -1000,24 +1019,39 @@ public class read_book__c {
 
     @FXML
     private void handleAuthorProfile(ActionEvent event) {
-        if (authorId == 0) {
-            showAlert(Alert.AlertType.ERROR, "Error", "Author not found for this book.");
-            LOGGER.warning("No author ID set for bookId: " + bookId);
+        if (!UserSession.getInstance().isLoggedIn()) {
+            showAlert(Alert.AlertType.WARNING, "Login Required", "Please log in to view the author profile.");
+            LOGGER.warning("Access to author profile denied: User not logged in for bookId: " + bookId);
             return;
         }
+
+        if (authorId <= 0) {
+            showAlert(Alert.AlertType.ERROR, "Error", "Author not found for this book.");
+            LOGGER.severe("Invalid authorId: " + authorId + " for bookId: " + bookId);
+            return;
+        }
+
         try {
+            // Store bookId in AppState
+            AppState.getInstance().setCurrentBookId(bookId);
+            LOGGER.info("Stored bookId in AppState: " + bookId);
+
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/author_profile.fxml"));
             Parent content = loader.load();
             author_profile__c controller = loader.getController();
-            controller.setAuthorId(authorId); // Pass the author ID to the controller
+            controller.setAuthorId(authorId);
+            controller.setBookId(bookId);
+            LOGGER.info("Navigating to author_profile__c with authorId: " + authorId + ", bookId: " + bookId);
             if (mainController != null) {
+                controller.setMainController(mainController);
                 mainController.getCenterPane().getChildren().setAll(content);
                 LOGGER.info("Navigated to author profile for authorId: " + authorId + " via mainController");
             } else {
+                controller.setMainController(null);
                 Scene scene = new Scene(content);
                 Stage stage = (Stage) author_profile.getScene().getWindow();
                 stage.setScene(scene);
-                LOGGER.info("Navigated to author profile for authorId: " + authorId);
+                LOGGER.info("Navigated to author profile for authorId: " + authorId + " via stage");
             }
         } catch (IOException e) {
             LOGGER.severe("Failed to load author_profile.fxml: " + e.getMessage());
