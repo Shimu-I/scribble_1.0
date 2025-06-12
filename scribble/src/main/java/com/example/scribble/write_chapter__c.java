@@ -5,6 +5,12 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import java.sql.*;
 import java.util.logging.Logger;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import java.io.IOException;
+import java.sql.*;
 
 public class write_chapter__c {
     private static final Logger LOGGER = Logger.getLogger(write_chapter__c.class.getName());
@@ -268,11 +274,118 @@ public class write_chapter__c {
         this.bookName = title;
     }
 
+    @FXML
     public void handle_back_button(ActionEvent actionEvent) {
-        if (mainController != null) {
-            mainController.loadFXML("write.fxml");
+        if (mainController == null) {
+            LOGGER.severe("Main controller is null, cannot navigate back from write_chapter__c");
+            showAlert("Error", "Navigation failed: main controller is not initialized.");
+            return;
+        }
+
+        // Try to load the previous chapter
+        int previousChapterNumber = chapterNumber - 1;
+        if (previousChapterNumber >= 1 && doesChapterOrDraftExist(bookId, previousChapterNumber)) {
+            // Update UI for previous chapter
+            chapterNumber = previousChapterNumber;
+            if (chapter_no != null) {
+                chapter_no.setText("Chapter " + chapterNumber);
+            }
+            writing_space.setText(""); // Clear current content
+            loadChapterOrDraftContent(); // Load previous chapter or draft
+            LOGGER.info("Loaded previous chapter " + chapterNumber + " for bookId: " + bookId);
+        } else {
+            // No previous chapter, navigate to write.fxml
+            try {
+                AppState.getInstance().setCurrentBookId(bookId);
+                AppState.getInstance().setPreviousFXML("/com/example/scribble/write_chapter.fxml");
+                LOGGER.info("Stored in AppState: bookId=" + bookId + ", previousFXML=write_chapter.fxml");
+
+                String fxmlFile = "/com/example/scribble/write.fxml";
+                FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlFile));
+                Parent page = loader.load();
+                write__c writeController = loader.getController();
+                writeController.setMainController(mainController);
+                writeController.setBookId(bookId);
+                mainController.getCenterPane().getChildren().setAll(page);
+                LOGGER.info("Navigated back to write.fxml with bookId: " + bookId);
+            } catch (IOException e) {
+                LOGGER.severe("Failed to navigate back to write.fxml: " + e.getMessage());
+                showAlert("Error", "Failed to navigate back: " + e.getMessage());
+            }
         }
     }
+
+    private boolean doesChapterOrDraftExist(int bookId, int chapterNumber) {
+        // Check chapters table
+        String chapterQuery = "SELECT COUNT(*) FROM chapters WHERE book_id = ? AND chapter_number = ?";
+        try (Connection conn = db_connect.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(chapterQuery)) {
+            stmt.setInt(1, bookId);
+            stmt.setInt(2, chapterNumber);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next() && rs.getInt(1) > 0) {
+                return true;
+            }
+        } catch (SQLException e) {
+            LOGGER.warning("Failed to check chapters table: " + e.getMessage());
+        }
+
+        // Check draft_chapters table
+        String draftQuery = "SELECT COUNT(*) FROM draft_chapters WHERE book_id = ? AND chapter_number = ? AND author_id = ?";
+        try (Connection conn = db_connect.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(draftQuery)) {
+            stmt.setInt(1, bookId);
+            stmt.setInt(2, chapterNumber);
+            stmt.setInt(3, authorId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next() && rs.getInt(1) > 0) {
+                return true;
+            }
+        } catch (SQLException e) {
+            LOGGER.warning("Failed to check draft_chapters table: " + e.getMessage());
+        }
+        return false;
+    }
+
+    private void loadChapterOrDraftContent() {
+        // Try loading from chapters table first
+        String chapterQuery = "SELECT content FROM chapters WHERE book_id = ? AND chapter_number = ?";
+        try (Connection conn = db_connect.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(chapterQuery)) {
+            stmt.setInt(1, bookId);
+            stmt.setInt(2, chapterNumber);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                writing_space.setText(rs.getString("content"));
+                showAlert("Info", "Loaded chapter " + chapterNumber + " from published chapters.");
+                return;
+            }
+        } catch (SQLException e) {
+            LOGGER.warning("Failed to load chapter content: " + e.getMessage());
+        }
+
+        // Try loading from draft_chapters
+        String draftQuery = "SELECT content FROM draft_chapters WHERE book_id = ? AND chapter_number = ? AND author_id = ?";
+        try (Connection conn = db_connect.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(draftQuery)) {
+            stmt.setInt(1, bookId);
+            stmt.setInt(2, chapterNumber);
+            stmt.setInt(3, authorId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                writing_space.setText(rs.getString("content"));
+                showAlert("Info", "Loaded draft for chapter " + chapterNumber + ".");
+                return;
+            }
+        } catch (SQLException e) {
+            LOGGER.warning("Failed to load draft content: " + e.getMessage());
+        }
+
+        // No content found
+        writing_space.setText("");
+        showAlert("Info", "No content found for chapter " + chapterNumber + ". Start writing!");
+    }
+
 
     public void setDraftId(int draftId) {
         String query = "SELECT book_id, chapter_number, author_id, content FROM draft_chapters WHERE draft_id = ?";

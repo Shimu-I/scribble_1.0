@@ -28,11 +28,15 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.concurrent.atomic.AtomicReference;
+import java.sql.*;
+import java.util.logging.Logger;
 
 public class write__c {
 
     @FXML
     public BorderPane rootPane;
+
+    private static final Logger LOGGER = Logger.getLogger(write__c.class.getName());
 
     @FXML
     public Button back_to_books;
@@ -236,7 +240,7 @@ public class write__c {
 
     @FXML
     private void handleWriteButton(ActionEvent event) {
-        System.out.println("Write button clicked");
+        LOGGER.info("Write button clicked");
         String title = book_title.getText();
         String description = book_description.getText();
         String genre = genreComboBox.getSelectionModel().getSelectedItem();
@@ -256,7 +260,7 @@ public class write__c {
         // Get user_id from UserSession
         UserSession session = UserSession.getInstance();
         if (!session.isLoggedIn()) {
-            showAlert("Error", "You must be logged in to create a book.");
+            showAlert("Error", "You must be logged in to create or edit a book.");
             navigateToSignIn();
             return;
         }
@@ -272,44 +276,55 @@ public class write__c {
             }
             conn.setAutoCommit(false); // Start transaction
 
-            // Insert into books table and get generated book_id
-            String bookSql = "INSERT INTO books (title, description, genre, status, cover_photo, view_count) " +
-                    "VALUES (?, ?, ?, ?, ?, 0)";
-            PreparedStatement bookPstmt = conn.prepareStatement(bookSql, PreparedStatement.RETURN_GENERATED_KEYS);
-            bookPstmt.setString(1, title);
-            bookPstmt.setString(2, description);
-            bookPstmt.setString(3, genre);
-            bookPstmt.setString(4, status);
-            bookPstmt.setString(5, coverPhoto); // May be null if no image was selected
-            bookPstmt.executeUpdate();
-
-            // Retrieve generated book_id
-            ResultSet generatedKeys = bookPstmt.getGeneratedKeys();
-            int bookId;
-            if (generatedKeys.next()) {
-                bookId = generatedKeys.getInt(1);
+            int bookId = AppState.getInstance().getCurrentBookId(); // Check if editing existing book
+            if (bookId > 0 && doesBookExist(bookId, conn)) {
+                // Update existing book
+                String updateSql = "UPDATE books SET title = ?, description = ?, genre = ?, status = ?, cover_photo = ? WHERE book_id = ?";
+                try (PreparedStatement stmt = conn.prepareStatement(updateSql)) {
+                    stmt.setString(1, title);
+                    stmt.setString(2, description);
+                    stmt.setString(3, genre);
+                    stmt.setString(4, status);
+                    stmt.setString(5, coverPhoto);
+                    stmt.setInt(6, bookId);
+                    stmt.executeUpdate();
+                }
+                conn.commit();
+                showAlert("Success", "Book updated successfully!");
             } else {
-                throw new SQLException("Failed to retrieve book_id.");
+                // Insert new book
+                String bookSql = "INSERT INTO books (title, description, genre, status, cover_photo, view_count) VALUES (?, ?, ?, ?, ?, 0)";
+                PreparedStatement bookPstmt = conn.prepareStatement(bookSql, PreparedStatement.RETURN_GENERATED_KEYS);
+                bookPstmt.setString(1, title);
+                bookPstmt.setString(2, description);
+                bookPstmt.setString(3, genre);
+                bookPstmt.setString(4, status);
+                bookPstmt.setString(5, coverPhoto);
+                bookPstmt.executeUpdate();
+
+                ResultSet generatedKeys = bookPstmt.getGeneratedKeys();
+                if (generatedKeys.next()) {
+                    bookId = generatedKeys.getInt(1);
+                } else {
+                    throw new SQLException("Failed to retrieve book_id.");
+                }
+
+                String authorSql = "INSERT INTO book_authors (book_id, user_id, role) VALUES (?, ?, 'Owner')";
+                try (PreparedStatement authorPstmt = conn.prepareStatement(authorSql)) {
+                    authorPstmt.setInt(1, bookId);
+                    authorPstmt.setInt(2, userId);
+                    authorPstmt.executeUpdate();
+                }
+                conn.commit();
+                showAlert("Success", "Book created successfully!");
             }
-
-            // Insert into book_authors table
-            String authorSql = "INSERT INTO book_authors (book_id, user_id, role) " +
-                    "VALUES (?, ?, 'Owner')";
-            PreparedStatement authorPstmt = conn.prepareStatement(authorSql);
-            authorPstmt.setInt(1, bookId);
-            authorPstmt.setInt(2, userId);
-            authorPstmt.executeUpdate();
-
-            conn.commit(); // Commit transaction
-            showAlert("Success", "Book created successfully!");
 
             // Navigate to chapter page
             navigateToChapterPage(bookId, title, userId);
-
             clearForm();
         } catch (SQLException e) {
             try {
-                conn.rollback(); // Roll back on error
+                if (conn != null) conn.rollback();
             } catch (SQLException rollbackEx) {
                 showAlert("Error", "Rollback failed: " + rollbackEx.getMessage());
             }
@@ -323,6 +338,15 @@ public class write__c {
                     showAlert("Error", "Failed to close connection: " + closeEx.getMessage());
                 }
             }
+        }
+    }
+
+    private boolean doesBookExist(int bookId, Connection conn) throws SQLException {
+        String query = "SELECT COUNT(*) FROM books WHERE book_id = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, bookId);
+            ResultSet rs = stmt.executeQuery();
+            return rs.next() && rs.getInt(1) > 0;
         }
     }
 
@@ -355,6 +379,60 @@ public class write__c {
         } else {
             System.err.println("Main controller is null in write__c.");
             showAlert("Error", "Cannot navigate to chapter page: Main controller is null.");
+        }
+    }
+
+
+    public void setBookId(int bookId) {
+        if (bookId <= 0) {
+            LOGGER.warning("Invalid bookId provided: " + bookId);
+            showAlert("Error", "Invalid book ID.");
+            return;
+        }
+        try (Connection conn = db_connect.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(
+                     "SELECT title, description, genre, status, cover_photo FROM books WHERE book_id = ?")) {
+            stmt.setInt(1, bookId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                if (book_title != null) {
+                    book_title.setText(rs.getString("title"));
+                }
+                if (book_description != null) {
+                    book_description.setText(rs.getString("description"));
+                }
+                if (genreComboBox != null) {
+                    genreComboBox.getSelectionModel().select(rs.getString("genre"));
+                }
+                if (statusComboBox != null) {
+                    statusComboBox.getSelectionModel().select(rs.getString("status"));
+                }
+                String coverPhoto = rs.getString("cover_photo");
+                if (coverPhoto != null && !coverPhoto.isEmpty() && bookCoverImageView != null) {
+                    try {
+                        String imagePath = "file:src/main/resources/images/book_covers/" + coverPhoto;
+                        Image image = new Image(imagePath);
+                        if (!image.isError()) {
+                            bookCoverImageView.setImage(image);
+                            coverPhotoPath = coverPhoto;
+                            Rectangle clip = new Rectangle(150, 222);
+                            clip.setArcWidth(30);
+                            clip.setArcHeight(30);
+                            bookCoverImageView.setClip(clip);
+                        } else {
+                            LOGGER.warning("Failed to load cover photo: " + coverPhoto);
+                        }
+                    } catch (Exception e) {
+                        LOGGER.warning("Failed to load cover photo: " + coverPhoto + " - " + e.getMessage());
+                    }
+                }
+                LOGGER.info("Loaded book details for bookId: " + bookId);
+            } else {
+                showAlert("Error", "Book not found for book_id: " + bookId);
+            }
+        } catch (SQLException e) {
+            LOGGER.severe("Failed to load book details for bookId: " + bookId + " - " + e.getMessage());
+            showAlert("Error", "Failed to load book details: " + e.getMessage());
         }
     }
 
