@@ -778,31 +778,41 @@ public class read_book__c {
     }
 
 
-
     @FXML
     private void handle_support_author(ActionEvent event) {
         if (!UserSession.getInstance().isLoggedIn()) {
             showAlert(Alert.AlertType.WARNING, "Login Required", "Please log in to support the author.");
             return;
         }
+
+        if (mainController == null) {
+            LOGGER.severe("Main controller is null, cannot navigate to support author page for bookId: " + bookId);
+            showAlert(Alert.AlertType.ERROR, "Error", "Navigation failed: main controller is not initialized.");
+            return;
+        }
+
         try {
+            // Store state in AppState
+            AppState.getInstance().setCurrentBookId(bookId);
+            AppState.getInstance().setPreviousFXML("/com/example/scribble/read_book.fxml");
+            LOGGER.info("Stored in AppState: bookId=" + bookId + ", previousFXML=read_book.fxml");
+
+            // Load support_author.fxml
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/support_author.fxml"));
             Parent content = loader.load();
-            if (mainController != null) {
-                mainController.getCenterPane().getChildren().setAll(content);
-                LOGGER.info("Navigated to support author page via mainController.");
-            } else {
-                Scene scene = new Scene(content);
-                Stage stage = (Stage) support_author_button.getScene().getWindow();
-                stage.setScene(scene);
-                LOGGER.info("Navigated to support author page.");
-            }
+            support_author__c supportAuthorController = loader.getController();
+            supportAuthorController.setMainController(mainController);
+            supportAuthorController.setBookId(bookId);
+            supportAuthorController.setUserId(UserSession.getInstance().getUserId());
+
+            // Update the center pane
+            mainController.getCenterPane().getChildren().setAll(content);
+            LOGGER.info("Navigated to support author page via mainController with bookId: " + bookId);
         } catch (IOException e) {
             LOGGER.severe("Failed to load support_author.fxml: " + e.getMessage());
-            showAlert(Alert.AlertType.ERROR, "Error", "Failed to open support page.");
+            showAlert(Alert.AlertType.ERROR, "Error", "Failed to open support page: " + e.getMessage());
         }
     }
-
 
 
     @FXML

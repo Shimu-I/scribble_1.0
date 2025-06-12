@@ -4,7 +4,6 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -16,8 +15,11 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.logging.Logger;
 
 public class support_author__c {
+
+    private static final Logger LOGGER = Logger.getLogger(support_author__c.class.getName());
 
     @FXML
     public Label author_name;       // Matches fx:id="author_name"
@@ -94,26 +96,47 @@ public class support_author__c {
         } catch (NumberFormatException e) {
             showAlert("Error", "Please enter a valid number for flowers.");
         } catch (Exception e) {
+            LOGGER.severe("Unexpected error in handleSendButton: " + e.getMessage());
             showAlert("Error", "An unexpected error occurred: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
     @FXML
-    public void handle_back_button(ActionEvent actionEvent) {
-        if (mainController != null) {
-            mainController.loadFXML("read_book.fxml");
-        } else {
-            // Fallback: Load read_book.fxml directly
-            try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("read_book.fxml"));
-                Parent root = loader.load();
-                Scene scene = back_button.getScene();
-                scene.setRoot(root);
-            } catch (IOException e) {
-                e.printStackTrace();
-                showAlert("Error", "Failed to go back: " + e.getMessage());
+    private void handle_back_button(ActionEvent actionEvent) {
+        if (mainController == null) {
+            LOGGER.severe("Main controller is null, cannot navigate back from support author page");
+            showAlert("Error", "Navigation failed: main controller is not initialized.");
+            return;
+        }
+
+        try {
+            // Retrieve previous FXML and bookId from AppState
+            String previousFXML = AppState.getInstance().getPreviousFXML();
+            int currentBookId = AppState.getInstance().getCurrentBookId();
+            LOGGER.info("Navigating back to: " + previousFXML + " with bookId: " + currentBookId);
+
+            if (previousFXML == null || previousFXML.isEmpty()) {
+                previousFXML = "/com/example/scribble/read_book.fxml"; // Fallback
+                LOGGER.warning("No previous FXML set in AppState, using default: " + previousFXML);
             }
+
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(previousFXML));
+            Parent page = loader.load();
+            Object controller = loader.getController();
+
+            // Set bookId and mainController on the target controller
+            if (controller instanceof read_book__c readBookController) {
+                readBookController.setBookId(currentBookId);
+                readBookController.setMainController(mainController);
+            } else {
+                LOGGER.warning("Unexpected controller type for " + previousFXML);
+            }
+
+            mainController.getCenterPane().getChildren().setAll(page);
+            LOGGER.info("Navigated back to " + previousFXML + " with bookId: " + currentBookId);
+        } catch (IOException e) {
+            LOGGER.severe("Failed to navigate back to " + AppState.getInstance().getPreviousFXML() + ": " + e.getMessage());
+            showAlert("Error", "Failed to navigate back: " + e.getMessage());
         }
     }
 
@@ -130,11 +153,11 @@ public class support_author__c {
             pstmt.setDouble(3, amount);
             pstmt.setString(4, message.isEmpty() ? null : message);
             int rowsAffected = pstmt.executeUpdate();
+            LOGGER.info("Support saved to database: userId=" + userId + ", authorId=" + authorId + ", amount=" + amount);
             return rowsAffected > 0;
         } catch (SQLException e) {
+            LOGGER.severe("Database error in saveSupportToDatabase: " + e.getMessage());
             showAlert("Error", "Database error: " + e.getMessage());
-            System.err.println("Database error: " + e.getMessage());
-            e.printStackTrace();
             return false;
         }
     }
@@ -195,7 +218,8 @@ public class support_author__c {
     }
 
     private void showAlert(String title, String content) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        Alert.AlertType alertType = title.equals("Error") ? Alert.AlertType.ERROR : Alert.AlertType.INFORMATION;
+        Alert alert = new Alert(alertType);
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(content);
@@ -205,20 +229,24 @@ public class support_author__c {
     private void updateAuthorName() {
         if (bookId <= 0) {
             author_name.setText("for Unknown Author");
+            LOGGER.warning("No valid bookId provided for author name update");
             return;
         }
         authorId = getAuthorIdFromBook(bookId);
         if (authorId != -1) {
             String authorName = getAuthorName(authorId);
             author_name.setText("for " + authorName);
+            LOGGER.info("Author name updated: " + authorName + " for bookId: " + bookId);
         } else {
             author_name.setText("for Unknown Author");
             showAlert("Warning", "Author not found for this book.");
+            LOGGER.warning("Author not found for bookId: " + bookId);
         }
     }
 
     private String getAuthorName(int authorId) {
         if (authorId <= 0) {
+            LOGGER.warning("Invalid authorId: " + authorId);
             return "Unknown Author";
         }
         String sql = "SELECT username FROM users WHERE user_id = ?";
@@ -228,17 +256,18 @@ public class support_author__c {
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
                 String username = rs.getString("username");
+                LOGGER.info("Fetched author username: " + username + " for authorId: " + authorId);
                 return username != null ? username : "Unknown Author";
             }
         } catch (SQLException e) {
-            System.err.println("Error fetching author username: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe("Error fetching author username: " + e.getMessage());
         }
         return "Unknown Author";
     }
 
     private int getAuthorIdFromBook(int bookId) {
         if (bookId <= 0) {
+            LOGGER.warning("Invalid bookId: " + bookId);
             return -1;
         }
         String sql = "SELECT user_id FROM book_authors WHERE book_id = ? AND role = 'Owner'";
@@ -247,21 +276,24 @@ public class support_author__c {
             pstmt.setInt(1, bookId);
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
-                return rs.getInt("user_id");
+                int authorId = rs.getInt("user_id");
+                LOGGER.info("Fetched authorId: " + authorId + " for bookId: " + bookId);
+                return authorId;
             }
         } catch (SQLException e) {
-            System.err.println("Error fetching author ID from book: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe("Error fetching author ID from book: " + e.getMessage());
         }
         return -1;
     }
 
     public void setUserId(int userId) {
         this.userId = userId;
+        LOGGER.info("User ID set: " + userId);
     }
 
     public void setBookId(int bookId) {
         this.bookId = bookId;
+        LOGGER.info("Book ID set: " + bookId);
         updateAuthorName();
     }
 }
