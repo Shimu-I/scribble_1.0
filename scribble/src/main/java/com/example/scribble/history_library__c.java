@@ -147,7 +147,7 @@ public class history_library__c implements nav_bar__cAware {
              PreparedStatement stmt = conn.prepareStatement(
                      "SELECT b.book_id, b.title, b.cover_photo, rl.added_at, rl.reading_status " +
                              "FROM reading_list rl JOIN books b ON rl.listed_book_id = b.book_id " +
-                             "WHERE rl.reader_id = ?")) {
+                             "WHERE rl.reader_id = ? ORDER BY rl.added_at DESC")) {
             stmt.setInt(1, userId);
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {

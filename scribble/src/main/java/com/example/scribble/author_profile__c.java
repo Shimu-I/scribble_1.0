@@ -212,7 +212,7 @@ public class author_profile__c {
             LOGGER.severe("Failed to fetch author books: " + e.getMessage());
         }
     }
-    
+
     private void displayAuthorData() {
         if (author == null) {
             LOGGER.warning("No author data to display for authorId: " + authorId);
