@@ -52,8 +52,6 @@ public class read_book__c {
             LOGGER.severe("ratingComboBox is null");
         }
 
-        // Proceed with initialization
-        isAuthorOrCoAuthor = isUserAuthorOrCoAuthor();
         checkNullElements();
         if (bookId > 0) {
             fetchBookDetails();
@@ -66,14 +64,12 @@ public class read_book__c {
             setDefaultLabels();
         }
 
-
         checkNullElements();
         updateAddChapterButtonVisibility();
         updateDraftContainerVisibility();
-
-
-
     }
+
+
 
     private void checkNullElements() {
         if (bookTitleLabel == null) LOGGER.severe("bookTitleLabel is null");
@@ -781,17 +777,7 @@ public class read_book__c {
         });
     }
 
-    @FXML
-    private void handle_back_button(ActionEvent event) {
-        shutdown();
-        if (mainController != null) {
-            mainController.loadFXML("reading_list.fxml");
-            LOGGER.info("Navigated back to reading list via mainController.");
-        } else {
-            LOGGER.severe("mainController is null, cannot navigate back to reading list.");
-            showAlert(Alert.AlertType.ERROR, "Navigation Error", "Main controller not set.");
-        }
-    }
+
 
     @FXML
     private void handle_support_author(ActionEvent event) {
@@ -1032,7 +1018,6 @@ public class read_book__c {
         }
 
         try {
-            // Store bookId in AppState
             AppState.getInstance().setCurrentBookId(bookId);
             LOGGER.info("Stored bookId in AppState: " + bookId);
 
@@ -1045,12 +1030,14 @@ public class read_book__c {
             if (mainController != null) {
                 controller.setMainController(mainController);
                 mainController.getCenterPane().getChildren().setAll(content);
+                shutdown(); // Close connection before navigating
                 LOGGER.info("Navigated to author profile for authorId: " + authorId + " via mainController");
             } else {
                 controller.setMainController(null);
                 Scene scene = new Scene(content);
                 Stage stage = (Stage) author_profile.getScene().getWindow();
                 stage.setScene(scene);
+                shutdown(); // Close connection before navigating
                 LOGGER.info("Navigated to author profile for authorId: " + authorId + " via stage");
             }
         } catch (IOException e) {
@@ -1059,6 +1046,17 @@ public class read_book__c {
         }
     }
 
+    @FXML
+    private void handle_back_button(ActionEvent event) {
+        shutdown();
+        if (mainController != null) {
+            mainController.loadFXML("reading_list.fxml");
+            LOGGER.info("Navigated back to reading list via mainController.");
+        } else {
+            LOGGER.severe("mainController is null, cannot navigate back to reading list.");
+            showAlert(Alert.AlertType.ERROR, "Navigation Error", "Main controller not set.");
+        }
+    }
     private void updateAddChapterButtonVisibility() {
         if (add_chapter != null) {
             add_chapter.setVisible(isAuthorOrCoAuthor);
