@@ -161,18 +161,26 @@
                      <children>
                         <VBox prefHeight="104.0" prefWidth="565.0" spacing="5.0">
                            <children>
-                              <HBox prefHeight="38.0" prefWidth="523.0" spacing="10.0">
+                              <HBox alignment="CENTER_LEFT" prefHeight="38.0" prefWidth="600.0" spacing="10.0">
                                  <children>
-                                    <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+                                    <ImageView fx:id="authorPhoto" fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
                                        <image>
                                           <Image url="@../../../images/icons/author.png" />
-                                       </image>
-                                    </ImageView>
-                                    <Button fx:id="author_profile" alignment="TOP_LEFT" mnemonicParsing="false" onAction="#handle_author_profile" prefHeight="35.0" prefWidth="115.0" style="-fx-background-color: transparent;" text="author_name" textFill="WHITE">
-                                       <font>
-                                          <Font size="14.0" />
-                                       </font>
-                                    </Button>
+                                       </image></ImageView>
+                                    <VBox fx:id="authorContainer" alignment="CENTER_LEFT" prefHeight="49.0" prefWidth="503.0">
+                                       <children>
+                                          <Button fx:id="author_profile" alignment="TOP_LEFT" maxHeight="-Infinity" minHeight="-Infinity" mnemonicParsing="false" onAction="#handleAuthorProfile" prefHeight="26.0" prefWidth="274.0" style="-fx-background-color: transparent; -fx-text-fill: #FFFFFF; -fx-font-size: 14; -fx-font-weight: bold;" text="author_name">
+                                             <font>
+                                                <Font name="System Bold" size="12.0" />
+                                             </font>
+                                          </Button>
+                                          <Label fx:id="co_author_names" prefHeight="18.0" prefWidth="474.0" text="co-authors: " textFill="WHITE">
+                                             <VBox.margin>
+                                                <Insets left="15.0" />
+                                             </VBox.margin>
+                                          </Label>
+                                       </children>
+                                    </VBox>
                                  </children>
                               </HBox>
                               <Label fx:id="book_description" alignment="TOP_LEFT" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="46.0" prefWidth="552.0" style="-fx-border-color: #fff; -fx-border-radius: 5;" text="books description............." textFill="WHITE" wrapText="true">
@@ -180,7 +188,7 @@
                                     <Insets bottom="2.0" left="35.0" right="35.0" top="2.0" />
                                  </padding>
                                  <VBox.margin>
-                                    <Insets left="10.0" />
+                                    <Insets />
                                  </VBox.margin>
                               </Label>
                            </children>
@@ -209,7 +217,7 @@
                                     <TextField fx:id="comment_box" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="30.0" prefWidth="432.0" promptText="type your comment" style="-fx-background-color: transparent; -fx-border-color: #fff; -fx-border-radius: 10; -fx-text-fill: #fff;" />
                                  </children>
                               </HBox>
-                              <ScrollPane fx:id="comment_scrollpane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="193.0" prefWidth="563.0" style="-fx-border-color: #fff; -fx-border-radius: 5; -fx-background-color: transparent;">
+                              <ScrollPane fx:id="comment_scrollpane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="193.0" prefWidth="565.0" style="-fx-border-color: #fff; -fx-border-radius: 5; -fx-background-color: transparent;">
                                  <content>
                                     <VBox fx:id="commentContainer" prefHeight="492.0" prefWidth="525.0" spacing="10.0" style="-fx-background-color: #005D4D;">
                                        <children>

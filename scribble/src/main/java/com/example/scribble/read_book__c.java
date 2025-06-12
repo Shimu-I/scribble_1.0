@@ -1,3 +1,4 @@
+
 package com.example.scribble;
 
 import javafx.event.ActionEvent;
@@ -29,11 +30,11 @@ public class read_book__c {
     private boolean isAuthorOrCoAuthor;
     private int authorId;
 
-    @FXML private Label bookTitleLabel, views, chapters, reads, avg_ratting, status, genre, book_description, user_name, user_comment, total_comments;
+    @FXML private Label bookTitleLabel, views, chapters, reads, avg_ratting, status, genre, book_description, user_name, user_comment, total_comments, co_author_names; // Ensure co_author_names is included
     @FXML private ComboBox<Integer> ratingComboBox;
     @FXML private Button read_now_button, support_author_button, request_collab_button, saved_books_button, author_profile, back_button, add_chapter, add_comment, add_draft;
-    @FXML private VBox chapterContainer, commentContainer, draftContainer;
-    @FXML private HBox authorContainer;
+    @FXML private VBox chapterContainer, commentContainer, draftContainer, authorContainer;
+    @FXML private HBox authorContainerHBox;
     @FXML private ImageView coverImage;
     @FXML private TextField comment_box;
 
@@ -196,39 +197,7 @@ public class read_book__c {
         if (coverImage != null) coverImage.setImage(null);
     }
 
-    private void loadAuthors() {
-        if (conn == null || author_profile == null || authorContainer == null) return;
-        authorContainer.getChildren().clear();
-        try (PreparedStatement stmt = conn.prepareStatement(
-                "SELECT u.user_id, u.username, ba.role FROM book_authors ba " +
-                        "JOIN users u ON ba.user_id = u.user_id WHERE ba.book_id = ?")) {
-            stmt.setInt(1, bookId);
-            ResultSet rs = stmt.executeQuery();
-            List<String> coAuthors = new ArrayList<>();
-            int ownerId = 0;
-            String ownerName = "Unknown";
-            while (rs.next()) {
-                String role = rs.getString("role");
-                String username = rs.getString("username");
-                if (role.equals("Owner")) {
-                    ownerId = rs.getInt("user_id");
-                    ownerName = username;
-                } else {
-                    coAuthors.add(username + " (co-author)");
-                }
-            }
-            author_profile.setText(ownerName + " (author)");
-            final int finalOwnerId = ownerId;
-            author_profile.setOnAction(e -> handleAuthorProfile(finalOwnerId));
-            for (String coAuthor : coAuthors) {
-                Label coAuthorLabel = new Label(coAuthor);
-                authorContainer.getChildren().add(coAuthorLabel);
-            }
-        } catch (SQLException e) {
-            LOGGER.severe("Error loading authors: " + e.getMessage());
-            author_profile.setText("Unknown (author)");
-        }
-    }
+
 
     private void loadComments() {
         if (conn == null || commentContainer == null) {
@@ -829,30 +798,7 @@ public class read_book__c {
         }
     }
 
-    private void handleAuthorProfile(int authorId) {
-        if (authorId == 0) {
-            showAlert(Alert.AlertType.ERROR, "Error", "Author not found for this book.");
-            return;
-        }
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/profile.fxml"));
-            Parent content = loader.load();
-            profile__c controller = loader.getController();
-            controller.setAuthorId(authorId);
-            if (mainController != null) {
-                mainController.getCenterPane().getChildren().setAll(content);
-                LOGGER.info("Navigated to author profile for authorId: " + authorId + " via mainController");
-            } else {
-                Scene scene = new Scene(content);
-                Stage stage = (Stage) author_profile.getScene().getWindow();
-                stage.setScene(scene);
-                LOGGER.info("Navigated to author profile for authorId: " + authorId);
-            }
-        } catch (IOException e) {
-            LOGGER.severe("Failed to load profile.fxml: " + e.getMessage());
-            showAlert(Alert.AlertType.ERROR, "Error", "Failed to open author profile.");
-        }
-    }
+
 
     @FXML
     private void handle_add_comment(ActionEvent event) {
@@ -1012,6 +958,73 @@ public class read_book__c {
         }
     }
 
+    private void loadAuthors() {
+        if (conn == null || author_profile == null || authorContainer == null) {
+            LOGGER.severe("Database connection or UI elements are null.");
+            return;
+        }
+        try (PreparedStatement stmt = conn.prepareStatement(
+                "SELECT u.user_id, u.username, ba.role FROM book_authors ba " +
+                        "JOIN users u ON ba.user_id = u.user_id WHERE ba.book_id = ?")) {
+            stmt.setInt(1, bookId);
+            ResultSet rs = stmt.executeQuery();
+            String authorName = "Unknown";
+            List<String> coAuthors = new ArrayList<>();
+            while (rs.next()) {
+                String role = rs.getString("role");
+                String username = rs.getString("username");
+                int userId = rs.getInt("user_id");
+                if (role.equals("Owner")) {
+                    authorName = username;
+                    authorId = userId; // Store the author's user ID
+                } else if (role.equals("Co-Author")) {
+                    coAuthors.add(username);
+                }
+            }
+            // Set author name on the button
+            author_profile.setText("Author: " + authorName);
+            // Set co-authors on the label
+            if (co_author_names != null) {
+                if (coAuthors.isEmpty()) {
+                    co_author_names.setText("Co-author: None");
+                } else {
+                    co_author_names.setText("Co-author: " + String.join(", ", coAuthors));
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.severe("Error loading authors: " + e.getMessage());
+            if (author_profile != null) author_profile.setText("Author: Unknown");
+            if (co_author_names != null) co_author_names.setText("Co-author: None");
+        }
+    }
+
+    @FXML
+    private void handleAuthorProfile(ActionEvent event) {
+        if (authorId == 0) {
+            showAlert(Alert.AlertType.ERROR, "Error", "Author not found for this book.");
+            LOGGER.warning("No author ID set for bookId: " + bookId);
+            return;
+        }
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/author_profile.fxml"));
+            Parent content = loader.load();
+            author_profile__c controller = loader.getController();
+            controller.setAuthorId(authorId); // Pass the author ID to the controller
+            if (mainController != null) {
+                mainController.getCenterPane().getChildren().setAll(content);
+                LOGGER.info("Navigated to author profile for authorId: " + authorId + " via mainController");
+            } else {
+                Scene scene = new Scene(content);
+                Stage stage = (Stage) author_profile.getScene().getWindow();
+                stage.setScene(scene);
+                LOGGER.info("Navigated to author profile for authorId: " + authorId);
+            }
+        } catch (IOException e) {
+            LOGGER.severe("Failed to load author_profile.fxml: " + e.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Error", "Failed to open author profile.");
+        }
+    }
+
     private void updateAddChapterButtonVisibility() {
         if (add_chapter != null) {
             add_chapter.setVisible(isAuthorOrCoAuthor);
@@ -1061,8 +1074,4 @@ public class read_book__c {
         }
     }
 
-    @FXML
-    private void handle_author_profile(ActionEvent actionEvent) {
-        handleAuthorProfile(authorId);
-    }
 }
