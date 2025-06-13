@@ -99,7 +99,7 @@ public class reading_list__c {
                 "FROM books b " +
                 "LEFT JOIN book_authors ba ON b.book_id = ba.book_id AND ba.role = 'Owner' " +
                 "LEFT JOIN users u ON ba.user_id = u.user_id " +
-                "WHERE LOWER(b.title) LIKE ? OR LOWER(b.genre) LIKE ? OR LOWER(b.description) LIKE ? " +
+                "WHERE LOWER(b.title) LIKE ? OR LOWER(b.genre) LIKE ? OR LOWER(b.description) LIKE ? OR LOWER(u.username) LIKE ? " +
                 "GROUP BY b.book_id, u.username";
 
         try (PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -108,6 +108,7 @@ public class reading_list__c {
                 pstmt.setString(1, pattern);
                 pstmt.setString(2, pattern);
                 pstmt.setString(3, pattern);
+                pstmt.setString(4, pattern);
             }
 
             try (ResultSet rs = pstmt.executeQuery()) {
