@@ -379,28 +379,47 @@ public class read_book__c {
             LOGGER.severe("Error loading drafts: " + e.getMessage());
         }
     }
+
     private void updateViewCount() {
-        if (conn == null || !UserSession.getInstance().isLoggedIn()) return;
+        if (conn == null || !UserSession.getInstance().isLoggedIn()) {
+            LOGGER.warning("Cannot update view count: No database connection or user not logged in.");
+            return;
+        }
         try {
+            int userId = UserSession.getInstance().getCurrentUserId();
+            // Check if a record exists
             PreparedStatement checkStmt = conn.prepareStatement(
                     "SELECT visit_id FROM book_visits WHERE user_id = ? AND book_id = ?");
-            checkStmt.setInt(1, UserSession.getInstance().getCurrentUserId());
+            checkStmt.setInt(1, userId);
             checkStmt.setInt(2, bookId);
             ResultSet rs = checkStmt.executeQuery();
-            if (!rs.next()) {
+            if (rs.next()) {
+                // Record exists, update the visited_at timestamp
+                PreparedStatement updateStmt = conn.prepareStatement(
+                        "UPDATE book_visits SET visited_at = CURRENT_TIMESTAMP WHERE user_id = ? AND book_id = ?");
+                updateStmt.setInt(1, userId);
+                updateStmt.setInt(2, bookId);
+                updateStmt.executeUpdate();
+                LOGGER.info("Updated visit timestamp for userId: " + userId + ", bookId: " + bookId);
+            } else {
+                // No record exists, insert a new one and increment view count
                 PreparedStatement insertStmt = conn.prepareStatement(
-                        "INSERT INTO book_visits (user_id, book_id) VALUES (?, ?)");
-                insertStmt.setInt(1, UserSession.getInstance().getCurrentUserId());
+                        "INSERT INTO book_visits (user_id, book_id, visited_at) VALUES (?, ?, CURRENT_TIMESTAMP)");
+                insertStmt.setInt(1, userId);
                 insertStmt.setInt(2, bookId);
                 insertStmt.executeUpdate();
-                PreparedStatement updateStmt = conn.prepareStatement(
+                PreparedStatement updateViewStmt = conn.prepareStatement(
                         "UPDATE books SET view_count = view_count + 1 WHERE book_id = ?");
-                updateStmt.setInt(1, bookId);
-                updateStmt.executeUpdate();
-                if (views != null) views.setText(String.valueOf(Integer.parseInt(views.getText()) + 1));
+                updateViewStmt.setInt(1, bookId);
+                updateViewStmt.executeUpdate();
+                if (views != null) {
+                    views.setText(String.valueOf(Integer.parseInt(views.getText()) + 1));
+                }
+                LOGGER.info("Inserted new visit for userId: " + userId + ", bookId: " + bookId);
             }
         } catch (SQLException e) {
             LOGGER.severe("Error updating view count: " + e.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Error", "Failed to update visit history.");
         }
     }
 
@@ -688,6 +707,8 @@ public class read_book__c {
                     if (rowsAffected > 0) {
                         LOGGER.info("Book saved with status '" + selectedStatus + "': bookId=" + bookId + ", userId=" + userId);
                         showAlert(Alert.AlertType.INFORMATION, "Success", "Book saved with status: " + selectedStatus + "!");
+                        // Record the visit in book_visits
+                        recordBookVisit(userId, bookId);
                     } else {
                         LOGGER.warning("No rows affected when saving bookId=" + bookId + " for userId=" + userId + " with status=" + selectedStatus);
                         showAlert(Alert.AlertType.WARNING, "Warning", "Book could not be saved. Please try again.");
@@ -719,6 +740,43 @@ public class read_book__c {
         });
     }
 
+    private void recordBookVisit(int userId, int bookId) {
+        try {
+            // Check if a record exists
+            PreparedStatement checkStmt = conn.prepareStatement(
+                    "SELECT visit_id FROM book_visits WHERE user_id = ? AND book_id = ?");
+            checkStmt.setInt(1, userId);
+            checkStmt.setInt(2, bookId);
+            ResultSet rs = checkStmt.executeQuery();
+            if (rs.next()) {
+                // Update timestamp if record exists
+                PreparedStatement updateStmt = conn.prepareStatement(
+                        "UPDATE book_visits SET visited_at = CURRENT_TIMESTAMP WHERE user_id = ? AND book_id = ?");
+                updateStmt.setInt(1, userId);
+                updateStmt.setInt(2, bookId);
+                updateStmt.executeUpdate();
+                LOGGER.info("Updated visit timestamp for userId: " + userId + ", bookId: " + bookId + " (from saving book)");
+            } else {
+                // Insert new record and increment view count
+                PreparedStatement insertStmt = conn.prepareStatement(
+                        "INSERT INTO book_visits (user_id, book_id, visited_at) VALUES (?, ?, CURRENT_TIMESTAMP)");
+                insertStmt.setInt(1, userId);
+                insertStmt.setInt(2, bookId);
+                insertStmt.executeUpdate();
+                PreparedStatement updateViewStmt = conn.prepareStatement(
+                        "UPDATE books SET view_count = view_count + 1 WHERE book_id = ?");
+                updateViewStmt.setInt(1, bookId);
+                updateViewStmt.executeUpdate();
+                if (views != null) {
+                    views.setText(String.valueOf(Integer.parseInt(views.getText()) + 1));
+                }
+                LOGGER.info("Inserted new visit for userId: " + userId + ", bookId: " + bookId + " (from saving book)");
+            }
+        } catch (SQLException e) {
+            LOGGER.severe("Error recording book visit: " + e.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Error", "Failed to record book visit.");
+        }
+    }
 
     @FXML
     private void handle_add_chapter_button(ActionEvent event) {
