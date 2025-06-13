@@ -221,8 +221,10 @@ public class read_book__c {
             return;
         }
 
+        // Sort by rating_id DESC to show newest comments first
         String query = "SELECT u.username, r.comment FROM ratings r " +
-                "JOIN users u ON r.user_id = u.user_id WHERE r.book_id = ? AND r.comment IS NOT NULL";
+                "JOIN users u ON r.user_id = u.user_id WHERE r.book_id = ? AND r.comment IS NOT NULL " +
+                "ORDER BY r.rating_id DESC";
         try (PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setInt(1, bookId);
             ResultSet rs = stmt.executeQuery();
@@ -271,6 +273,7 @@ public class read_book__c {
             if (total_comments != null) total_comments.setText("Comments (0)");
         }
     }
+
 
     private void loadChapters() {
         if (conn == null || chapterContainer == null) {
