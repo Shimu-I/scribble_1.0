@@ -206,7 +206,7 @@ public class groups_joined_owned__c {
         groupBox.setPrefSize(270, 105);
         groupBox.setMaxSize(270, 105);
         groupBox.setMinSize(270, 105);
-        groupBox.setStyle("-fx-background-color: #005D4D; -fx-background-radius: 5; -fx-border-color: #fff; -fx-border-radius: 5;");
+        groupBox.setStyle("-fx-background-color: #F28888; -fx-background-radius: 5; -fx-border-color: #fff; -fx-border-radius: 5;");
 
         ImageView imageView = new ImageView();
         imageView.setFitHeight(76.0);

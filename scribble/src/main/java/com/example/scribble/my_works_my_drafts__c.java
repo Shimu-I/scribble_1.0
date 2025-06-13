@@ -155,7 +155,7 @@ public class my_works_my_drafts__c implements nav_bar__cAware {
     private HBox createBookCard(int bookId, String title, String coverPath, String date, String dateLabel) {
         HBox card = new HBox();
         card.setAlignment(Pos.CENTER);
-        card.setStyle("-fx-background-color: #005D4D; -fx-border-color: white; -fx-border-radius: 5; -fx-background-radius: 5;");
+        card.setStyle("-fx-background-color: #F28888; -fx-border-color: white; -fx-border-radius: 5; -fx-background-radius: 5;");
         card.setPrefHeight(105.0);
         card.setPrefWidth(270.0);
         card.setMaxHeight(Double.NEGATIVE_INFINITY);
@@ -225,7 +225,7 @@ public class my_works_my_drafts__c implements nav_bar__cAware {
     private HBox createDraftCard(int bookId, String title, String coverPath, int chapterNumber, String date) {
         HBox card = new HBox();
         card.setAlignment(Pos.CENTER);
-        card.setStyle("-fx-background-color: #005D4D; -fx-border-color: white; -fx-border-radius: 5; -fx-background-radius: 5;");
+        card.setStyle("-fx-background-color: #F28888; -fx-border-color: white; -fx-border-radius: 5; -fx-background-radius: 5;");
         card.setPrefHeight(105.0);
         card.setPrefWidth(270.0);
         card.setMaxHeight(Double.NEGATIVE_INFINITY);

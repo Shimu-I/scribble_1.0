@@ -167,7 +167,7 @@ public class history_library__c implements nav_bar__cAware {
 
     private HBox createBookCard(int bookId, String title, String coverPath, String date, String dateLabel, String readingStatus) {
         HBox card = new HBox();
-        card.setStyle("-fx-background-color: #005D4D; -fx-background-radius: 5; -fx-border-color: #fff; -fx-border-radius: 5;");
+        card.setStyle("-fx-background-color: #F28888; -fx-background-radius: 5; -fx-border-color: #fff; -fx-border-radius: 5;");
         card.setAlignment(javafx.geometry.Pos.CENTER);
         card.setPrefHeight(105.0); // Increased to accommodate ChoiceBox below labels
         card.setPrefWidth(270.0);

@@ -526,7 +526,7 @@ public class read_book__c {
             controller.setBookId(bookId);
             controller.setDraftId(draftId);
             controller.setChapterNumber(chapterNumber);
-            controller.setBookName(bookTitle); // Explicitly set book title
+            controller.setBookName(bookTitle);
             if (mainController != null) {
                 mainController.getCenterPane().getChildren().setAll(content);
                 LOGGER.info("Opened draft with ID: " + draftId + ", chapter number: " + chapterNumber + ", book title: " + bookTitle + " via mainController");
@@ -541,6 +541,7 @@ public class read_book__c {
             showAlert(Alert.AlertType.ERROR, "Error", "Failed to open draft.");
         }
     }
+
 
     @FXML
     private void handle_read(ActionEvent event) {
@@ -870,20 +871,43 @@ public class read_book__c {
                     showAlert(Alert.AlertType.ERROR, "Invalid Input", "Chapter number must be positive.");
                     return;
                 }
+
+                // Fetch book title
+                String bookTitle = null;
+                try (Connection conn = db_connect.getConnection();
+                     PreparedStatement stmt = conn.prepareStatement("SELECT title FROM books WHERE book_id = ?")) {
+                    stmt.setInt(1, bookId);
+                    ResultSet rs = stmt.executeQuery();
+                    if (rs.next()) {
+                        bookTitle = rs.getString("title");
+                        if (bookTitle == null || bookTitle.trim().isEmpty()) {
+                            bookTitle = "Untitled Book";
+                            LOGGER.warning("No valid title found for bookId: " + bookId + ", using default: Untitled Book");
+                        }
+                    } else {
+                        bookTitle = "Untitled Book";
+                        LOGGER.severe("No book found for bookId: " + bookId + ", using default: Untitled Book");
+                    }
+                } catch (SQLException e) {
+                    bookTitle = "Untitled Book";
+                    LOGGER.severe("Error querying book title for bookId: " + bookId + ": " + e.getMessage() + ", using default: Untitled Book");
+                }
+
                 try {
                     FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/write_chapter.fxml"));
                     Parent content = loader.load();
                     write_chapter__c controller = loader.getController();
                     controller.setBookId(bookId);
                     controller.setChapterNumber(chapterNumber);
+                    controller.setBookName(bookTitle); // Pass the fetched or default title
                     if (mainController != null) {
                         mainController.getCenterPane().getChildren().setAll(content);
-                        LOGGER.info("Navigated to add draft page for bookId: " + bookId + ", chapterNumber: " + chapterNumber + " via mainController");
+                        LOGGER.info("Navigated to add draft page for bookId: " + bookId + ", chapterNumber: " + chapterNumber + ", bookTitle: " + bookTitle + " via mainController");
                     } else {
                         Scene scene = new Scene(content);
                         Stage stage = (Stage) draftContainer.getScene().getWindow();
                         stage.setScene(scene);
-                        LOGGER.info("Navigated to add draft page for bookId: " + bookId + ", chapterNumber: " + chapterNumber);
+                        LOGGER.info("Navigated to add draft page for bookId: " + bookId + ", chapterNumber: " + chapterNumber + ", bookTitle: " + bookTitle);
                     }
                 } catch (IOException e) {
                     LOGGER.severe("Failed to load write_chapter.fxml: " + e.getMessage());
@@ -894,6 +918,8 @@ public class read_book__c {
             }
         });
     }
+
+
 
     @FXML
     private void handle_chapterContainer(ActionEvent event) {

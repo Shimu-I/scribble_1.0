@@ -114,9 +114,8 @@ public class colab_sent_received__c {
                 String coverPath = rs.getString("cover_photo"); // Fetch cover_photo
 
                 HBox requestHBox = new HBox(10);
-                requestHBox.setStyle("-fx-background-color: #005D4D; -fx-background-radius: 5; -fx-padding: 5;");
                 requestHBox.setAlignment(Pos.CENTER_LEFT);
-                requestHBox.setStyle("-fx-background-color: #005D4D; -fx-background-radius: 5; -fx-border-color: #fff; -fx-border-radius: 5; -fx-padding: 0 0 0 40;");
+                requestHBox.setStyle("-fx-background-color: #F28888; -fx-background-radius: 5; -fx-border-color: #fff; -fx-border-radius: 5; -fx-padding: 0 0 0 40;");
                 requestHBox.setPrefSize(270, 105);
                 requestHBox.setMaxSize(270, 105);
                 requestHBox.setMinSize(270, 105);
@@ -192,9 +191,8 @@ public class colab_sent_received__c {
 
 
                 HBox requestHBox = new HBox(10);
-                requestHBox.setStyle("-fx-background-color: #005D4D; -fx-background-radius: 5; -fx-border-color: #fff; -fx-border-radius: 5; -fx-padding: 5;");
                 requestHBox.setAlignment(Pos.CENTER_LEFT);
-                requestHBox.setStyle("-fx-background-color: #005D4D; -fx-background-radius: 5; -fx-border-color: #fff; -fx-border-radius: 5; -fx-padding: 0 0 0 40;");
+                requestHBox.setStyle("-fx-background-color: #F28888; -fx-background-radius: 5; -fx-border-color: #fff; -fx-border-radius: 5; -fx-padding: 0 0 0 40;");
                 requestHBox.setPrefSize(270, 105);
                 requestHBox.setMaxSize(270, 105);
                 requestHBox.setMinSize(270, 105);

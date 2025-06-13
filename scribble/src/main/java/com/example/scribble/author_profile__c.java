@@ -271,7 +271,7 @@ public class author_profile__c {
                         bookHBox.setPrefSize(306, 154);
                         bookHBox.setMaxSize(306, 154);
                         bookHBox.setMinSize(306, 154);
-                        bookHBox.setStyle("-fx-background-color: #005D4D; -fx-background-radius: 5; -fx-border-color: #FFFFFF; -fx-border-radius: 5;");
+                        bookHBox.setStyle("-fx-background-color: #F28888; -fx-background-radius: 5; -fx-border-color: #FFFFFF; -fx-border-radius: 5;");
 
                         ImageView bookCover = new ImageView();
                         bookCover.setFitHeight(118.0);
