@@ -1,4 +1,3 @@
-
 package com.example.scribble;
 
 import javafx.event.ActionEvent;
@@ -27,10 +26,10 @@ public class read_book__c {
     private static final Logger LOGGER = Logger.getLogger(read_book__c.class.getName());
     private Connection conn;
     private int bookId;
-    private boolean isAuthorOrCoAuthor;
+    private boolean isAuthorOrCoAuthor; // Updated dynamically
     private int authorId;
 
-    @FXML private Label bookTitleLabel, views, chapters, reads, avg_ratting, status, genre, book_description, user_name, user_comment, total_comments, co_author_names; // Ensure co_author_names is included
+    @FXML private Label bookTitleLabel, views, chapters, reads, avg_ratting, status, genre, book_description, user_name, user_comment, total_comments, co_author_names;
     @FXML private ComboBox<Integer> ratingComboBox;
     @FXML private Button read_now_button, support_author_button, request_collab_button, saved_books_button, author_profile, back_button, add_chapter, add_comment, add_draft;
     @FXML private VBox chapterContainer, commentContainer, draftContainer, authorContainer;
@@ -68,8 +67,6 @@ public class read_book__c {
         updateAddChapterButtonVisibility();
         updateDraftContainerVisibility();
     }
-
-
 
     private void checkNullElements() {
         if (bookTitleLabel == null) LOGGER.severe("bookTitleLabel is null");
@@ -121,7 +118,12 @@ public class read_book__c {
     public void setBookId(int bookId) {
         this.bookId = bookId;
         LOGGER.info("setBookId called with bookId: " + bookId);
-        isAuthorOrCoAuthor = isUserAuthorOrCoAuthor();
+        if (UserSession.getInstance().isLoggedIn()) {
+            this.authorId = UserSession.getInstance().getUserId();
+            this.isAuthorOrCoAuthor = isAuthorOrCoAuthor(bookId, this.authorId); // Update based on current user
+        } else {
+            this.isAuthorOrCoAuthor = false; // Default to false if not logged in
+        }
         if (bookId <= 0) {
             LOGGER.warning("Invalid bookId: " + bookId + ". Using default behavior.");
             setDefaultLabels();
@@ -212,8 +214,6 @@ public class read_book__c {
         if (coverImage != null) coverImage.setImage(null);
     }
 
-
-
     private void loadComments() {
         if (conn == null || commentContainer == null) {
             LOGGER.severe("No database connection or commentContainer is null.");
@@ -221,7 +221,6 @@ public class read_book__c {
             return;
         }
 
-        // Sort by rating_id DESC to show newest comments first
         String query = "SELECT u.username, r.comment FROM ratings r " +
                 "JOIN users u ON r.user_id = u.user_id WHERE r.book_id = ? AND r.comment IS NOT NULL " +
                 "ORDER BY r.rating_id DESC";
@@ -233,7 +232,7 @@ public class read_book__c {
             while (rs.next()) {
                 commentCount++;
                 VBox commentBox = new VBox(5);
-                commentBox.setPadding(new Insets(5, 5, 5, 10)); // Match FXML padding
+                commentBox.setPadding(new Insets(5, 5, 5, 10));
 
                 Label usernameLabel = new Label("user: " + rs.getString("username"));
                 usernameLabel.setTextFill(javafx.scene.paint.Color.WHITE);
@@ -242,7 +241,7 @@ public class read_book__c {
                 Label commentLabel = new Label(rs.getString("comment"));
                 commentLabel.setTextFill(javafx.scene.paint.Color.WHITE);
                 commentLabel.setFont(javafx.scene.text.Font.font("System", 14.0));
-                commentLabel.setPadding(new Insets(0, 0, 0, 50)); // Match FXML user_comment padding
+                commentLabel.setPadding(new Insets(0, 0, 0, 50));
 
                 commentBox.getChildren().addAll(usernameLabel, commentLabel);
                 commentContainer.getChildren().add(commentBox);
@@ -274,7 +273,6 @@ public class read_book__c {
         }
     }
 
-
     private void loadChapters() {
         if (conn == null || chapterContainer == null) {
             LOGGER.severe("No database connection or chapterContainer is null.");
@@ -288,7 +286,6 @@ public class read_book__c {
         try (PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setInt(1, bookId);
             try (ResultSet rs = pstmt.executeQuery()) {
-                // Find the ScrollPane's inner VBox (scrollable content)
                 VBox scrollContent = null;
                 for (javafx.scene.Node node : chapterContainer.getChildren()) {
                     if (node instanceof ScrollPane) {
@@ -305,7 +302,6 @@ public class read_book__c {
                     return;
                 }
 
-                // Clear only the scrollable content
                 scrollContent.getChildren().clear();
 
                 while (rs.next()) {
@@ -335,7 +331,6 @@ public class read_book__c {
         }
     }
 
-
     private void loadDrafts() {
         if (conn == null || draftContainer == null || !isAuthorOrCoAuthor) {
             LOGGER.info("No drafts loaded: No connection, no container, or user not author/co-author.");
@@ -346,7 +341,6 @@ public class read_book__c {
         try (PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setInt(1, bookId);
             ResultSet rs = stmt.executeQuery();
-            // Find the ScrollPane's inner VBox (scrollable content)
             VBox scrollContent = null;
             for (javafx.scene.Node node : draftContainer.getChildren()) {
                 if (node instanceof ScrollPane) {
@@ -362,7 +356,6 @@ public class read_book__c {
                 return;
             }
 
-            // Clear only the scrollable content
             scrollContent.getChildren().clear();
 
             while (rs.next()) {
@@ -387,14 +380,12 @@ public class read_book__c {
         }
         try {
             int userId = UserSession.getInstance().getCurrentUserId();
-            // Check if a record exists
             PreparedStatement checkStmt = conn.prepareStatement(
                     "SELECT visit_id FROM book_visits WHERE user_id = ? AND book_id = ?");
             checkStmt.setInt(1, userId);
             checkStmt.setInt(2, bookId);
             ResultSet rs = checkStmt.executeQuery();
             if (rs.next()) {
-                // Record exists, update the visited_at timestamp
                 PreparedStatement updateStmt = conn.prepareStatement(
                         "UPDATE book_visits SET visited_at = CURRENT_TIMESTAMP WHERE user_id = ? AND book_id = ?");
                 updateStmt.setInt(1, userId);
@@ -402,7 +393,6 @@ public class read_book__c {
                 updateStmt.executeUpdate();
                 LOGGER.info("Updated visit timestamp for userId: " + userId + ", bookId: " + bookId);
             } else {
-                // No record exists, insert a new one and increment view count
                 PreparedStatement insertStmt = conn.prepareStatement(
                         "INSERT INTO book_visits (user_id, book_id, visited_at) VALUES (?, ?, CURRENT_TIMESTAMP)");
                 insertStmt.setInt(1, userId);
@@ -445,21 +435,33 @@ public class read_book__c {
         }
     }
 
+
     private void openChapter(int chapterId) {
+        if (!UserSession.getInstance().isLoggedIn()) {
+            LOGGER.info("User not logged in, cannot open chapter with chapterId: " + chapterId + " for bookId: " + bookId);
+            showAlert(Alert.AlertType.WARNING, "Login Required", "Please log in to read this chapter.");
+            return;
+        }
+
+        if (mainController == null) {
+            LOGGER.severe("Main controller is null, cannot navigate to read_chapter.fxml for chapterId: " + chapterId);
+            showAlert(Alert.AlertType.ERROR, "Navigation Error", "Failed to open chapter due to missing main controller.");
+            return;
+        }
+
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/read_chapter.fxml"));
             Parent content = loader.load();
             read_chapter__c controller = loader.getController();
+            controller.setMainController(mainController);
+            controller.setBookId(bookId);
             controller.setChapterId(chapterId);
-            if (mainController != null) {
-                mainController.getCenterPane().getChildren().setAll(content);
-                LOGGER.info("Opened chapter with ID: " + chapterId + " via mainController");
-            } else {
-                Scene scene = new Scene(content);
-                Stage stage = (Stage) read_now_button.getScene().getWindow();
-                stage.setScene(scene);
-                LOGGER.info("Opened chapter with ID: " + chapterId);
-            }
+            AppState.getInstance().setPreviousFXML("/com/example/scribble/read_book.fxml");
+            AppState.getInstance().setCurrentBookId(bookId);
+            mainController.getCenterPane().getChildren().setAll(content);
+            LOGGER.info("Opened chapter with chapterId: " + chapterId + ", bookId: " + bookId + " via mainController");
+
+            // Update chapter read record
             try (PreparedStatement stmt = conn.prepareStatement(
                     "INSERT INTO chapter_reads (user_id, chapter_id) VALUES (?, ?) " +
                             "ON DUPLICATE KEY UPDATE read_at = CURRENT_TIMESTAMP")) {
@@ -470,39 +472,54 @@ public class read_book__c {
                         "UPDATE books SET total_reads = total_reads + 1 WHERE book_id = ?");
                 updateStmt.setInt(1, bookId);
                 updateStmt.executeUpdate();
-                if (reads != null) reads.setText(String.valueOf(Integer.parseInt(reads.getText()) + 1));
+                if (reads != null) {
+                    reads.setText(String.valueOf(Integer.parseInt(reads.getText()) + 1));
+                }
+                LOGGER.info("Updated chapter read record for chapterId: " + chapterId + ", bookId: " + bookId);
+            } catch (SQLException e) {
+                LOGGER.severe("Error updating chapter read record for chapterId: " + chapterId + ": " + e.getMessage());
+                showAlert(Alert.AlertType.ERROR, "Database Error", "Failed to record chapter read.");
             }
-        } catch (SQLException | IOException e) {
-            LOGGER.severe("Error opening chapter: " + e.getMessage());
-            showAlert(Alert.AlertType.ERROR, "Error", "Failed to open chapter.");
+        } catch (IOException e) {
+            LOGGER.severe("Failed to load read_chapter.fxml for chapterId: " + chapterId + ": " + e.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Navigation Error", "Failed to open chapter: " + e.getMessage());
         }
     }
 
+
+
     private void openChapterForEdit(int chapterId) {
+        if (!UserSession.getInstance().isLoggedIn()) {
+            LOGGER.info("User not logged in, cannot edit chapter with chapterId: " + chapterId + " for bookId: " + bookId);
+            showAlert(Alert.AlertType.WARNING, "Login Required", "Please log in to edit this chapter.");
+            return;
+        }
+
+        if (mainController == null) {
+            LOGGER.severe("Main controller is null, cannot navigate to write_chapter.fxml for chapterId: " + chapterId);
+            showAlert(Alert.AlertType.ERROR, "Navigation Error", "Failed to open chapter for edit due to missing main controller.");
+            return;
+        }
+
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/write_chapter.fxml"));
             Parent content = loader.load();
             write_chapter__c controller = loader.getController();
-            controller.setBookId(bookId);
+            controller.setMainController(mainController);
             controller.setChapterId(chapterId);
-            if (mainController != null) {
-                mainController.getCenterPane().getChildren().setAll(content);
-                LOGGER.info("Opened chapter for edit with ID: " + chapterId + " via mainController");
-            } else {
-                Scene scene = new Scene(content);
-                Stage stage = (Stage) chapterContainer.getScene().getWindow();
-                stage.setScene(scene);
-                LOGGER.info("Opened chapter for edit with ID: " + chapterId);
-            }
+            AppState.getInstance().setPreviousFXML("/com/example/scribble/read_book.fxml");
+            AppState.getInstance().setCurrentBookId(bookId);
+            mainController.getCenterPane().getChildren().setAll(content);
+            LOGGER.info("Opened chapter for edit with ID: " + chapterId + ", bookId: " + bookId + " via mainController");
         } catch (IOException e) {
-            LOGGER.severe("Failed to load write_chapter.fxml: " + e.getMessage());
-            showAlert(Alert.AlertType.ERROR, "Error", "Failed to open chapter for editing.");
+            LOGGER.severe("Error opening chapter for edit with chapterId: " + chapterId + ": " + e.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Navigation Error", "Failed to open chapter for edit: " + e.getMessage());
         }
     }
 
+
     private void openDraft(int draftId) {
         try {
-            // Query draft_chapters to get chapter_number
             String draftQuery = "SELECT chapter_number FROM draft_chapters WHERE draft_id = ?";
             int chapterNumber = -1;
             try (Connection conn = db_connect.getConnection();
@@ -522,7 +539,6 @@ public class read_book__c {
                 return;
             }
 
-            // Query books to get title
             String bookQuery = "SELECT title FROM books WHERE book_id = ?";
             String bookTitle = null;
             try (Connection conn = db_connect.getConnection();
@@ -563,7 +579,6 @@ public class read_book__c {
             showAlert(Alert.AlertType.ERROR, "Error", "Failed to open draft.");
         }
     }
-
 
     @FXML
     private void handle_read(ActionEvent event) {
@@ -661,7 +676,6 @@ public class read_book__c {
             return;
         }
 
-        // Show ChoiceDialog to select reading status
         ChoiceDialog<String> statusDialog = new ChoiceDialog<>("SavedForLater",
                 new ArrayList<>(List.of("Reading", "Completed", "Dropped", "SavedForLater")));
         statusDialog.setTitle("Select Reading Status");
@@ -676,7 +690,6 @@ public class read_book__c {
                 }
                 LOGGER.info("Database connection state: Connected");
 
-                // Validate userId and bookId
                 try (PreparedStatement checkUser = conn.prepareStatement("SELECT user_id FROM users WHERE user_id = ?")) {
                     checkUser.setInt(1, userId);
                     if (!checkUser.executeQuery().next()) {
@@ -695,7 +708,6 @@ public class read_book__c {
                     }
                 }
 
-                // Insert or update reading_list with selected status
                 try (PreparedStatement pstmt = conn.prepareStatement(
                         "INSERT INTO reading_list (reader_id, listed_book_id, reading_status) VALUES (?, ?, ?) " +
                                 "ON DUPLICATE KEY UPDATE reading_status = ?")) {
@@ -707,7 +719,6 @@ public class read_book__c {
                     if (rowsAffected > 0) {
                         LOGGER.info("Book saved with status '" + selectedStatus + "': bookId=" + bookId + ", userId=" + userId);
                         showAlert(Alert.AlertType.INFORMATION, "Success", "Book saved with status: " + selectedStatus + "!");
-                        // Record the visit in book_visits
                         recordBookVisit(userId, bookId);
                     } else {
                         LOGGER.warning("No rows affected when saving bookId=" + bookId + " for userId=" + userId + " with status=" + selectedStatus);
@@ -742,14 +753,12 @@ public class read_book__c {
 
     private void recordBookVisit(int userId, int bookId) {
         try {
-            // Check if a record exists
             PreparedStatement checkStmt = conn.prepareStatement(
                     "SELECT visit_id FROM book_visits WHERE user_id = ? AND book_id = ?");
             checkStmt.setInt(1, userId);
             checkStmt.setInt(2, bookId);
             ResultSet rs = checkStmt.executeQuery();
             if (rs.next()) {
-                // Update timestamp if record exists
                 PreparedStatement updateStmt = conn.prepareStatement(
                         "UPDATE book_visits SET visited_at = CURRENT_TIMESTAMP WHERE user_id = ? AND book_id = ?");
                 updateStmt.setInt(1, userId);
@@ -757,7 +766,6 @@ public class read_book__c {
                 updateStmt.executeUpdate();
                 LOGGER.info("Updated visit timestamp for userId: " + userId + ", bookId: " + bookId + " (from saving book)");
             } else {
-                // Insert new record and increment view count
                 PreparedStatement insertStmt = conn.prepareStatement(
                         "INSERT INTO book_visits (user_id, book_id, visited_at) VALUES (?, ?, CURRENT_TIMESTAMP)");
                 insertStmt.setInt(1, userId);
@@ -782,61 +790,119 @@ public class read_book__c {
     private void handle_add_chapter_button(ActionEvent event) {
         if (!UserSession.getInstance().isLoggedIn()) {
             showAlert(Alert.AlertType.WARNING, "Login Required", "Please log in to add a chapter.");
-            return;
-        }
-        if (!isAuthorOrCoAuthor) {
-            showAlert(Alert.AlertType.WARNING, "Permission Denied", "Only the author or co-author can add chapters.");
+            LOGGER.warning("User not logged in, cannot add chapter for bookId: " + bookId);
             return;
         }
 
-        TextInputDialog dialog = new TextInputDialog();
+        int userId = UserSession.getInstance().getUserId();
+        if (userId <= 0) {
+            showAlert(Alert.AlertType.ERROR, "Session Error", "Invalid user session. Please log in again.");
+            LOGGER.severe("Invalid userId from session: " + userId);
+            return;
+        }
+
+        if (!isAuthorOrCoAuthor(bookId, userId)) {
+            showAlert(Alert.AlertType.WARNING, "Permission Denied", "Only the author or co-author can add chapters.");
+            LOGGER.warning("User " + userId + " not authorized for bookId: " + bookId);
+            return;
+        }
+
+        TextInputDialog dialog = new TextInputDialog(String.valueOf(getNextChapterNumber(bookId)));
         dialog.setTitle("Add Chapter");
-        dialog.setHeaderText("Enter chapter number:");
+        dialog.setHeaderText("Enter chapter number for the new chapter:");
         dialog.setContentText("Chapter Number:");
         dialog.showAndWait().ifPresent(chapterNumberStr -> {
             try {
                 int chapterNumber = Integer.parseInt(chapterNumberStr);
                 if (chapterNumber <= 0) {
                     showAlert(Alert.AlertType.ERROR, "Invalid Input", "Chapter number must be positive.");
+                    LOGGER.warning("Invalid chapter number: " + chapterNumberStr);
                     return;
                 }
-                // Check if chapter number already exists
-                try (PreparedStatement stmt = conn.prepareStatement(
-                        "SELECT COUNT(*) FROM chapters WHERE book_id = ? AND chapter_number = ?")) {
+
+                String bookTitle = null;
+                try (Connection conn = db_connect.getConnection();
+                     PreparedStatement stmt = conn.prepareStatement("SELECT title FROM books WHERE book_id = ?")) {
                     stmt.setInt(1, bookId);
-                    stmt.setInt(2, chapterNumber);
                     ResultSet rs = stmt.executeQuery();
-                    if (rs.next() && rs.getInt(1) > 0) {
-                        showAlert(Alert.AlertType.ERROR, "Invalid Input", "Chapter number already exists.");
+                    if (rs.next()) {
+                        bookTitle = rs.getString("title");
+                        if (bookTitle == null || bookTitle.trim().isEmpty()) {
+                            bookTitle = "Untitled Book";
+                            LOGGER.warning("No valid title for bookId: " + bookId + ", using default: Untitled Book");
+                        }
+                    } else {
+                        showAlert(Alert.AlertType.ERROR, "Invalid Book", "The specified book does not exist.");
+                        LOGGER.severe("No book found for bookId: " + bookId);
                         return;
                     }
+                } catch (SQLException e) {
+                    showAlert(Alert.AlertType.ERROR, "Database Error", "Failed to verify book existence.");
+                    LOGGER.severe("Error querying book title for bookId: " + bookId + ": " + e.getMessage());
+                    return;
                 }
+
+                if (chapterNumberExists(bookId, chapterNumber)) {
+                    showAlert(Alert.AlertType.ERROR, "Invalid Chapter Number",
+                            "Chapter or draft number " + chapterNumber + " already exists for this book.");
+                    LOGGER.warning("Chapter number conflict for bookId: " + bookId + ", chapterNumber: " + chapterNumber);
+                    return;
+                }
+
                 try {
                     FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/write_chapter.fxml"));
                     Parent content = loader.load();
                     write_chapter__c controller = loader.getController();
+                    controller.setMainController(mainController);
                     controller.setBookId(bookId);
+                    controller.setBookName(bookTitle);
+                    controller.setUserId(userId);
                     controller.setChapterNumber(chapterNumber);
+                    AppState.getInstance().setPreviousFXML("/com/example/scribble/read_book.fxml");
+                    AppState.getInstance().setCurrentBookId(bookId);
                     if (mainController != null) {
                         mainController.getCenterPane().getChildren().setAll(content);
-                        LOGGER.info("Navigated to add chapter page for bookId: " + bookId + ", chapterNumber: " + chapterNumber + " via mainController");
+                        LOGGER.info("Navigated to add chapter page for bookId: " + bookId +
+                                ", chapterNumber: " + chapterNumber + ", bookTitle: " + bookTitle +
+                                ", userId: " + userId + " via mainController");
                     } else {
-                        Scene scene = new Scene(content);
-                        Stage stage = (Stage) add_chapter.getScene().getWindow();
-                        stage.setScene(scene);
-                        LOGGER.info("Navigated to add chapter page for bookId: " + bookId + ", chapterNumber: " + chapterNumber);
+                        LOGGER.severe("Main controller is null, navigation to new scene failed for bookId: " + bookId);
+                        showAlert(Alert.AlertType.ERROR, "Navigation Error", "Failed to open add chapter page due to missing main controller.");
                     }
                 } catch (IOException e) {
                     LOGGER.severe("Failed to load write_chapter.fxml: " + e.getMessage());
-                    showAlert(Alert.AlertType.ERROR, "Error", "Failed to open add chapter page.");
+                    showAlert(Alert.AlertType.ERROR, "Navigation Error", "Failed to open add chapter page.");
                 }
             } catch (NumberFormatException e) {
                 showAlert(Alert.AlertType.ERROR, "Invalid Input", "Please enter a valid chapter number.");
-            } catch (SQLException e) {
-                LOGGER.severe("Error checking chapter number: " + e.getMessage());
-                showAlert(Alert.AlertType.ERROR, "Error", "Failed to validate chapter number.");
+                LOGGER.warning("Invalid chapter number format: " + chapterNumberStr);
             }
         });
+    }
+
+
+    private int getNextChapterNumber(int bookId) {
+        String query = """
+        SELECT GREATEST(
+            (SELECT IFNULL(MAX(chapter_number), 0) FROM chapters WHERE book_id = ?),
+            (SELECT IFNULL(MAX(chapter_number), 0) FROM draft_chapters WHERE book_id = ?)
+        ) + 1 AS next_chapter
+    """;
+        try (Connection conn = db_connect.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, bookId);
+            stmt.setInt(2, bookId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                int nextChapter = rs.getInt("next_chapter");
+                LOGGER.info("Next chapter number for bookId " + bookId + ": " + nextChapter);
+                return nextChapter;
+            }
+        } catch (SQLException e) {
+            LOGGER.severe("Failed to determine next chapter number for bookId: " + bookId + ", error: " + e.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Database Error", "Could not determine next chapter number.");
+        }
+        return 1; // Default to 1 if query fails
     }
 
 
@@ -854,12 +920,10 @@ public class read_book__c {
         }
 
         try {
-            // Store state in AppState
             AppState.getInstance().setCurrentBookId(bookId);
             AppState.getInstance().setPreviousFXML("/com/example/scribble/read_book.fxml");
             LOGGER.info("Stored in AppState: bookId=" + bookId + ", previousFXML=read_book.fxml");
 
-            // Load support_author.fxml
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/support_author.fxml"));
             Parent content = loader.load();
             support_author__c supportAuthorController = loader.getController();
@@ -867,7 +931,6 @@ public class read_book__c {
             supportAuthorController.setBookId(bookId);
             supportAuthorController.setUserId(UserSession.getInstance().getUserId());
 
-            // Update the center pane
             mainController.getCenterPane().getChildren().setAll(content);
             LOGGER.info("Navigated to support author page via mainController with bookId: " + bookId);
         } catch (IOException e) {
@@ -875,7 +938,6 @@ public class read_book__c {
             showAlert(Alert.AlertType.ERROR, "Error", "Failed to open support page: " + e.getMessage());
         }
     }
-
 
     @FXML
     private void handle_add_comment(ActionEvent event) {
@@ -901,7 +963,7 @@ public class read_book__c {
             stmt.setString(3, comment);
             stmt.setString(4, comment);
             stmt.executeUpdate();
-            comment_box.clear(); // Clear the TextField after submission
+            comment_box.clear();
             loadComments();
             LOGGER.info("Comment added for bookId: " + bookId);
         } catch (SQLException e) {
@@ -914,10 +976,20 @@ public class read_book__c {
     private void handle_add_draft(ActionEvent event) {
         if (!UserSession.getInstance().isLoggedIn()) {
             showAlert(Alert.AlertType.WARNING, "Login Required", "Please log in to add a draft.");
+            LOGGER.warning("User not logged in, cannot add draft for bookId: " + bookId);
             return;
         }
+
+        int userId = UserSession.getInstance().getUserId();
+        if (userId <= 0) {
+            showAlert(Alert.AlertType.ERROR, "Session Error", "Invalid user session. Please log in again.");
+            LOGGER.severe("Invalid userId from session: " + userId);
+            return;
+        }
+
         if (!isAuthorOrCoAuthor) {
             showAlert(Alert.AlertType.WARNING, "Permission Denied", "Only the author or co-author can add drafts.");
+            LOGGER.warning("User " + userId + " not authorized for bookId: " + bookId);
             return;
         }
 
@@ -930,10 +1002,10 @@ public class read_book__c {
                 int chapterNumber = Integer.parseInt(chapterNumberStr);
                 if (chapterNumber <= 0) {
                     showAlert(Alert.AlertType.ERROR, "Invalid Input", "Chapter number must be positive.");
+                    LOGGER.warning("Invalid chapter number: " + chapterNumberStr);
                     return;
                 }
 
-                // Fetch book title
                 String bookTitle = null;
                 try (Connection conn = db_connect.getConnection();
                      PreparedStatement stmt = conn.prepareStatement("SELECT title FROM books WHERE book_id = ?")) {
@@ -943,56 +1015,65 @@ public class read_book__c {
                         bookTitle = rs.getString("title");
                         if (bookTitle == null || bookTitle.trim().isEmpty()) {
                             bookTitle = "Untitled Book";
-                            LOGGER.warning("No valid title found for bookId: " + bookId + ", using default: Untitled Book");
+                            LOGGER.warning("No valid title for bookId: " + bookId + ", using default: Untitled Book");
                         }
                     } else {
-                        bookTitle = "Untitled Book";
-                        LOGGER.severe("No book found for bookId: " + bookId + ", using default: Untitled Book");
+                        showAlert(Alert.AlertType.ERROR, "Invalid Book", "The specified book does not exist.");
+                        LOGGER.severe("No book found for bookId: " + bookId);
+                        return;
                     }
                 } catch (SQLException e) {
-                    bookTitle = "Untitled Book";
-                    LOGGER.severe("Error querying book title for bookId: " + bookId + ": " + e.getMessage() + ", using default: Untitled Book");
+                    showAlert(Alert.AlertType.ERROR, "Database Error", "Failed to verify book existence.");
+                    LOGGER.severe("Error querying book title for bookId: " + bookId + ": " + e.getMessage());
+                    return;
+                }
+
+                if (chapterNumberExists(bookId, chapterNumber)) {
+                    showAlert(Alert.AlertType.ERROR, "Invalid Chapter Number",
+                            "Chapter or draft number " + chapterNumber + " already exists for this book.");
+                    LOGGER.warning("Chapter number conflict for bookId: " + bookId + ", chapterNumber: " + chapterNumber);
+                    return;
                 }
 
                 try {
                     FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/write_chapter.fxml"));
                     Parent content = loader.load();
                     write_chapter__c controller = loader.getController();
+                    controller.setMainController(mainController);
                     controller.setBookId(bookId);
+                    controller.setBookName(bookTitle);
+                    controller.setUserId(userId);
                     controller.setChapterNumber(chapterNumber);
-                    controller.setBookName(bookTitle); // Pass the fetched or default title
+                    AppState.getInstance().setPreviousFXML("/com/example/scribble/read_book.fxml");
+                    AppState.getInstance().setCurrentBookId(bookId);
                     if (mainController != null) {
                         mainController.getCenterPane().getChildren().setAll(content);
-                        LOGGER.info("Navigated to add draft page for bookId: " + bookId + ", chapterNumber: " + chapterNumber + ", bookTitle: " + bookTitle + " via mainController");
+                        LOGGER.info("Navigated to add draft page for bookId: " + bookId +
+                                ", chapterNumber: " + chapterNumber + ", bookTitle: " + bookTitle +
+                                ", userId: " + userId + " via mainController");
                     } else {
-                        Scene scene = new Scene(content);
-                        Stage stage = (Stage) draftContainer.getScene().getWindow();
-                        stage.setScene(scene);
-                        LOGGER.info("Navigated to add draft page for bookId: " + bookId + ", chapterNumber: " + chapterNumber + ", bookTitle: " + bookTitle);
+                        LOGGER.severe("Main controller is null, navigation to new scene failed for bookId: " + bookId);
+                        showAlert(Alert.AlertType.ERROR, "Navigation Error", "Failed to open add draft page due to missing main controller.");
                     }
                 } catch (IOException e) {
                     LOGGER.severe("Failed to load write_chapter.fxml: " + e.getMessage());
-                    showAlert(Alert.AlertType.ERROR, "Error", "Failed to open add draft page.");
+                    showAlert(Alert.AlertType.ERROR, "Navigation Error", "Failed to open add draft page.");
                 }
             } catch (NumberFormatException e) {
                 showAlert(Alert.AlertType.ERROR, "Invalid Input", "Please enter a valid chapter number.");
+                LOGGER.warning("Invalid chapter number format: " + chapterNumberStr);
             }
         });
     }
 
-
-
     @FXML
     private void handle_chapterContainer(ActionEvent event) {
-        // Get the source of the event
         Object source = event.getSource();
         if (source instanceof Button chapterButton && chapterContainer.getChildren().contains(chapterButton)) {
-            // Extract chapter ID from button text (e.g., "Chapter 5")
             String buttonText = chapterButton.getText();
             if (buttonText.startsWith("Chapter ")) {
                 try {
                     int chapterNumber = Integer.parseInt(buttonText.replace("Chapter ", ""));
-                    // Query chapter_id for the chapter_number
                     String query = "SELECT chapter_id FROM chapters WHERE book_id = ? AND chapter_number = ?";
                     try (PreparedStatement stmt = conn.prepareStatement(query)) {
                         stmt.setInt(1, bookId);
@@ -1018,22 +1099,17 @@ public class read_book__c {
             }
         } else {
             LOGGER.info("Chapter container clicked outside a chapter button.");
-            // Optional: Show alert or ignore
-            // showAlert(Alert.AlertType.INFORMATION, "Info", "Please click a chapter button to open a chapter.");
         }
     }
 
     @FXML
     private void handle_draftContainer(ActionEvent event) {
-        // Get the source of the event
         Object source = event.getSource();
         if (source instanceof Button draftButton && draftContainer.getChildren().contains(draftButton)) {
-            // Extract chapter number from button text (e.g., "Draft for Chapter 5")
             String buttonText = draftButton.getText();
             if (buttonText.startsWith("Draft for Chapter ")) {
                 try {
                     int chapterNumber = Integer.parseInt(buttonText.replace("Draft for Chapter ", ""));
-                    // Query draft_id for the chapter_number
                     String query = "SELECT draft_id FROM draft_chapters WHERE book_id = ? AND chapter_number = ?";
                     try (PreparedStatement stmt = conn.prepareStatement(query)) {
                         stmt.setInt(1, bookId);
@@ -1055,8 +1131,6 @@ public class read_book__c {
             }
         } else {
             LOGGER.info("Draft container clicked outside a draft button.");
-            // Optional: Show alert or ignore
-            // showAlert(Alert.AlertType.INFORMATION, "Info", "Please click a draft button to open a draft.");
         }
     }
 
@@ -1078,14 +1152,12 @@ public class read_book__c {
                 int userId = rs.getInt("user_id");
                 if (role.equals("Owner")) {
                     authorName = username;
-                    authorId = userId; // Store the author's user ID
+                    authorId = userId;
                 } else if (role.equals("Co-Author")) {
                     coAuthors.add(username);
                 }
             }
-            // Set author name on the button
             author_profile.setText("Author: " + authorName);
-            // Set co-authors on the label
             if (co_author_names != null) {
                 if (coAuthors.isEmpty()) {
                     co_author_names.setText("Co-author: None");
@@ -1123,18 +1195,17 @@ public class read_book__c {
             author_profile__c controller = loader.getController();
             controller.setAuthorId(authorId);
             controller.setBookId(bookId);
-            LOGGER.info("Navigating to author_profile__c with authorId: " + authorId + ", bookId: " + bookId);
             if (mainController != null) {
                 controller.setMainController(mainController);
                 mainController.getCenterPane().getChildren().setAll(content);
-                shutdown(); // Close connection before navigating
+                shutdown();
                 LOGGER.info("Navigated to author profile for authorId: " + authorId + " via mainController");
             } else {
                 controller.setMainController(null);
                 Scene scene = new Scene(content);
                 Stage stage = (Stage) author_profile.getScene().getWindow();
                 stage.setScene(scene);
-                shutdown(); // Close connection before navigating
+                shutdown();
                 LOGGER.info("Navigated to author profile for authorId: " + authorId + " via stage");
             }
         } catch (IOException e) {
@@ -1154,6 +1225,7 @@ public class read_book__c {
             showAlert(Alert.AlertType.ERROR, "Navigation Error", "Main controller not set.");
         }
     }
+
     private void updateAddChapterButtonVisibility() {
         if (add_chapter != null) {
             add_chapter.setVisible(isAuthorOrCoAuthor);
@@ -1170,16 +1242,47 @@ public class read_book__c {
         }
     }
 
-    private boolean isUserAuthorOrCoAuthor() {
-        if (conn == null || !UserSession.getInstance().isLoggedIn()) return false;
-        try (PreparedStatement pstmt = conn.prepareStatement(
-                "SELECT COUNT(*) FROM book_authors WHERE book_id = ? AND user_id = ? AND role IN ('Owner', 'Co-Author')")) {
-            pstmt.setInt(1, bookId);
-            pstmt.setInt(2, UserSession.getInstance().getCurrentUserId());
-            ResultSet rs = pstmt.executeQuery();
-            if (rs.next()) return rs.getInt(1) > 0;
+    private boolean isAuthorOrCoAuthor(int bookId, int userId) {
+        String query = "SELECT COUNT(*) FROM book_authors WHERE book_id = ? AND user_id = ?";
+        try (Connection conn = db_connect.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, bookId);
+            stmt.setInt(2, userId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                boolean isAuthor = rs.getInt(1) > 0;
+                LOGGER.info("Author check for bookId: " + bookId + ", userId: " + userId + " -> " + isAuthor);
+                return isAuthor;
+            }
         } catch (SQLException e) {
-            LOGGER.severe("Error checking author/co-author status: " + e.getMessage());
+            LOGGER.severe("Error verifying author for bookId: " + bookId + ", userId: " + userId + ": " + e.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Database Error", "Failed to verify authorization.");
+        }
+        return false;
+    }
+
+    private boolean chapterNumberExists(int bookId, int chapterNumber) {
+        String query = """
+            SELECT (SELECT COUNT(*) FROM chapters WHERE book_id = ? AND chapter_number = ?) +
+                   (SELECT COUNT(*) FROM draft_chapters WHERE book_id = ? AND chapter_number = ?) AS count
+        """;
+        try (Connection conn = db_connect.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, bookId);
+            stmt.setInt(2, chapterNumber);
+            stmt.setInt(3, bookId);
+            stmt.setInt(4, chapterNumber);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                boolean exists = rs.getInt("count") > 0;
+                LOGGER.info("Chapter number exists check for bookId: " + bookId + ", chapterNumber: " +
+                        chapterNumber + " -> " + exists);
+                return exists;
+            }
+        } catch (SQLException e) {
+            LOGGER.severe("Error checking chapter number for bookId: " + bookId + ", chapterNumber: " +
+                    chapterNumber + ": " + e.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Database Error", "Failed to check chapter number.");
         }
         return false;
     }
@@ -1202,5 +1305,4 @@ public class read_book__c {
             LOGGER.severe("Error closing database connection: " + e.getMessage());
         }
     }
-
 }
