@@ -134,7 +134,7 @@ public class groups_joined_owned__c {
                 "JOIN books b ON cg.book_id = b.book_id " +
                 "LEFT JOIN book_authors ba ON b.book_id = ba.book_id " +
                 "LEFT JOIN users u ON ba.user_id = u.user_id " +
-                "WHERE ugs.user_id = ? AND ugs.status = 'joined' AND cg.admin_id != ?";
+                "WHERE ugs.user_id = ? AND ugs.status = 'joined' AND cg.admin_id != ? ORDER BY cg.created_at DESC";
         try (Connection conn = db_connect.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setInt(1, userId);
@@ -171,7 +171,8 @@ public class groups_joined_owned__c {
                 "JOIN books b ON cg.book_id = b.book_id " +
                 "LEFT JOIN group_members gm ON cg.group_id = gm.group_id " +
                 "WHERE cg.admin_id = ? " +
-                "GROUP BY cg.group_id, b.title, b.cover_photo";
+                "GROUP BY cg.group_id, b.title, b.cover_photo ORDER BY cg.created_at DESC";
+
         try (Connection conn = db_connect.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setInt(1, userId);

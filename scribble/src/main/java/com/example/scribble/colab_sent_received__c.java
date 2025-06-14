@@ -98,7 +98,7 @@ public class colab_sent_received__c {
         try (PreparedStatement stmt = conn.prepareStatement(
                 "SELECT ci.invite_id, ci.book_id, ci.invitee_email, ci.status, ci.message, b.title, b.cover_photo " +
                         "FROM collaboration_invites ci LEFT JOIN books b ON ci.book_id = b.book_id " +
-                        "WHERE ci.inviter_id = ?")) {
+                        "WHERE ci.inviter_id = ? ORDER BY ci.created_at DESC")) {
             stmt.setInt(1, currentUserId);
             ResultSet rs = stmt.executeQuery();
             colabSentContainer.getChildren().clear();
@@ -173,7 +173,7 @@ public class colab_sent_received__c {
                         "FROM collaboration_invites ci " +
                         "JOIN users u ON ci.inviter_id = u.user_id " +
                         "LEFT JOIN books b ON ci.book_id = b.book_id " +
-                        "WHERE ci.invitee_email = (SELECT email FROM users WHERE user_id = ?)")) {
+                        "WHERE ci.invitee_email = (SELECT email FROM users WHERE user_id = ?) ORDER BY ci.created_at DESC")) {
             stmt.setInt(1, currentUserId);
             ResultSet rs = stmt.executeQuery();
             colabReceivedContainer.getChildren().clear();
