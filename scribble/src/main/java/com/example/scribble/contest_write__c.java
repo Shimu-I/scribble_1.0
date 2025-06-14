@@ -35,11 +35,16 @@ import java.sql.SQLException;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.logging.Logger;
+import com.example.scribble.AppState_c;
 
 import java.util.concurrent.atomic.AtomicReference;
 
 
 public class contest_write__c {
+
+    private static final Logger LOGGER = Logger.getLogger(contest_write__c.class.getName());
+
 
     @FXML
     private Button back_button;
@@ -68,6 +73,13 @@ public class contest_write__c {
     private String username;
     private String userPhotoPath;
     private String selectedCoverPhotoPath;
+
+    @FXML private nav_bar__c mainController;
+
+    public void setMainController(nav_bar__c mainController) {
+        this.mainController = mainController;
+        LOGGER.info("Set mainController in contest_write__c");
+    }
 
     public void initData(int contestId, String genre, int userId, String username, String userPhotoPath) {
         this.contestId = contestId;
@@ -101,17 +113,45 @@ public class contest_write__c {
 
     @FXML
     private void handle_back_button(ActionEvent event) {
+        if (mainController == null) {
+            LOGGER.severe("Main controller is null, cannot navigate back from contest write page");
+            showErrorAlert("Error", "Navigation failed: main controller is not initialized.");
+            return;
+        }
+
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/contest.fxml"));
+            // Retrieve previous FXML from AppState_c
+            String previousFXML = AppState_c.getInstance().getPreviousFXML();
+            if (previousFXML == null || previousFXML.isEmpty()) {
+                previousFXML = "/com/example/scribble/contest_entries.fxml"; // Fallback
+                LOGGER.warning("No previous FXML set in AppState_c, using default: " + previousFXML);
+            }
+
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(previousFXML));
+            if (loader.getLocation() == null) {
+                showErrorAlert("Resource Error", "Previous page resource not found: " + previousFXML);
+                return;
+            }
+
             Parent root = loader.load();
-            Stage stage = (Stage) back_button.getScene().getWindow();
-            Scene scene = new Scene(root);
-            stage.setScene(scene);
-            stage.setTitle("Pen Wars Contests");
-            stage.show();
+            Object controller = loader.getController();
+
+            // Pass mainController to the target controller if supported
+            if (controller instanceof contest_entries__c entriesController) {
+                entriesController.initData(contestId, genre, userId, username);
+                entriesController.setMainController(mainController);
+            } else if (controller instanceof contest__c contestController) {
+                contestController.setMainController(mainController);
+            } else {
+                LOGGER.info("Target controller does not support setMainController: " + controller.getClass().getName());
+            }
+
+            // Load into centerPane to preserve nav bar
+            mainController.getCenterPane().getChildren().setAll(root);
+            LOGGER.info("Navigated back to " + previousFXML);
         } catch (IOException e) {
             e.printStackTrace();
-            showErrorAlert("Navigation Error", "Failed to return to the contest page.");
+            showErrorAlert("Navigation Error", "Failed to return to the previous page: " + e.getMessage());
         }
     }
 
@@ -133,10 +173,15 @@ public class contest_write__c {
             return;
         }
 
-        // Validate that userId matches the logged-in user's ID
         if (userId != UserSession.getInstance().getUserId()) {
             showErrorAlert("Session Error", "User ID mismatch. Please log in with the correct account.");
             System.out.println("Validation failed: userId " + userId + " does not match session userId " + UserSession.getInstance().getUserId());
+            return;
+        }
+
+        if (mainController == null) {
+            LOGGER.severe("Main controller is null, cannot navigate to contest entries page");
+            showErrorAlert("Error", "Navigation failed: main controller is not initialized.");
             return;
         }
 
@@ -190,7 +235,7 @@ public class contest_write__c {
             showInfoAlert("Success", "Your entry has been submitted successfully!");
             clearForm();
 
-            // Navigate to contest_entries page with initialized data
+            // Navigate to contest_entries page using centerPane
             try {
                 java.net.URL resource = getClass().getResource("/com/example/scribble/contest_entries.fxml");
                 if (resource == null) {
@@ -202,12 +247,15 @@ public class contest_write__c {
                 FXMLLoader loader = new FXMLLoader(resource);
                 Parent root = loader.load();
                 contest_entries__c controller = loader.getController();
-                controller.initData(contestId, genre, userId, username); // Pass data to new controller
-                Stage stage = (Stage) upload_button.getScene().getWindow();
-                Scene scene = new Scene(root);
-                stage.setScene(scene);
-                stage.setTitle("Contest Entries");
-                stage.show();
+                controller.initData(contestId, genre, userId, username);
+                controller.setMainController(mainController); // Pass mainController
+
+                // Set previous FXML in AppState_c
+                AppState_c.getInstance().setPreviousFXML("/com/example/scribble/contest.fxml");
+
+                // Load into centerPane
+                mainController.getCenterPane().getChildren().setAll(root);
+                LOGGER.info("Navigated to contest_entries.fxml");
             } catch (IOException e) {
                 e.printStackTrace();
                 showErrorAlert("Navigation Error", "Failed to load the contest entries page: " + e.getMessage());

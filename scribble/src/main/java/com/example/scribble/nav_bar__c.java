@@ -256,6 +256,18 @@ public class nav_bar__c {
             } else if (controller instanceof support_author__c) {
                 System.out.println("Injecting main controller into support_author__c");
                 ((support_author__c) controller).setMainController(this);
+            }else if (controller instanceof contest__c) {
+                System.out.println("Injecting main controller into contest__c");
+                ((contest__c) controller).setMainController(this);
+            }else if (controller instanceof contest_entries__c) {
+                System.out.println("Injecting main controller into contest_entries__c");
+                ((contest_entries__c) controller).setMainController(this);
+            }else if (controller instanceof contest_read_entry__c) {
+                System.out.println("Injecting main controller into contest_read_entry__c");
+                ((contest_read_entry__c) controller).setMainController(this);
+            }else if (controller instanceof contest_write__c) {
+                System.out.println("Injecting main controller into contest_write__c");
+                ((contest_write__c) controller).setMainController(this);
             } else {
                 System.out.println("No matching controller for " + fxmlFile);
             }

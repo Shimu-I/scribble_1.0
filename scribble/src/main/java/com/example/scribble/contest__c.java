@@ -15,8 +15,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.logging.Logger;
+
 
 public class contest__c {
+    private static final Logger LOGGER = Logger.getLogger(contest__c.class.getName());
 
     @FXML
     private Button fantasy_button;
@@ -29,6 +32,13 @@ public class contest__c {
 
     @FXML
     private Button crime_horror_button;
+
+    @FXML private nav_bar__c mainController;
+
+    public void setMainController(nav_bar__c mainController) {
+        this.mainController = mainController;
+        LOGGER.info("Set mainController in contest__c");
+    }
 
     @FXML
     private void handle_fantasy_button(ActionEvent event) {
@@ -54,26 +64,18 @@ public class contest__c {
         UserSession session = UserSession.getInstance();
         if (!session.isLoggedIn()) {
             showErrorAlert("Session Error", "You must be logged in to participate in a contest.");
+            LOGGER.severe("User not logged in, cannot navigate to contest entries for genre: " + genre);
             return;
         }
 
         int contestId = getContestIdForGenre(genre);
         if (contestId == -1) {
             showErrorAlert("Contest Not Found", "The " + genre + " contest is not available.");
+            LOGGER.warning("No contest found for genre: " + genre);
             return;
         }
 
-        ChoiceDialog<String> dialog = new ChoiceDialog<>("Add Contest Entry", Arrays.asList("Add Contest Entry", "View Contest Entries"));
-        dialog.setTitle("Contest Action");
-        dialog.setHeaderText("What would you like to do for the " + genre + " contest?");
-        dialog.setContentText("Choose an action:");
-        dialog.showAndWait().ifPresent(choice -> {
-            if (choice.equals("Add Contest Entry")) {
-                navigateToContestWrite(contestId, genre);
-            } else {
-                navigateToContestEntries(contestId, genre);
-            }
-        });
+        navigateToContestEntries(contestId, genre);
     }
 
     private int getContestIdForGenre(String genre) {
@@ -112,11 +114,12 @@ public class contest__c {
             Parent root = loader.load();
             contest_write__c writeController = loader.getController();
             writeController.initData(contestId, genre, userId, username, userPhotoPath);
-            Stage stage = (Stage) fantasy_button.getScene().getWindow();
-            Scene scene = new Scene(root);
-            stage.setScene(scene);
-            stage.setTitle("Write for " + genre + " Contest");
-            stage.show();
+
+            // Update AppState to track the previous FXML
+            AppState.getInstance().setPreviousFXML("/com/example/scribble/contest.fxml");
+
+            // Load into centerPane instead of replacing the scene
+            mainController.getCenterPane().getChildren().setAll(root);
         } catch (IOException e) {
             e.printStackTrace();
             showErrorAlert("Navigation Error", "Failed to load the contest writing page: " + e.getMessage());
@@ -124,27 +127,36 @@ public class contest__c {
     }
 
     private void navigateToContestEntries(int contestId, String genre) {
-        try {
-            UserSession session = UserSession.getInstance();
-            int userId = session.getUserId();
-            String username = session.getUsername();
+        if (mainController == null) {
+            LOGGER.severe("Main controller is null in contest__c, cannot navigate to contest_entries.fxml");
+            showErrorAlert("Error", "Navigation failed: main controller is not initialized in contest__c.");
+            return;
+        }
 
+        LOGGER.info("Initiating navigation to contest_entries.fxml with mainController: " + mainController);
+        try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/contest_entries.fxml"));
             if (loader.getLocation() == null) {
-                System.err.println("FXML file not found: /com/example/scribble/contest_entries.fxml");
+                LOGGER.severe("Resource not found: /com/example/scribble/contest_entries.fxml");
                 showErrorAlert("Resource Error", "Contest entries page resource not found.");
                 return;
             }
             Parent root = loader.load();
-            contest_entries__c entriesController = loader.getController();
-            entriesController.initData(contestId, genre, userId, username);
-            Stage stage = (Stage) fantasy_button.getScene().getWindow();
-            Scene scene = new Scene(root);
-            stage.setScene(scene);
-            stage.setTitle("Contest Entries for " + genre);
-            stage.show();
+            contest_entries__c controller = loader.getController();
+            controller.initData(contestId, genre, UserSession.getInstance().getUserId(), UserSession.getInstance().getUsername());
+            controller.setMainController(mainController); // Pass mainController
+            LOGGER.info("mainController set in contest_entries__c: " + mainController);
+
+            // Set previous FXML in AppState_c
+            AppState_c.getInstance().setPreviousFXML("/com/example/scribble/contest.fxml");
+            LOGGER.info("Set previousFXML to /com/example/scribble/contest.fxml");
+
+            // Load into centerPane
+            mainController.getCenterPane().getChildren().setAll(root);
+            LOGGER.info("Successfully navigated to contest_entries.fxml");
         } catch (IOException e) {
             e.printStackTrace();
+            LOGGER.severe("Failed to navigate to contest_entries.fxml: " + e.getMessage());
             showErrorAlert("Navigation Error", "Failed to load the contest entries page: " + e.getMessage());
         }
     }

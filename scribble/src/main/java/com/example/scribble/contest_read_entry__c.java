@@ -21,8 +21,13 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.logging.Logger;
+import com.example.scribble.AppState_c;
 
 public class contest_read_entry__c {
+
+    private static final Logger LOGGER = Logger.getLogger(contest_read_entry__c.class.getName());
+
 
     @FXML
     private Button back_button;
@@ -44,6 +49,13 @@ public class contest_read_entry__c {
     private String genre;
     private int userId;
     private String username;
+
+    @FXML private nav_bar__c mainController;
+
+    public void setMainController(nav_bar__c mainController) {
+        this.mainController = mainController;
+        LOGGER.info("Set mainController in contest_read_entry__c");
+    }
 
     public void initData(int entryId) {
         this.entryId = entryId;
@@ -110,23 +122,45 @@ public class contest_read_entry__c {
 
     @FXML
     private void handle_back_button(ActionEvent event) {
+        if (mainController == null) {
+            LOGGER.severe("Main controller is null, cannot navigate back from contest read entry page");
+            showErrorAlert("Error", "Navigation failed: main controller is not initialized.");
+            return;
+        }
+
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/contest_entries.fxml"));
+            String previousFXML = AppState_c.getInstance().getPreviousFXML();
+            if (previousFXML == null || previousFXML.isEmpty()) {
+                previousFXML = "/com/example/scribble/contest_entries.fxml";
+                LOGGER.warning("No previous FXML set in AppState_c, using default: " + previousFXML);
+            }
+
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(previousFXML));
             if (loader.getLocation() == null) {
-                showErrorAlert("Resource Error", "Contest entries page resource not found.");
+                LOGGER.severe("Resource not found: " + previousFXML);
+                showErrorAlert("Resource Error", "Previous page resource not found: " + previousFXML);
                 return;
             }
+
             Parent root = loader.load();
-            contest_entries__c controller = loader.getController();
-            controller.initData(contestId, genre, userId, username);
-            Stage stage = (Stage) back_button.getScene().getWindow();
-            Scene scene = new Scene(root);
-            stage.setScene(scene);
-            stage.setTitle("Contest Entries");
-            stage.show();
+            Object controller = loader.getController();
+
+            if (controller instanceof contest_entries__c entriesController) {
+                entriesController.initData(contestId, genre, userId, username);
+                entriesController.setMainController(mainController);
+                LOGGER.info("Initialized contest_entries__c with contestId=" + contestId + ", genre=" + genre);
+            } else if (controller instanceof contest__c contestController) {
+                contestController.setMainController(mainController);
+                LOGGER.info("Initialized contest__c");
+            } else {
+                LOGGER.info("Target controller does not support setMainController: " + controller.getClass().getName());
+            }
+
+            mainController.getCenterPane().getChildren().setAll(root);
+            LOGGER.info("Navigated back to " + previousFXML);
         } catch (IOException e) {
-            e.printStackTrace();
-            showErrorAlert("Navigation Error", "Failed to return to the contest entries page: " + e.getMessage());
+            LOGGER.severe("Failed to navigate back to previous page: " + e.getMessage());
+            showErrorAlert("Navigation Error", "Failed to return to the previous page: " + e.getMessage());
         }
     }
 

@@ -1,12 +1,11 @@
 package com.example.scribble;
 
-
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -14,8 +13,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
-import javafx.stage.Stage;
-
 import java.io.IOException;
 import java.net.URL;
 import java.sql.Connection;
@@ -23,25 +20,26 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
+import java.util.logging.Logger;
 
 public class contest_entries__c {
 
-    @FXML
-    private Button back_button;
+    private static final Logger LOGGER = Logger.getLogger(contest_entries__c.class.getName());
 
-    @FXML
-    private Button add_entry;
-
-    @FXML
-    private VBox entryContainer;
-
-    @FXML
-    private Label genre_name;
-
+    @FXML private Button back_button;
+    @FXML private Button add_entry;
+    @FXML private VBox entryContainer;
+    @FXML private Label genre_name;
     private int contestId;
     private String genre;
     private int userId;
     private String username;
+    @FXML private nav_bar__c mainController;
+
+    public void setMainController(nav_bar__c mainController) {
+        this.mainController = mainController;
+        LOGGER.info("Set mainController in contest_entries__c: " + mainController);
+    }
 
     public void initData(int contestId, String genre, int userId, String username) {
         this.contestId = contestId;
@@ -65,29 +63,56 @@ public class contest_entries__c {
         if (genre_name != null && genre != null) {
             genre_name.setText(genre);
         } else if (genre_name == null) {
-            System.err.println("genre_name label is not injected from FXML.");
+            LOGGER.severe("genre_name label is not injected from FXML.");
         } else {
-            System.out.println("Skipped genre label update: genre_name=" + genre_name + ", genre=" + genre);
+            LOGGER.info("Skipped genre label update: genre_name=" + genre_name + ", genre=" + genre);
         }
     }
 
     @FXML
     private void handle_back_button(ActionEvent event) {
+        if (mainController == null) {
+            LOGGER.severe("Main controller is null, cannot navigate back from contest entries page");
+            showErrorAlert("Error", "Navigation failed: main controller is not initialized.");
+            return;
+        }
+
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/contest.fxml"));
-            if (loader.getLocation() == null) {
-                showErrorAlert("Resource Error", "Contest page resource not found.");
+            String previousFXML = AppState_c.getInstance().getPreviousFXML();
+            if (previousFXML == null || previousFXML.isEmpty() || previousFXML.equals("/com/example/scribble/contest_entries.fxml")) {
+                previousFXML = "/com/example/scribble/contest.fxml";
+                LOGGER.warning("Invalid or self-referential previous FXML: " + AppState_c.getInstance().getPreviousFXML() + ", defaulting to: " + previousFXML);
+            }
+
+            URL fxmlResource = getClass().getResource(previousFXML);
+            if (fxmlResource == null) {
+                LOGGER.severe("Resource not found: " + previousFXML);
+                showErrorAlert("Resource Error", "Previous page resource not found: " + previousFXML);
                 return;
             }
+
+            FXMLLoader loader = new FXMLLoader(fxmlResource);
             Parent root = loader.load();
-            Stage stage = (Stage) back_button.getScene().getWindow();
-            Scene scene = new Scene(root);
-            stage.setScene(scene);
-            stage.setTitle("Pen Wars Contests");
-            stage.show();
+            Object controller = loader.getController();
+
+            // Use reflection or interface to handle setMainController safely
+            try {
+                if (controller != null) {
+                    java.lang.reflect.Method setMainControllerMethod = controller.getClass().getMethod("setMainController", nav_bar__c.class);
+                    setMainControllerMethod.invoke(controller, mainController);
+                    LOGGER.info("setMainController called on controller: " + controller.getClass().getName());
+                } else {
+                    LOGGER.warning("Controller is null for FXML: " + previousFXML);
+                }
+            } catch (NoSuchMethodException | IllegalAccessException | java.lang.reflect.InvocationTargetException e) {
+                LOGGER.info("Target controller does not support setMainController: " + (controller != null ? controller.getClass().getName() : "null") + ", error: " + e.getMessage());
+            }
+
+            mainController.getCenterPane().getChildren().setAll(root);
+            LOGGER.info("Navigated back to " + previousFXML);
         } catch (IOException e) {
-            e.printStackTrace();
-            showErrorAlert("Navigation Error", "Failed to return to the contest page: " + e.getMessage());
+            LOGGER.severe("Failed to navigate back to previous FXML: " + e.getMessage());
+            showErrorAlert("Navigation Error", "Failed to return to the previous page: " + e.getMessage());
         }
     }
 
@@ -95,28 +120,36 @@ public class contest_entries__c {
     private void handle_add_entry(ActionEvent event) {
         if (!UserSession.getInstance().isLoggedIn()) {
             showErrorAlert("Session Error", "You must be logged in to add an entry.");
+            LOGGER.severe("User not logged in, cannot navigate to contest_write.fxml");
             return;
         }
         if (userId != UserSession.getInstance().getUserId()) {
             showErrorAlert("Session Error", "User ID mismatch. Please log in with the correct account.");
+            LOGGER.severe("User ID mismatch: userId=" + userId + ", session userId=" + UserSession.getInstance().getUserId());
             return;
         }
+        if (mainController == null) {
+            LOGGER.severe("Main controller is null, cannot navigate to contest_write.fxml");
+            showErrorAlert("Error", "Navigation failed: main controller is not initialized.");
+            return;
+        }
+
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/contest_write.fxml"));
             if (loader.getLocation() == null) {
+                LOGGER.severe("Resource not found: /com/example/scribble/contest_write.fxml");
                 showErrorAlert("Resource Error", "Contest writing page resource not found.");
                 return;
             }
             Parent root = loader.load();
             contest_write__c controller = loader.getController();
             controller.initData(contestId, genre, userId, username, UserSession.getInstance().getUserPhotoPath());
-            Stage stage = (Stage) add_entry.getScene().getWindow();
-            Scene scene = new Scene(root);
-            stage.setScene(scene);
-            stage.setTitle("Submit Contest Entry");
-            stage.show();
+            controller.setMainController(mainController);
+            AppState_c.getInstance().setPreviousFXML("/com/example/scribble/contest_entries.fxml");
+            mainController.getCenterPane().getChildren().setAll(root);
+            LOGGER.info("Successfully navigated to contest_write.fxml");
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.severe("Failed to navigate to contest_write.fxml: " + e.getMessage());
             showErrorAlert("Navigation Error", "Failed to open the entry submission page: " + e.getMessage());
         }
     }
@@ -125,37 +158,127 @@ public class contest_entries__c {
     private void handle_not_voted_button(ActionEvent event) {
         if (!UserSession.getInstance().isLoggedIn()) {
             showErrorAlert("Session Error", "You must be logged in to vote.");
+            LOGGER.severe("User not logged in, cannot vote.");
             return;
         }
         Button source = (Button) event.getSource();
-        HBox entryHBox = (HBox) source.getParent().getParent().getParent().getParent();
+        HBox entryHBox = findEntryHBox(source);
+        if (entryHBox == null) {
+            LOGGER.severe("Failed to find entry HBox for voting button.");
+            showErrorAlert("UI Error", "Unable to process vote due to UI structure issue.");
+            return;
+        }
         int entryId = getEntryIdFromHBox(entryHBox);
+        if (isOwnEntry(entryId)) {
+            showErrorAlert("Vote Error", "You cannot vote for your own entry.");
+            LOGGER.warning("User " + UserSession.getInstance().getUserId() + " attempted to vote for their own entryId=" + entryId);
+            return;
+        }
+        if (hasUserVoted(entryId)) {
+            showErrorAlert("Vote Error", "You have already voted for this entry.");
+            LOGGER.warning("User " + UserSession.getInstance().getUserId() + " attempted to vote again for entryId=" + entryId);
+            return;
+        }
         addVote(entryId, entryHBox);
+    }
+
+    private boolean isOwnEntry(int entryId) {
+        try (Connection conn = db_connect.getConnection()) {
+            if (conn == null) {
+                LOGGER.severe("Database connection is null, cannot check entry ownership for entryId=" + entryId);
+                return false;
+            }
+            String query = "SELECT user_id FROM contest_entries WHERE entry_id = ?";
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setInt(1, entryId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getInt("user_id") == UserSession.getInstance().getUserId();
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.severe("Failed to check entry ownership for entryId=" + entryId + ": " + e.getMessage());
+            showErrorAlert("Database Error", "Unable to verify entry ownership: " + e.getMessage());
+        }
+        return false;
     }
 
     @FXML
     private void handle_voted_button(ActionEvent event) {
         if (!UserSession.getInstance().isLoggedIn()) {
             showErrorAlert("Session Error", "You must be logged in to remove a vote.");
+            LOGGER.severe("User not logged in, cannot remove vote.");
             return;
         }
         Button source = (Button) event.getSource();
-        HBox entryHBox = (HBox) source.getParent().getParent().getParent().getParent();
+        HBox entryHBox = findEntryHBox(source);
+        if (entryHBox == null) {
+            LOGGER.severe("Failed to find entry HBox for voting button.");
+            showErrorAlert("UI Error", "Unable to process vote removal due to UI structure issue.");
+            return;
+        }
         int entryId = getEntryIdFromHBox(entryHBox);
+        if (!hasUserVoted(entryId)) {
+            showErrorAlert("Vote Error", "You have not voted for this entry.");
+            LOGGER.warning("User " + UserSession.getInstance().getUserId() + " attempted to remove non-existent vote for entryId=" + entryId);
+            return;
+        }
         removeVote(entryId, entryHBox);
+    }
+
+    private HBox findEntryHBox(Node node) {
+        while (node != null) {
+            if (node instanceof HBox && "entry_hbox".equals(node.getId())) {
+                return (HBox) node;
+            }
+            node = node.getParent();
+        }
+        return null;
     }
 
     @FXML
     private void handle_open_entry(ActionEvent event) {
+        if (!UserSession.getInstance().isLoggedIn()) {
+            showErrorAlert("Session Error", "You must be logged in to view entries.");
+            LOGGER.severe("User not logged in, cannot navigate to contest_read_entry.fxml");
+            return;
+        }
+        if (mainController == null) {
+            LOGGER.severe("Main controller is null in contest_entries__c, cannot navigate to contest_read_entry.fxml");
+            showErrorAlert("Error", "Navigation failed: main controller is not initialized in contest_entries__c.");
+            return;
+        }
+
         Button source = (Button) event.getSource();
         HBox entryHBox = (HBox) source.getParent();
         int entryId = getEntryIdFromHBox(entryHBox);
-        openEntryPage(entryId);
+
+        LOGGER.info("Initiating navigation to contest_read_entry.fxml for entryId: " + entryId + " with mainController: " + mainController);
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/contest_read_entry.fxml"));
+            if (loader.getLocation() == null) {
+                LOGGER.severe("Resource not found: /com/example/scribble/contest_read_entry.fxml");
+                showErrorAlert("Resource Error", "Contest read entry page resource not found.");
+                return;
+            }
+            Parent root = loader.load();
+            contest_read_entry__c controller = loader.getController();
+            controller.initData(entryId);
+            controller.setMainController(mainController);
+            LOGGER.info("mainController set in contest_read_entry__c: " + mainController);
+            AppState_c.getInstance().setPreviousFXML("/com/example/scribble/contest_entries.fxml");
+            mainController.getCenterPane().getChildren().setAll(root);
+            LOGGER.info("Successfully navigated to contest_read_entry.fxml for entryId: " + entryId);
+        } catch (IOException e) {
+            LOGGER.severe("Failed to navigate to contest_read_entry.fxml: " + e.getMessage());
+            showErrorAlert("Navigation Error", "Failed to open the entry page: " + e.getMessage());
+        }
     }
 
     private void loadEntries() {
         if (entryContainer == null) {
-            System.err.println("entryContainer is null; cannot load entries.");
+            LOGGER.severe("entryContainer is null; cannot load entries.");
             return;
         }
         entryContainer.getChildren().clear();
@@ -175,7 +298,7 @@ public class contest_entries__c {
                     "WHERE ce.contest_id = ? ORDER BY ce.vote_count DESC, ce.submission_date ASC";
             try (PreparedStatement stmt = conn.prepareStatement(query)) {
                 stmt.setInt(1, contestId);
-                System.out.println("Executing query for contestId: " + contestId);
+                LOGGER.info("Executing query for contestId: " + contestId);
                 ResultSet rs = stmt.executeQuery();
                 int entryNumber = 1;
                 while (rs.next()) {
@@ -191,11 +314,11 @@ public class contest_entries__c {
                     entryContainer.getChildren().add(entryHBox);
                 }
                 if (entryNumber == 1) {
-                    System.out.println("No entries found for contestId: " + contestId);
+                    LOGGER.info("No entries found for contestId: " + contestId);
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe("Failed to load contest entries: " + e.getMessage());
             showErrorAlert("Database Error", "Failed to load contest entries: " + e.getMessage());
         }
     }
@@ -204,24 +327,24 @@ public class contest_entries__c {
                                  int voteCount, String coverPhoto) {
         HBox hbox = new HBox();
         hbox.setAlignment(javafx.geometry.Pos.CENTER);
-        hbox.setPrefHeight(95.0); // Set height to 95
-        hbox.setPrefWidth(1030.0); // Set width to 1030
-        hbox.setMaxHeight(95.0); // Enforce maximum height
-        hbox.setMaxWidth(1030.0); // Enforce maximum width
-        hbox.setMinHeight(95.0); // Enforce minimum height
-        hbox.setMinWidth(1030.0); // Enforce minimum width
-        hbox.setSpacing(25.0); // Match FXML
+        hbox.setPrefHeight(95.0);
+        hbox.setPrefWidth(1030.0);
+        hbox.setMaxHeight(95.0);
+        hbox.setMaxWidth(1030.0);
+        hbox.setMinHeight(95.0);
+        hbox.setMinWidth(1030.0);
+        hbox.setSpacing(25.0);
         hbox.setStyle("-fx-background-color: #F4908A; -fx-background-radius: 10;");
         hbox.setId("entry_hbox");
 
         HBox numberBox = new HBox();
         numberBox.setAlignment(javafx.geometry.Pos.CENTER);
-        numberBox.setPrefHeight(58.0); // Set height to 58
-        numberBox.setPrefWidth(58.0); // Set width to 58
-        numberBox.setMaxHeight(58.0); // Enforce maximum height
-        numberBox.setMaxWidth(58.0); // Enforce maximum width
-        numberBox.setMinHeight(58.0); // Enforce minimum height
-        numberBox.setMinWidth(58.0); // Enforce minimum width
+        numberBox.setPrefHeight(58.0);
+        numberBox.setPrefWidth(58.0);
+        numberBox.setMaxHeight(58.0);
+        numberBox.setMaxWidth(58.0);
+        numberBox.setMinHeight(58.0);
+        numberBox.setMinWidth(58.0);
         numberBox.setStyle("-fx-background-color: #014237; -fx-background-radius: 20;");
         numberBox.setId("entry_no_hbox");
         Label numberLabel = new Label(String.valueOf(entryNumber));
@@ -231,8 +354,8 @@ public class contest_entries__c {
 
         VBox titleAuthorBox = new VBox();
         titleAuthorBox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
-        titleAuthorBox.setPrefHeight(95.0); // Match FXML
-        titleAuthorBox.setPrefWidth(266.0); // Match FXML
+        titleAuthorBox.setPrefHeight(95.0);
+        titleAuthorBox.setPrefWidth(266.0);
         Label titleLabel = new Label(title);
         titleLabel.setFont(new Font("System Bold", 24.0));
         Label authorLabel = new Label("by " + author);
@@ -245,60 +368,54 @@ public class contest_entries__c {
 
         HBox voteBox = new HBox();
         voteBox.setAlignment(javafx.geometry.Pos.CENTER);
-        voteBox.setPrefHeight(95.0); // Match FXML
-        voteBox.setPrefWidth(232.0); // Match FXML
-        voteBox.setSpacing(10.0); // Match FXML
+        voteBox.setPrefHeight(95.0);
+        voteBox.setPrefWidth(232.0);
+        voteBox.setSpacing(10.0);
 
         StackPane voteButtonsPane = new StackPane();
         voteButtonsPane.setAlignment(javafx.geometry.Pos.CENTER);
-        voteButtonsPane.setPrefHeight(30.0); // Height of one button
-        voteButtonsPane.setPrefWidth(30.0); // Width of one button
+        voteButtonsPane.setPrefHeight(30.0);
+        voteButtonsPane.setPrefWidth(30.0);
         voteButtonsPane.setStyle("-fx-pref-height: 30.0; -fx-pref-width: 30.0; -fx-max-height: 30.0; -fx-max-width: 30.0;");
 
         Button notVotedButton = new Button();
         ImageView notVotedIcon = new ImageView(new Image(getClass().getResource("/images/icons/star5.png").toExternalForm()));
-        notVotedIcon.setFitHeight(30.0); // Match FXML
-        notVotedIcon.setFitWidth(30.0); // Match FXML
+        notVotedIcon.setFitHeight(30.0);
+        notVotedIcon.setFitWidth(30.0);
         notVotedButton.setGraphic(notVotedIcon);
-        notVotedButton.setPrefHeight(30.0); // Match FXML
-        notVotedButton.setPrefWidth(30.0); // Match FXML
-        notVotedButton.setStyle("-fx-background-color: transparent;"); // Fixed
-        notVotedButton.setOnAction(e -> addVote(entryId, hbox));
+        notVotedButton.setPrefHeight(30.0);
+        notVotedButton.setPrefWidth(30.0);
+        notVotedButton.setStyle("-fx-background-color: transparent;");
+        notVotedButton.setOnAction(this::handle_not_voted_button);
 
         Button votedButton = new Button();
         ImageView votedIcon = new ImageView(new Image(getClass().getResource("/images/icons/star6.png").toExternalForm()));
-        votedIcon.setFitHeight(30.0); // Match FXML
-        votedIcon.setFitWidth(30.0); // Match FXML
+        votedIcon.setFitHeight(30.0);
+        votedIcon.setFitWidth(30.0);
         votedButton.setGraphic(votedIcon);
-        votedButton.setPrefHeight(30.0); // Match FXML
-        votedButton.setPrefWidth(30.0); // Match FXML
-        votedButton.setStyle("-fx-background-color: transparent;"); // Fixed
-        votedButton.setOnAction(e -> removeVote(entryId, hbox));
+        votedButton.setPrefHeight(30.0);
+        votedButton.setPrefWidth(30.0);
+        votedButton.setStyle("-fx-background-color: transparent;");
+        votedButton.setOnAction(this::handle_voted_button);
 
         boolean hasVoted = UserSession.getInstance().isLoggedIn() && hasUserVoted(entryId);
         notVotedButton.setVisible(!hasVoted);
         votedButton.setVisible(hasVoted);
-        voteButtonsPane.getChildren().addAll(notVotedButton, votedButton); // Overlay at 0,0,0
+        voteButtonsPane.getChildren().addAll(notVotedButton, votedButton);
 
         Label voteCountLabel = new Label("Voted by " + voteCount + " people");
         voteCountLabel.setFont(new Font(14.0));
         voteBox.getChildren().addAll(voteButtonsPane, voteCountLabel);
 
         Button openButton = new Button("open");
-        openButton.setPrefHeight(30.0); // Match FXML
-        openButton.setPrefWidth(120.0); // Match FXML
-        openButton.setStyle("-fx-background-color: #F5E0CD; -fx-background-radius: 5;" +
-                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0, 0, 0);" +
-                "-fx-translate-y: 0;" +
-                "-fx-translate-y: -2px; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 10, 0, 0, 1);");
+        openButton.setPrefHeight(30.0);
+        openButton.setPrefWidth(120.0);
+        openButton.setStyle("-fx-background-color: #F5E0CD; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0, 0, 0);");
         openButton.setTextFill(javafx.scene.paint.Color.valueOf("#014237"));
         openButton.setFont(new Font("System Bold", 14.0));
-        openButton.setOnAction(e -> openEntryPage(entryId));
-        // Add hover effect
+        openButton.setOnAction(this::handle_open_entry);
         openButton.setOnMouseEntered(e -> openButton.setStyle("-fx-background-color: #F5E0CD; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 10, 0, 0, 1); -fx-translate-y: -2px;"));
-        openButton.setOnMouseExited(e -> openButton.setStyle("-fx-background-color: #F5E0CD; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0, 0, 0); -fx-translate-y: 0;"));
-
-
+        openButton.setOnMouseExited(e -> openButton.setStyle("-fx-background-color: #F5E0CD; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0, 0, 0);"));
 
         hbox.getChildren().addAll(numberBox, titleAuthorBox, dateLabel, voteBox, openButton);
         hbox.getProperties().put("entryId", entryId);
@@ -306,100 +423,175 @@ public class contest_entries__c {
     }
 
     private boolean hasUserVoted(int entryId) {
+        if (!UserSession.getInstance().isLoggedIn()) {
+            return false;
+        }
         try (Connection conn = db_connect.getConnection()) {
+            if (conn == null) {
+                System.err.println("Database connection is null, cannot check vote status for entryId=" + entryId);
+                return false;
+            }
             String query = "SELECT vote_id FROM contest_votes WHERE contest_entry_id = ? AND user_id = ?";
             try (PreparedStatement stmt = conn.prepareStatement(query)) {
                 stmt.setInt(1, entryId);
                 stmt.setInt(2, UserSession.getInstance().getUserId());
-                ResultSet rs = stmt.executeQuery();
-                return rs.next();
+                try (ResultSet rs = stmt.executeQuery()) {
+                    return rs.next();
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();
+            showErrorAlert("Database Error", "Unable to verify vote status: " + e.getMessage());
             return false;
         }
     }
 
     private void addVote(int entryId, HBox entryHBox) {
-        try (Connection conn = db_connect.getConnection()) {
+        Connection conn = null;
+        try {
+            conn = db_connect.getConnection();
+            if (conn == null) {
+                throw new SQLException("Database connection is null");
+            }
             conn.setAutoCommit(false);
+
             String insertVote = "INSERT INTO contest_votes (contest_entry_id, user_id, vote_value, created_at) VALUES (?, ?, TRUE, NOW())";
             try (PreparedStatement stmt = conn.prepareStatement(insertVote)) {
                 stmt.setInt(1, entryId);
                 stmt.setInt(2, UserSession.getInstance().getUserId());
                 stmt.executeUpdate();
             }
+
             String updateVotes = "UPDATE contest_entries SET vote_count = vote_count + 1 WHERE entry_id = ?";
             try (PreparedStatement stmt = conn.prepareStatement(updateVotes)) {
                 stmt.setInt(1, entryId);
-                stmt.executeUpdate();
+                int rowsAffected = stmt.executeUpdate();
+                if (rowsAffected == 0) {
+                    throw new SQLException("No rows updated for entry_id=" + entryId);
+                }
             }
+
             conn.commit();
             updateVoteDisplay(entryHBox, true);
-            loadEntries();
+            loadEntries(); // Refresh entry order
+            LOGGER.info("Vote added for entryId=" + entryId + " by userId=" + UserSession.getInstance().getUserId());
         } catch (SQLException e) {
-            e.printStackTrace();
-            showErrorAlert("Database Error", "Failed to add vote: " + e.getMessage());
+            LOGGER.severe("Failed to add vote for entryId=" + entryId + ": " + e.getMessage());
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                    LOGGER.info("Transaction rolled back for addVote, entryId=" + entryId);
+                } catch (SQLException rollbackEx) {
+                    LOGGER.severe("Rollback failed: " + rollbackEx.getMessage());
+                }
+            }
+            showErrorAlert("Database Error", "Failed to add vote: " + (e.getMessage().contains("Duplicate entry") ? "You have already voted." : e.getMessage()));
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                } catch (SQLException e) {
+                    LOGGER.severe("Failed to close connection: " + e.getMessage());
+                }
+            }
         }
     }
 
     private void removeVote(int entryId, HBox entryHBox) {
-        try (Connection conn = db_connect.getConnection()) {
+        Connection conn = null;
+        try {
+            conn = db_connect.getConnection();
+            if (conn == null) {
+                throw new SQLException("Database connection is null");
+            }
             conn.setAutoCommit(false);
+
             String deleteVote = "DELETE FROM contest_votes WHERE contest_entry_id = ? AND user_id = ?";
             try (PreparedStatement stmt = conn.prepareStatement(deleteVote)) {
                 stmt.setInt(1, entryId);
                 stmt.setInt(2, UserSession.getInstance().getUserId());
-                stmt.executeUpdate();
+                int rowsAffected = stmt.executeUpdate();
+                if (rowsAffected == 0) {
+                    throw new SQLException("No vote found to delete for entry_id=" + entryId);
+                }
             }
-            String updateVotes = "UPDATE contest_entries SET vote_count = vote_count - 1 WHERE entry_id = ?";
+
+            String updateVotes = "UPDATE contest_entries SET vote_count = GREATEST(vote_count - 1, 0) WHERE entry_id = ?";
             try (PreparedStatement stmt = conn.prepareStatement(updateVotes)) {
                 stmt.setInt(1, entryId);
-                stmt.executeUpdate();
+                int rowsAffected = stmt.executeUpdate();
+                if (rowsAffected == 0) {
+                    throw new SQLException("No rows updated for entry_id=" + entryId);
+                }
             }
+
             conn.commit();
             updateVoteDisplay(entryHBox, false);
-            loadEntries();
+            loadEntries(); // Refresh entry order
+            LOGGER.info("Vote removed for entryId=" + entryId + " by userId=" + UserSession.getInstance().getUserId());
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe("Failed to remove vote for entryId=" + entryId + ": " + e.getMessage());
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                    LOGGER.info("Transaction rolled back for removeVote, entryId=" + entryId);
+                } catch (SQLException rollbackEx) {
+                    LOGGER.severe("Rollback failed: " + rollbackEx.getMessage());
+                }
+            }
             showErrorAlert("Database Error", "Failed to remove vote: " + e.getMessage());
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                } catch (SQLException e) {
+                    LOGGER.severe("Failed to close connection: " + e.getMessage());
+                }
+            }
         }
     }
 
     private void updateVoteDisplay(HBox entryHBox, boolean hasVoted) {
-        HBox voteBox = (HBox) entryHBox.getChildren().get(3);
-        StackPane voteButtonsPane = (StackPane) voteBox.getChildren().get(0);
-        Button notVotedButton = (Button) voteButtonsPane.getChildren().get(0);
-        Button votedButton = (Button) voteButtonsPane.getChildren().get(1);
-        notVotedButton.setVisible(!hasVoted);
-        votedButton.setVisible(hasVoted);
+        try {
+            HBox voteBox = (HBox) entryHBox.getChildren().get(3);
+            StackPane voteButtonsPane = (StackPane) voteBox.getChildren().get(0);
+            Button notVotedButton = (Button) voteButtonsPane.getChildren().get(0);
+            Button votedButton = (Button) voteButtonsPane.getChildren().get(1);
+            notVotedButton.setVisible(!hasVoted);
+            votedButton.setVisible(hasVoted);
 
-        Label voteCountLabel = (Label) voteBox.getChildren().get(1);
-        int currentVotes = Integer.parseInt(voteCountLabel.getText().replaceAll("Voted by (\\d+) people", "$1"));
-        voteCountLabel.setText("Voted by " + (hasVoted ? currentVotes + 1 : Math.max(0, currentVotes - 1)) + " people");
+            Label voteCountLabel = (Label) voteBox.getChildren().get(1);
+            int entryId = getEntryIdFromHBox(entryHBox);
+            int currentVoteCount = getCurrentVoteCount(entryId);
+            voteCountLabel.setText("Voted by " + currentVoteCount + " people");
+        } catch (Exception e) {
+            e.printStackTrace();
+            showErrorAlert("UI Error", "Failed to update vote display: " + e.getMessage());
+        }
     }
 
-    private void openEntryPage(int entryId) {
-        try {
-            URL resource = getClass().getResource("/com/example/scribble/contest_read_entry.fxml");
-            if (resource == null) {
-                System.err.println("Resource not found: /com/example/scribble/contest_read_entry.fxml");
-                showErrorAlert("Resource Error", "Contest entry read page resource not found.");
-                return;
+    private int getCurrentVoteCount(int entryId) {
+        try (Connection conn = db_connect.getConnection()) {
+            if (conn == null) {
+                System.err.println("Database connection is null, cannot fetch vote count for entryId=" + entryId);
+                return 0;
             }
-            FXMLLoader loader = new FXMLLoader(resource);
-            Parent root = loader.load();
-            contest_read_entry__c controller = loader.getController();
-            controller.initData(entryId);
-            Stage stage = (Stage) entryContainer.getScene().getWindow();
-            Scene scene = new Scene(root);
-            stage.setScene(scene);
-            stage.setTitle("Read Contest Entry");
-            stage.show();
-        } catch (IOException e) {
+            String query = "SELECT vote_count FROM contest_entries WHERE entry_id = ?";
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setInt(1, entryId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getInt("vote_count");
+                    }
+                }
+            }
+        } catch (SQLException e) {
             e.printStackTrace();
-            showErrorAlert("Navigation Error", "Failed to open the entry page: " + e.getMessage());
+            System.err.println("Failed to fetch vote count for entryId=" + entryId + ": " + e.getMessage());
         }
+        return 0;
     }
 
     private int getEntryIdFromHBox(HBox hbox) {
