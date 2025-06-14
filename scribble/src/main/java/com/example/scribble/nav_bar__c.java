@@ -1,4 +1,3 @@
-
 package com.example.scribble;
 
 import javafx.event.ActionEvent;
@@ -15,17 +14,9 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 
-import javafx.event.ActionEvent;
-import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.layout.Pane;
-import java.io.IOException;
-import java.util.logging.Logger;
-import java.util.logging.Level;
-
 import java.io.File;
 import java.io.IOException;
+import java.util.logging.Logger;
 
 public class nav_bar__c {
 
@@ -57,39 +48,53 @@ public class nav_bar__c {
     private ImageView user_photo;
 
     @FXML
-    private ImageView user_sign_in;
+    private ImageView user_sign_in; // Still an ImageView in sign-in Button's graphic
 
     @FXML
-    private ImageView user_sign_out;
+    private Button signOutButton; // New Button field for sign-out
+
+    @FXML
+    private Button testSignOutButton;
 
     private static final Logger LOGGER = Logger.getLogger(nav_bar__c.class.getName());
 
     @FXML
     public void initialize() {
+        UserSession.loadFromFile(); // Explicitly load session
         if (user_photo == null) {
             System.err.println("user_photo ImageView is null!");
         } else {
             System.out.println("user_photo ImageView is initialized.");
         }
+        if (signOutButton != null) {
+            System.out.println("signOutButton initialized: visible=" + signOutButton.isVisible() +
+                    ", disabled=" + signOutButton.isDisabled() +
+                    ", layoutX=" + signOutButton.getLayoutX() +
+                    ", layoutY=" + signOutButton.getLayoutY());
+        } else {
+            System.err.println("signOutButton is null in initialize!");
+        }
+        if (testSignOutButton != null) {
+            System.out.println("testSignOutButton initialized: visible=" + testSignOutButton.isVisible());
+        } else {
+            System.err.println("testSignOutButton is null in initialize!");
+        }
         loadFXML("Home.fxml");
+
         updateUIVisibility();
     }
 
-    // Update UI visibility based on UserSession login status
-
     private void updateUIVisibility() {
         boolean isLoggedIn = UserSession.getInstance().isLoggedIn();
-        System.out.println("isLoggedIn: " + isLoggedIn);
+        System.out.println("Updating UI: isLoggedIn=" + isLoggedIn + ", userId=" + UserSession.getInstance().getUserId());
         if (user_photo != null) {
             user_photo.setVisible(isLoggedIn);
             if (isLoggedIn) {
                 String photoPath = UserSession.getInstance().getUserPhotoPath();
-                // Use hollow_circle2.png as default if photoPath is null, empty, or set to demo_profile.png
                 if (photoPath == null || photoPath.isEmpty() || photoPath.equals("demo_profile.png") || photoPath.equals("/images/profiles/demo_profile.png")) {
                     photoPath = "/images/profiles/hollow_circle2.png";
                     System.out.println("Using default photo: " + photoPath);
                 } else {
-                    // Normalize path: prepend /images/profiles/ if it's a filename
                     if (!photoPath.startsWith("/")) {
                         photoPath = "/images/profiles/" + photoPath;
                     }
@@ -101,7 +106,6 @@ public class nav_bar__c {
                     System.out.println("User photo set to: " + photoPath);
                 } else {
                     System.err.println("Failed to load user photo: " + photoPath);
-                    // Fallback to hollow_circle2.png
                     image = loadImage("/images/profiles/hollow_circle2.png");
                     if (image != null) {
                         user_photo.setImage(image);
@@ -114,19 +118,24 @@ public class nav_bar__c {
         } else {
             System.err.println("user_photo is null in updateUIVisibility");
         }
-        if (user_sign_out != null) {
-            user_sign_out.setVisible(isLoggedIn);
-            System.out.println("user_sign_out visibility set to: " + isLoggedIn);
+        if (signOutButton != null) {
+            signOutButton.setVisible(isLoggedIn);
+            System.out.println("signOutButton visibility set to: " + isLoggedIn);
+        } else {
+            System.err.println("signOutButton is null in updateUIVisibility");
         }
         if (user_sign_in != null) {
             user_sign_in.setVisible(!isLoggedIn);
             System.out.println("user_sign_in visibility set to: " + !isLoggedIn);
         }
+        if (testSignOutButton != null) {
+            testSignOutButton.setVisible(isLoggedIn);
+            System.out.println("testSignOutButton visibility set to: " + isLoggedIn);
+        }
     }
 
     private Image loadImage(String path) {
         try {
-            // Try as classpath resource
             if (path.startsWith("/")) {
                 java.net.URL resource = getClass().getResource(path);
                 if (resource != null) {
@@ -135,7 +144,6 @@ public class nav_bar__c {
                     System.err.println("Classpath resource not found: " + path);
                 }
             }
-            // Try as file system path
             File file = new File(path);
             if (file.exists()) {
                 return new Image(file.toURI().toString());
@@ -151,21 +159,21 @@ public class nav_bar__c {
 
     @FXML
     void handle_user_sign_in(ActionEvent event) {
-        // Navigate to sign-in page
+        System.out.println("Navigating to sign-in page.");
         navigateToPage(event, "sign_in.fxml", "Sign In");
     }
 
     @FXML
     void handle_user_sign_out(ActionEvent event) {
-        // Clear the user session
+        System.out.println("Sign-out button clicked; executing handle_user_sign_out...");
         UserSession.getInstance().clearSession();
-        UserSession.getInstance().saveToFile(); // Persist cleared session state
-
-        // Update UI visibility
+        System.out.println("After clearSession: isLoggedIn=" + UserSession.getInstance().isLoggedIn() + ", userId=" + UserSession.getInstance().getUserId());
+        UserSession.getInstance().saveToFile();
         updateUIVisibility();
-
-        // Navigate to sign-in page
-        navigateToPage(event, "sign_in.fxml", "Sign In");
+        showAlert(Alert.AlertType.INFORMATION, "Signed Out", "You have signed out. Now you are in guest mode.");
+        System.out.println("Loading Home page...");
+        loadFXML("Home.fxml");
+        System.out.println("Sign-out completed; current page should be Home.fxml");
     }
 
     @FXML
@@ -199,11 +207,8 @@ public class nav_bar__c {
             System.out.println("Profile page is opening!!!");
             loadFXML("profile.fxml");
         } else {
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Access Denied");
-            alert.setHeaderText(null);
-            alert.setContentText("Please sign in to access your profile page.");
-            alert.showAndWait();
+            System.out.println("Guest user; login required to view profile.");
+            showAlert(Alert.AlertType.WARNING, "Login Required", "Please sign in to view your profile information.");
         }
     }
 
@@ -223,7 +228,6 @@ public class nav_bar__c {
             AnchorPane.setLeftAnchor(newPage, 0.0);
             AnchorPane.setRightAnchor(newPage, 0.0);
 
-            // Inject main controller into sub-controllers
             Object controller = loader.getController();
             if (controller instanceof reading_list__c) {
                 System.out.println("Injecting main controller into reading_list__c");
@@ -263,14 +267,12 @@ public class nav_bar__c {
 
     @FXML
     private void handleNewBook(ActionEvent event) {
-        // Clear AppState to prevent reusing old bookId
         AppState.getInstance().clearCurrentBookId();
         AppState.getInstance().setPreviousFXML("/com/example/scribble/reading_list.fxml");
         loadFXML("write.fxml");
         LOGGER.info("Navigated to write.fxml for new book creation");
     }
 
-    // Helper method to navigate to a page
     private void navigateToPage(ActionEvent event, String fxmlFile, String pageName) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlFile));
@@ -284,7 +286,6 @@ public class nav_bar__c {
         }
     }
 
-    // Helper method to show alerts
     private void showAlert(Alert.AlertType alertType, String title, String message) {
         Alert alert = new Alert(alertType);
         alert.setTitle(title);
@@ -300,7 +301,6 @@ public class nav_bar__c {
         return centerPane;
     }
 
-    // Authentication check using UserSession
     private boolean checkUserAuthentication() {
         return UserSession.getInstance().isLoggedIn();
     }

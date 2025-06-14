@@ -63,13 +63,18 @@ public class sign_in__controller {
         if (authenticateUser(email, password)) {
             showAlert(Alert.AlertType.INFORMATION, "Login Successful", "Welcome back!");
 
-            // Navigate to home/dashboard
+            // Navigate to nav_bar.fxml and load Home.fxml
             try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("nav_bar.fxml"));
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/nav_bar.fxml"));
                 Parent root = loader.load();
+                nav_bar__c navController = loader.getController();
+                navController.loadFXML("Home.fxml"); // Load Home.fxml into centerPane
+
                 Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
                 stage.setScene(new Scene(root));
                 stage.show();
+
+                System.out.println("Sign-in successful; redirected to Home page.");
             } catch (IOException e) {
                 e.printStackTrace();
                 showAlert(Alert.AlertType.ERROR, "Navigation Error", "Unable to open home page.");
