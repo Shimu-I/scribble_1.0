@@ -42,24 +42,34 @@ public class write_chapter__c {
     private int chapterNumber = -1;
 
     @FXML
+
     public void initialize() {
         if (writing_space == null || chapter_no == null || book_title == null || save_button == null) {
             LOGGER.severe("FXML elements not properly bound in write_chapter__c");
             showAlert("Error", "Application error: UI components not initialized.");
             return;
         }
-        if (mainController == null) {
-            LOGGER.warning("Main controller is null during initialization of write_chapter__c");
+        if (authorId <= 0) {
+            authorId = UserSession.getInstance().getUserId(); // Set from session if not provided
+            LOGGER.info("Initialized write_chapter__c with authorId from UserSession: " + authorId);
         }
-
         writing_space.setText("");
         save_button.setOnAction(event -> handleSave());
-        LOGGER.info("Initialized write_chapter__c controller");
+
+        // Check if mainController is set
+        if (mainController == null) {
+            LOGGER.warning("mainController is null in initialize method of write_chapter__c");
+        }
     }
 
     public void setBookDetails(int bookId, String bookName, int authorId) {
+        if (bookId <= 0) {
+            LOGGER.severe("Invalid bookId provided: " + bookId);
+            showAlert("Error", "Cannot load chapter: Invalid book ID.");
+            return;
+        }
         if (!doesBookExist(bookId)) {
-            showAlert("Error", "Invalid book ID: " + bookId);
+            showAlert("Error", "Book does not exist for book ID: " + bookId);
             LOGGER.severe("Invalid bookId: " + bookId);
             return;
         }
@@ -77,6 +87,9 @@ public class write_chapter__c {
         this.bookId = bookId;
         this.bookName = bookName != null ? bookName : "Untitled Book";
         this.authorId = authorId;
+
+        // Update AppState.currentBookId
+        AppState.getInstance().setCurrentBookId(bookId);
 
         book_title.setText(this.bookName);
         this.chapterNumber = getNextChapterNumber(bookId);
@@ -137,12 +150,19 @@ public class write_chapter__c {
         }
     }
 
+    @FXML
     private void handleSave() {
         String content = writing_space.getText().trim();
         if (content.isEmpty()) {
             showAlert("Error", "Cannot save an empty chapter.");
             LOGGER.warning("Attempted to save empty chapter for bookId: " + bookId + ", chapterNumber: " + chapterNumber);
             return;
+        }
+
+        authorId = UserSession.getInstance().getUserId(); // Ensure authorId is current
+        if (!UserSession.getInstance().isLoggedIn() || authorId <= 0) {
+            LOGGER.severe("No valid user logged in, please log in to save chapter. UserId: " + authorId);
+            showAlert("Login Required", "No valid user logged in. Please log in to save the chapter.");            return;
         }
 
         if (!doesAuthorExist(authorId) || !isUserBookAuthor(bookId, authorId)) {
@@ -179,20 +199,18 @@ public class write_chapter__c {
                 saveChapterToDatabase(conn, bookId, chapterNumber, content);
                 deleteDraftFromDatabase(conn);
                 conn.commit();
+                LOGGER.info("Published chapter for bookId: " + bookId + ", chapterNumber: " + chapterNumber + ", authorId: " + authorId);
                 promptForNextChapter();
-                LOGGER.info("Published chapter for bookId: " + bookId + ", chapterNumber: " + chapterNumber +
-                        ", authorId: " + authorId);
             } catch (SQLException e) {
                 conn.rollback();
-                LOGGER.severe("Failed to save chapter for bookId: " + bookId + ", chapterNumber: " + chapterNumber +
-                        ", error: " + e.getMessage());
-                showAlert("Database Error", "Failed to save chapter.");
+                LOGGER.severe("Failed to save chapter for bookId: " + bookId + ", chapterNumber: " + chapterNumber + ", error: " + e.getMessage());
+                showAlert("Database Error", "Failed to save chapter: " + e.getMessage());
             } finally {
                 conn.setAutoCommit(true);
             }
         } catch (SQLException e) {
             LOGGER.severe("Failed to establish database connection for saving chapter: " + e.getMessage());
-            showAlert("Database Error", "Unable to connect to database.");
+            showAlert("Database Error", "Unable to connect to database: " + e.getMessage());
         }
     }
 
@@ -214,11 +232,11 @@ public class write_chapter__c {
                     FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/write_chapter.fxml"));
                     Parent content = loader.load();
                     write_chapter__c controller = loader.getController();
-                    controller.setMainController(mainController);
+                    controller.setMainController(mainController); // Ensure mainController is set
                     controller.setBookId(bookId);
                     controller.setChapterNumber(nextChapterNumber);
                     controller.setBookName(book_title != null ? book_title.getText() : "");
-                    controller.setUserId(UserSession.getInstance().getCurrentUserId());
+                    controller.setUserId(UserSession.getInstance().getUserId());
                     AppState.getInstance().setPreviousFXML("/com/example/scribble/read_book.fxml");
                     AppState.getInstance().setCurrentBookId(bookId);
                     if (mainController != null) {
@@ -226,10 +244,11 @@ public class write_chapter__c {
                         LOGGER.info("Navigated to next chapter: bookId=" + bookId + ", chapterNumber=" + nextChapterNumber);
                     } else {
                         LOGGER.severe("Main controller is null, cannot navigate to next chapter");
+                        showAlert("Error", "Navigation failed: main controller not initialized.");
                     }
                 } catch (IOException e) {
                     LOGGER.severe("Error navigating to next chapter: " + e.getMessage());
-                    showAlert("Navigation Error: Failed to open next chapter: " + e.getMessage(), "");
+                    showAlert("Error", "Failed to open next chapter: " + e.getMessage());
                 }
             } else {
                 navigateBack();
@@ -314,7 +333,6 @@ public class write_chapter__c {
         }
     }
 
-
     private void promptForNextDraft() {
         showAlert("Success", "Draft saved successfully.");
 
@@ -326,22 +344,22 @@ public class write_chapter__c {
             ResultSet rs = stmt.executeQuery();
             if (rs.next() && rs.getInt(1) == 1) {
                 // First draft, navigate back to read_book.fxml
-                if (mainController != null) {
-                    try {
-                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/read_book.fxml"));
-                        Parent page = loader.load();
-                        read_book__c controller = loader.getController();
-                        controller.setMainController(mainController);
-                        controller.setBookId(bookId);
-                        mainController.getCenterPane().getChildren().setAll(page);
-                        LOGGER.info("Navigated back to read_book.fxml for bookId: " + bookId + " after first draft");
-                    } catch (IOException e) {
-                        LOGGER.severe("Failed to navigate to read_book.fxml: " + e.getMessage());
-                        showAlert("Error", "Navigation failed: unable to return to reading page.");
-                    }
-                } else {
+                if (mainController == null) {
                     LOGGER.severe("Main controller is null, cannot navigate to read_book.fxml");
                     showAlert("Error", "Navigation failed: main controller not initialized.");
+                    return; // Prevent navigation if mainController is null
+                }
+                try {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/read_book.fxml"));
+                    Parent page = loader.load();
+                    read_book__c controller = loader.getController();
+                    controller.setMainController(mainController);
+                    controller.setBookId(bookId);
+                    mainController.getCenterPane().getChildren().setAll(page);
+                    LOGGER.info("Navigated back to read_book.fxml for bookId: " + bookId + " after first draft");
+                } catch (IOException e) {
+                    LOGGER.severe("Failed to navigate to read_book.fxml: " + e.getMessage());
+                    showAlert("Error", "Navigation failed: unable to return to reading page.");
                 }
                 return;
             }
@@ -366,22 +384,22 @@ public class write_chapter__c {
             loadDraftFromDatabase();
             LOGGER.info("Prompted for next draft: bookId=" + bookId + ", chapterNumber=" + chapterNumber);
         } else {
-            if (mainController != null) {
-                try {
-                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/read_book.fxml"));
-                    Parent page = loader.load();
-                    read_book__c controller = loader.getController();
-                    controller.setMainController(mainController);
-                    controller.setBookId(bookId);
-                    mainController.getCenterPane().getChildren().setAll(page);
-                    LOGGER.info("Navigated back to read_book.fxml for bookId: " + bookId);
-                } catch (IOException e) {
-                    LOGGER.severe("Failed to navigate to read_book.fxml: " + e.getMessage());
-                    showAlert("Error", "Navigation failed: unable to return to reading page.");
-                }
-            } else {
+            if (mainController == null) {
                 LOGGER.severe("Main controller is null, cannot navigate to read_book.fxml");
                 showAlert("Error", "Navigation failed: main controller not initialized.");
+                return;
+            }
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/read_book.fxml"));
+                Parent page = loader.load();
+                read_book__c controller = loader.getController();
+                controller.setMainController(mainController);
+                controller.setBookId(bookId);
+                mainController.getCenterPane().getChildren().setAll(page);
+                LOGGER.info("Navigated back to read_book.fxml for bookId: " + bookId);
+            } catch (IOException e) {
+                LOGGER.severe("Failed to navigate to read_book.fxml: " + e.getMessage());
+                showAlert("Error", "Navigation failed: unable to return to reading page.");
             }
         }
     }
@@ -514,6 +532,7 @@ public class write_chapter__c {
 
     public void setMainController(nav_bar__c mainController) {
         this.mainController = mainController;
+        LOGGER.info("Set mainController in write_chapter__c");
     }
 
     public void setUserId(int userId) {
@@ -551,7 +570,6 @@ public class write_chapter__c {
             return;
         }
 
-        // Get the previous FXML from AppState
         String previousFXML = AppState.getInstance().getPreviousFXML();
         if (previousFXML == null || previousFXML.isEmpty()) {
             LOGGER.warning("No previous FXML set in AppState, defaulting to read_book.fxml");
@@ -576,7 +594,7 @@ public class write_chapter__c {
                 LOGGER.warning("Unknown controller type for FXML: " + previousFXML);
             }
 
-            // Store current FXML as previous for the next navigation
+            // Update AppState
             AppState.getInstance().setPreviousFXML("/com/example/scribble/write_chapter.fxml");
             AppState.getInstance().setCurrentBookId(bookId);
 
@@ -584,10 +602,9 @@ public class write_chapter__c {
             LOGGER.info("Navigated back to " + previousFXML + " with bookId: " + bookId);
         } catch (IOException e) {
             LOGGER.severe("Failed to navigate back to " + previousFXML + ": " + e.getMessage());
-            showAlert("Error", "Failed to navigate back.");
+            showAlert("Error", "Failed to navigate back: " + e.getMessage());
         }
     }
-
 
     private boolean doesChapterOrDraftExist(int bookId, int chapterNumber) {
         if (authorId == -1) {

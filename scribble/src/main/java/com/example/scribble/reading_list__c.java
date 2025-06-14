@@ -13,6 +13,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
+import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.net.URL;
@@ -22,11 +23,15 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
+import java.util.logging.Level;
 
 public class reading_list__c {
+    private static final Logger LOGGER = Logger.getLogger(reading_list__c.class.getName());
 
     @FXML private Button fantasy_button, thriller_button, mystery_button, horror_button, fiction_button;
     @FXML private Button add_book_button, inside_book_button;
+    @FXML private Button newBookButton;
     @FXML private TextField search_bar;
     @FXML private VBox books_container;
 
@@ -70,6 +75,13 @@ public class reading_list__c {
 
         if (search_bar != null) {
             search_bar.textProperty().addListener((obs, oldVal, newVal) -> searchBooks(newVal.trim()));
+        }
+
+        if (newBookButton != null) {
+            newBookButton.setOnAction(this::handleNewBook);
+            LOGGER.info("New book button initialized in reading_list__c");
+        } else {
+            LOGGER.warning("newBookButton not found in FXML.");
         }
     }
 
@@ -281,12 +293,30 @@ public class reading_list__c {
 
     @FXML
     private void handleAddBook(ActionEvent event) {
-        if (mainController != null) {
-            System.out.println("Loading write.fxml via mainController");
-            mainController.loadFXML("write.fxml");
-        } else {
-            System.err.println("Main controller is null. Cannot load write.fxml.");
+        if (!UserSession.getInstance().isLoggedIn()) {
+            showAlert(Alert.AlertType.WARNING, "Login Required", "Please log in to write new book.");
+            return;
         }
+        if (mainController != null) {
+            try {
+                AppState.getInstance().setCurrentBookId(-1); // Clear currentBookId for new book
+                LOGGER.info("Cleared AppState.currentBookId for new book creation");
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/write.fxml"));
+                Parent content = loader.load();
+                write__c controller = loader.getController();
+                controller.setMainController(mainController);
+                AppState.getInstance().setPreviousFXML("/com/example/scribble/reading_list.fxml");
+                mainController.getCenterPane().getChildren().setAll(content);
+                LOGGER.info("Loading write.fxml via mainController for new book");
+            } catch (IOException e) {
+                LOGGER.severe("Failed to load write.fxml: " + e.getMessage());
+
+                showAlert(Alert.AlertType.ERROR, "Error", "Failed to open write page.");
+            }
+        } else {
+            LOGGER.severe("Main controller is null. Cannot load write.fxml.");
+
+            showAlert(Alert.AlertType.ERROR, "Error", "Navigation failed: main controller is not initialized.");        }
     }
 
     // FXML-bound event handler for the "Open" button
@@ -331,6 +361,29 @@ public class reading_list__c {
         } else {
             System.err.println("No bookId found for button.");
             showAlert(Alert.AlertType.ERROR, "Error", "No book ID associated with this button.");
+        }
+    }
+
+    @FXML
+    private void handleNewBook(ActionEvent event) {
+        AppState.getInstance().clearCurrentBookId();
+        AppState.getInstance().setPreviousFXML("/com/example/scribble/reading_list.fxml");
+        if (mainController != null) {
+            mainController.loadFXML("write.fxml");
+            LOGGER.info("Navigated to write.fxml for new book creation from reading_list__c");
+        } else {
+            LOGGER.severe("Main controller is null in reading_list__c, cannot navigate to write.fxml");
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/write.fxml"));
+                Parent page = loader.load();
+                write__c writeController = loader.getController();
+                writeController.setMainController(null);
+                Stage stage = (Stage) newBookButton.getScene().getWindow();
+                stage.getScene().setRoot(page);
+                LOGGER.info("Navigated to write.fxml with fallback due to null mainController");
+            } catch (IOException e) {
+                LOGGER.severe("Failed to load write.fxml: " + e.getMessage());
+            }
         }
     }
 

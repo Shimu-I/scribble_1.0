@@ -30,6 +30,8 @@ public class UserSession {
         this.userId = userId;
         this.username = username;
         this.userPhotoPath = userPhotoPath;
+        saveToFile(); // Persist immediately after setting
+        System.out.println("UserSession set: userId=" + userId + ", username=" + username + ", photoPath=" + userPhotoPath);
     }
 
     public int getUserId() {
@@ -48,6 +50,8 @@ public class UserSession {
         userId = 0;
         username = null;
         userPhotoPath = null;
+        saveToFile(); // Persist the cleared state
+        System.out.println("UserSession cleared.");
     }
 
     public boolean isLoggedIn() {
@@ -89,5 +93,16 @@ public class UserSession {
             // File doesn't exist or is invalid; start fresh
         }
         return session;
+    }
+
+    static {
+        // Load session from file on class initialization
+        loadFromFile();
+    }
+
+    public void updateSession(int userId, String username, String userPhotoPath) {
+        if (this.userId != userId || this.username == null || !this.username.equals(username) || this.userPhotoPath == null || !this.userPhotoPath.equals(userPhotoPath)) {
+            setUser(userId, username, userPhotoPath);
+        }
     }
 }

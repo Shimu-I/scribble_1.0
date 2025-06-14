@@ -519,7 +519,14 @@ public class read_book__c {
 
 
     private void openDraft(int draftId) {
+        if (mainController == null) {
+            LOGGER.severe("Main controller is null, cannot navigate to write_chapter.fxml");
+            showAlert(Alert.AlertType.ERROR, "Error", "Navigation failed: main controller not initialized.");
+            return;
+        }
+
         try {
+            // Retrieve chapter number from draft_chapters
             String draftQuery = "SELECT chapter_number FROM draft_chapters WHERE draft_id = ?";
             int chapterNumber = -1;
             try (Connection conn = db_connect.getConnection();
@@ -539,6 +546,7 @@ public class read_book__c {
                 return;
             }
 
+            // Retrieve book title from books
             String bookQuery = "SELECT title FROM books WHERE book_id = ?";
             String bookTitle = null;
             try (Connection conn = db_connect.getConnection();
@@ -558,22 +566,24 @@ public class read_book__c {
                 return;
             }
 
+            // Load write_chapter.fxml
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/write_chapter.fxml"));
             Parent content = loader.load();
             write_chapter__c controller = loader.getController();
+
+            // Set properties on the controller
+            controller.setMainController(mainController); // Set mainController first
             controller.setBookId(bookId);
             controller.setDraftId(draftId);
             controller.setChapterNumber(chapterNumber);
             controller.setBookName(bookTitle);
-            if (mainController != null) {
-                mainController.getCenterPane().getChildren().setAll(content);
-                LOGGER.info("Opened draft with ID: " + draftId + ", chapter number: " + chapterNumber + ", book title: " + bookTitle + " via mainController");
-            } else {
-                Scene scene = new Scene(content);
-                Stage stage = (Stage) draftContainer.getScene().getWindow();
-                stage.setScene(scene);
-                LOGGER.info("Opened draft with ID: " + draftId + ", chapter number: " + chapterNumber + ", book title: " + bookTitle);
-            }
+            controller.setUserId(UserSession.getInstance().getUserId());
+
+            // Update the center pane
+            AppState.getInstance().setPreviousFXML("/com/example/scribble/read_book.fxml");
+            AppState.getInstance().setCurrentBookId(bookId);
+            mainController.getCenterPane().getChildren().setAll(content);
+            LOGGER.info("Opened draft with ID: " + draftId + ", chapter number: " + chapterNumber + ", book title: " + bookTitle + " via mainController");
         } catch (IOException e) {
             LOGGER.severe("Failed to load write_chapter.fxml: " + e.getMessage());
             showAlert(Alert.AlertType.ERROR, "Error", "Failed to open draft.");

@@ -15,6 +15,15 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.layout.Pane;
+import java.io.IOException;
+import java.util.logging.Logger;
+import java.util.logging.Level;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -52,6 +61,8 @@ public class nav_bar__c {
 
     @FXML
     private ImageView user_sign_out;
+
+    private static final Logger LOGGER = Logger.getLogger(nav_bar__c.class.getName());
 
     @FXML
     public void initialize() {
@@ -248,6 +259,15 @@ public class nav_bar__c {
             e.printStackTrace();
             showAlert(Alert.AlertType.ERROR, "Navigation Error", "Unable to load " + fxmlFile);
         }
+    }
+
+    @FXML
+    private void handleNewBook(ActionEvent event) {
+        // Clear AppState to prevent reusing old bookId
+        AppState.getInstance().clearCurrentBookId();
+        AppState.getInstance().setPreviousFXML("/com/example/scribble/reading_list.fxml");
+        loadFXML("write.fxml");
+        LOGGER.info("Navigated to write.fxml for new book creation");
     }
 
     // Helper method to navigate to a page

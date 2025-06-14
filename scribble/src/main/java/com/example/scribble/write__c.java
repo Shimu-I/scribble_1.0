@@ -28,51 +28,36 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.concurrent.atomic.AtomicReference;
-import java.sql.*;
 import java.util.logging.Logger;
+import java.util.logging.Level;
 
 public class write__c {
-
-    @FXML
-    public BorderPane rootPane;
-
     private static final Logger LOGGER = Logger.getLogger(write__c.class.getName());
 
-    @FXML
-    public Button back_to_books;
-
-    @FXML
-    private Button book_image_button;
-
-    @FXML
-    private ImageView bookCoverImageView;
-
+    @FXML public BorderPane rootPane;
+    @FXML public Button back_to_books;
+    @FXML private Button book_image_button;
+    @FXML private ImageView bookCoverImageView;
     private String coverPhotoPath;
-
-    @FXML
-    private TextField book_title;
-
-    @FXML
-    private TextArea book_description;
-
-    @FXML
-    private ComboBox<String> genreComboBox;
-
-    @FXML
-    private ComboBox<String> statusComboBox;
-
-    @FXML
-    private Button write_button;
-
-    @FXML
-    private nav_bar__c mainController;
+    @FXML private TextField book_title;
+    @FXML private TextArea book_description;
+    @FXML private ComboBox<String> genreComboBox;
+    @FXML private ComboBox<String> statusComboBox;
+    @FXML private Button write_button;
+    @FXML private nav_bar__c mainController;
 
     public void setMainController(nav_bar__c mainController) {
         this.mainController = mainController;
+        LOGGER.info("Set mainController in write__c");
     }
 
     @FXML
     private void initialize() {
+        if (book_title == null || book_description == null || genreComboBox == null || statusComboBox == null || bookCoverImageView == null) {
+            LOGGER.severe("FXML elements not properly bound in write__c");
+            showAlert("Error", "Application error: UI components not initialized.");
+            return;
+        }
         genreComboBox.getItems().addAll(
                 "Fantasy", "Thriller", "Mystery", "Thriller Mystery", "Youth Fiction",
                 "Crime", "Horror", "Romance", "Science Fiction", "Adventure", "Historical"
@@ -89,14 +74,42 @@ public class write__c {
         clip.setArcWidth(30);
         clip.setArcHeight(30);
         bookCoverImageView.setClip(clip);
+
+        // Check if editing an existing book
+        int bookId = AppState.getInstance().getCurrentBookId();
+        LOGGER.info("Initialized write__c with currentBookId: " + bookId);
+        if (bookId > 0 && isEditingExistingBook(bookId)) {
+            setBookId(bookId);
+        } else {
+            AppState.getInstance().setCurrentBookId(-1); // Ensure new book creation
+            clearForm();
+            LOGGER.info("Cleared form for new book creation");
+        }
+    }
+
+    private boolean isEditingExistingBook(int bookId) {
+        try (Connection conn = db_connect.getConnection();
+             PreparedStatement stmt = conn.prepareStatement("SELECT COUNT(*) FROM books WHERE book_id = ?")) {
+            stmt.setInt(1, bookId);
+            ResultSet rs = stmt.executeQuery();
+            boolean exists = rs.next() && rs.getInt(1) > 0;
+            LOGGER.info("Checked if book exists for bookId: " + bookId + " -> " + exists);
+            return exists;
+        } catch (SQLException e) {
+            LOGGER.severe("Failed to check if book exists for bookId: " + bookId + " - " + e.getMessage());
+            return false;
+        }
     }
 
     @FXML
     private void handle_back_to_books(ActionEvent actionEvent) {
         if (mainController != null) {
-            mainController.loadFXML("reading_list.fxml"); // Navigate back to Books
+            AppState.getInstance().setPreviousFXML("/com/example/scribble/write.fxml");
+            mainController.loadFXML("reading_list.fxml");
+            LOGGER.info("Navigated back to reading_list.fxml");
         } else {
-            System.err.println("Main controller is null in write__c.");
+            LOGGER.severe("Main controller is null in write__c, cannot navigate back");
+            showAlert("Error", "Navigation failed: main controller is not initialized.");
         }
     }
 
@@ -219,15 +232,23 @@ public class write__c {
 
                 ImageIO.write(bufferedImage, "png", destinationPath.toFile());
                 coverPhotoPath = newFilename;
-                bookCoverImageView.setImage(new Image("file:" + destinationPath.toString()));
-                Rectangle clip = new Rectangle(150, 222);
-                clip.setArcWidth(30);
-                clip.setArcHeight(30);
-                bookCoverImageView.setClip(clip);
+                Image image = new Image("file:" + destinationPath.toString());
+                if (!image.isError()) {
+                    bookCoverImageView.setImage(image);
+                    Rectangle clip = new Rectangle(150, 222);
+                    clip.setArcWidth(30);
+                    clip.setArcHeight(30);
+                    bookCoverImageView.setClip(clip);
+                    LOGGER.info("Saved and loaded cover photo: " + newFilename);
+                } else {
+                    LOGGER.warning("Failed to load cover photo: " + newFilename);
+                    coverPhotoPath = null;
+                }
                 cropStage.close();
             } catch (IOException ex) {
-                ex.printStackTrace();
-                showAlert("Image Error", "Failed to crop and save the cover photo.");
+                LOGGER.severe("Failed to crop and save cover photo: " + ex.getMessage());
+                showAlert("Error", "Failed to crop and save the cover photo.");
+                coverPhotoPath = null;
             }
         });
 
@@ -241,19 +262,21 @@ public class write__c {
     @FXML
     private void handleWriteButton(ActionEvent event) {
         LOGGER.info("Write button clicked");
-        String title = book_title.getText();
-        String description = book_description.getText();
+        String title = book_title.getText().trim();
+        String description = book_description.getText().trim();
         String genre = genreComboBox.getSelectionModel().getSelectedItem();
         String status = statusComboBox.getSelectionModel().getSelectedItem();
-        String coverPhoto = coverPhotoPath;
+        String coverPhoto = coverPhotoPath != null ? coverPhotoPath : "default_cover.png";
 
         // Validate inputs
         if (title.isEmpty() || description.isEmpty()) {
             showAlert("Error", "Please fill in title and description.");
+            LOGGER.warning("Attempted to save book with empty title or description");
             return;
         }
         if (genre == null || status == null) {
             showAlert("Error", "Please select a genre and status.");
+            LOGGER.warning("Attempted to save book with null genre or status");
             return;
         }
 
@@ -272,11 +295,13 @@ public class write__c {
             conn = db_connect.getConnection();
             if (conn == null) {
                 showAlert("Error", "Failed to connect to the database.");
+                LOGGER.severe("Database connection is null");
                 return;
             }
             conn.setAutoCommit(false); // Start transaction
 
-            int bookId = AppState.getInstance().getCurrentBookId(); // Check if editing existing book
+            int bookId = AppState.getInstance().getCurrentBookId();
+            LOGGER.info("Current bookId from AppState: " + bookId);
             if (bookId > 0 && doesBookExist(bookId, conn)) {
                 // Update existing book
                 String updateSql = "UPDATE books SET title = ?, description = ?, genre = ?, status = ?, cover_photo = ? WHERE book_id = ?";
@@ -288,25 +313,28 @@ public class write__c {
                     stmt.setString(5, coverPhoto);
                     stmt.setInt(6, bookId);
                     stmt.executeUpdate();
+                    LOGGER.info("Updated book with bookId: " + bookId);
                 }
                 conn.commit();
                 showAlert("Success", "Book updated successfully!");
             } else {
                 // Insert new book
                 String bookSql = "INSERT INTO books (title, description, genre, status, cover_photo, view_count) VALUES (?, ?, ?, ?, ?, 0)";
-                PreparedStatement bookPstmt = conn.prepareStatement(bookSql, PreparedStatement.RETURN_GENERATED_KEYS);
-                bookPstmt.setString(1, title);
-                bookPstmt.setString(2, description);
-                bookPstmt.setString(3, genre);
-                bookPstmt.setString(4, status);
-                bookPstmt.setString(5, coverPhoto);
-                bookPstmt.executeUpdate();
+                try (PreparedStatement bookPstmt = conn.prepareStatement(bookSql, PreparedStatement.RETURN_GENERATED_KEYS)) {
+                    bookPstmt.setString(1, title);
+                    bookPstmt.setString(2, description);
+                    bookPstmt.setString(3, genre);
+                    bookPstmt.setString(4, status);
+                    bookPstmt.setString(5, coverPhoto);
+                    bookPstmt.executeUpdate();
 
-                ResultSet generatedKeys = bookPstmt.getGeneratedKeys();
-                if (generatedKeys.next()) {
-                    bookId = generatedKeys.getInt(1);
-                } else {
-                    throw new SQLException("Failed to retrieve book_id.");
+                    ResultSet generatedKeys = bookPstmt.getGeneratedKeys();
+                    if (generatedKeys.next()) {
+                        bookId = generatedKeys.getInt(1);
+                        LOGGER.info("Created new book with bookId: " + bookId);
+                    } else {
+                        throw new SQLException("Failed to retrieve book_id.");
+                    }
                 }
 
                 String authorSql = "INSERT INTO book_authors (book_id, user_id, role) VALUES (?, ?, 'Owner')";
@@ -314,9 +342,11 @@ public class write__c {
                     authorPstmt.setInt(1, bookId);
                     authorPstmt.setInt(2, userId);
                     authorPstmt.executeUpdate();
+                    LOGGER.info("Inserted book_authors for bookId: " + bookId + ", userId: " + userId);
                 }
                 conn.commit();
                 showAlert("Success", "Book created successfully!");
+                AppState.getInstance().setCurrentBookId(bookId); // Update AppState with new bookId
             }
 
             // Navigate to chapter page
@@ -326,8 +356,10 @@ public class write__c {
             try {
                 if (conn != null) conn.rollback();
             } catch (SQLException rollbackEx) {
+                LOGGER.severe("Rollback failed: " + rollbackEx.getMessage());
                 showAlert("Error", "Rollback failed: " + rollbackEx.getMessage());
             }
+            LOGGER.severe("Failed to save book: " + e.getMessage());
             showAlert("Error", "Failed to save book: " + e.getMessage());
         } finally {
             if (conn != null) {
@@ -335,6 +367,7 @@ public class write__c {
                     conn.setAutoCommit(true);
                     conn.close();
                 } catch (SQLException closeEx) {
+                    LOGGER.severe("Failed to close connection: " + closeEx.getMessage());
                     showAlert("Error", "Failed to close connection: " + closeEx.getMessage());
                 }
             }
@@ -346,7 +379,9 @@ public class write__c {
         try (PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setInt(1, bookId);
             ResultSet rs = stmt.executeQuery();
-            return rs.next() && rs.getInt(1) > 0;
+            boolean exists = rs.next() && rs.getInt(1) > 0;
+            LOGGER.info("Book exists check for bookId: " + bookId + " -> " + exists);
+            return exists;
         }
     }
 
@@ -357,31 +392,35 @@ public class write__c {
             Stage stage = (Stage) write_button.getScene().getWindow();
             stage.setScene(new Scene(root));
             stage.show();
+            LOGGER.info("Navigated to sign_in.fxml");
         } catch (IOException e) {
+            LOGGER.severe("Failed to load sign-in page: " + e.getMessage());
             showAlert("Error", "Failed to load sign-in page: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
     private void navigateToChapterPage(int bookId, String bookName, int authorId) {
         if (mainController != null) {
-            System.out.println("Loading write_chapter.fxml via mainController");
+            LOGGER.info("Loading write_chapter.fxml with bookId: " + bookId + ", bookName: " + bookName + ", authorId: " + authorId);
             try {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("write_chapter.fxml"));
-                mainController.getCenterPane().getChildren().setAll((Node) loader.load());
+                Parent page = loader.load();
                 write_chapter__c chapterController = loader.getController();
                 chapterController.setMainController(mainController);
                 chapterController.setBookDetails(bookId, bookName, authorId);
+                AppState.getInstance().setPreviousFXML("/com/example/scribble/write.fxml");
+                AppState.getInstance().setCurrentBookId(bookId);
+                mainController.getCenterPane().getChildren().setAll(page);
+                LOGGER.info("Successfully navigated to write_chapter.fxml");
             } catch (IOException e) {
+                LOGGER.severe("Failed to load write_chapter.fxml: " + e.getMessage());
                 showAlert("Error", "Failed to load chapter page: " + e.getMessage());
-                e.printStackTrace();
             }
         } else {
-            System.err.println("Main controller is null in write__c.");
+            LOGGER.severe("Main controller is null in write__c, cannot navigate to write_chapter.fxml");
             showAlert("Error", "Cannot navigate to chapter page: Main controller is null.");
         }
     }
-
 
     public void setBookId(int bookId) {
         if (bookId <= 0) {
@@ -410,25 +449,32 @@ public class write__c {
                 String coverPhoto = rs.getString("cover_photo");
                 if (coverPhoto != null && !coverPhoto.isEmpty() && bookCoverImageView != null) {
                     try {
-                        String imagePath = "file:src/main/resources/images/book_covers/" + coverPhoto;
-                        Image image = new Image(imagePath);
-                        if (!image.isError()) {
-                            bookCoverImageView.setImage(image);
-                            coverPhotoPath = coverPhoto;
-                            Rectangle clip = new Rectangle(150, 222);
-                            clip.setArcWidth(30);
-                            clip.setArcHeight(30);
-                            bookCoverImageView.setClip(clip);
+                        Path coverPath = Path.of("src/main/resources/images/book_covers/" + coverPhoto);
+                        if (Files.exists(coverPath)) {
+                            String imagePath = "file:" + coverPath.toString();
+                            Image image = new Image(imagePath);
+                            if (!image.isError()) {
+                                bookCoverImageView.setImage(image);
+                                coverPhotoPath = coverPhoto;
+                                Rectangle clip = new Rectangle(150, 222);
+                                clip.setArcWidth(30);
+                                clip.setArcHeight(30);
+                                bookCoverImageView.setClip(clip);
+                                LOGGER.info("Loaded cover photo for bookId: " + bookId + ": " + coverPhoto);
+                            } else {
+                                LOGGER.warning("Failed to load cover photo (image error): " + coverPhoto);
+                            }
                         } else {
-                            LOGGER.warning("Failed to load cover photo: " + coverPhoto);
+                            LOGGER.warning("Cover photo file does not exist: " + coverPhoto);
                         }
                     } catch (Exception e) {
-                        LOGGER.warning("Failed to load cover photo: " + coverPhoto + " - " + e.getMessage());
+                        LOGGER.severe("Failed to load cover photo: " + coverPhoto + " - " + e.getMessage());
                     }
                 }
                 LOGGER.info("Loaded book details for bookId: " + bookId);
             } else {
                 showAlert("Error", "Book not found for book_id: " + bookId);
+                LOGGER.severe("Book not found for bookId: " + bookId);
             }
         } catch (SQLException e) {
             LOGGER.severe("Failed to load book details for bookId: " + bookId + " - " + e.getMessage());
@@ -447,10 +493,12 @@ public class write__c {
         clip.setArcWidth(30);
         clip.setArcHeight(30);
         bookCoverImageView.setClip(clip);
+        LOGGER.info("Cleared form in write__c");
     }
 
     private void showAlert(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        Alert.AlertType type = title.equalsIgnoreCase("Error") ? Alert.AlertType.ERROR : Alert.AlertType.INFORMATION;
+        Alert alert = new Alert(type);
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
