@@ -49,6 +49,8 @@ public class profile_info_edit__c {
     private TextField new_password;
     @FXML
     private ImageView profileImageView;
+    @FXML
+    private Button delete_profile_pic;
 
     private profile__c parentController;
     private File selectedImageFile;
@@ -68,6 +70,19 @@ public class profile_info_edit__c {
     @FXML
     public void initialize() {
         System.out.println("profile_info_edit__c initialized");
+        setDefaultProfileImage();
+    }
+
+    private void setDefaultProfileImage() {
+        try {
+            String defaultImagePath = "/images/profiles/hollow_circle.png";
+            Image defaultImage = new Image(getClass().getResource(defaultImagePath).toExternalForm());
+            profileImageView.setImage(defaultImage);
+            System.out.println("Set default profile image: " + defaultImagePath);
+        } catch (Exception e) {
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Error", "Failed to load default profile image: " + e.getMessage());
+        }
     }
 
     private void loadUserData() {
@@ -85,14 +100,34 @@ public class profile_info_edit__c {
                 edit_email.setText(rs.getString("email"));
                 String profilePic = rs.getString("profile_picture");
                 if (profilePic != null && !profilePic.isEmpty()) {
-                    profileImageView.setImage(new Image("file:src/main/resources/images/profiles/" + profilePic));
+                    loadProfileImage(profilePic);
+                } else {
+                    setDefaultProfileImage();
                 }
             } else {
                 showAlert(Alert.AlertType.ERROR, "Error", "User not found");
+                setDefaultProfileImage();
             }
         } catch (SQLException e) {
             e.printStackTrace();
             showAlert(Alert.AlertType.ERROR, "Error", "Failed to load user data: " + e.getMessage());
+            setDefaultProfileImage();
+        }
+    }
+
+    private void loadProfileImage(String profilePicName) {
+        try {
+            String imagePath = "/images/profiles/" + profilePicName;
+            Image image = new Image(getClass().getResource(imagePath).toExternalForm());
+            if (image.isError()) {
+                throw new IOException("Failed to load profile image: " + image.getException().getMessage());
+            }
+            profileImageView.setImage(image);
+            System.out.println("Loaded profile image: " + imagePath);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Failed to load profile image: " + profilePicName + ", falling back to default");
+            setDefaultProfileImage();
         }
     }
 
@@ -118,15 +153,61 @@ public class profile_info_edit__c {
         if (file != null) {
             try {
                 Image image = new Image(file.toURI().toString());
+                if (image.isError()) {
+                    throw new IOException("Failed to load selected image: " + image.getException().getMessage());
+                }
                 profileImageView.setImage(image);
                 selectedImageFile = file;
                 System.out.println("Selected profile picture: " + file.getAbsolutePath());
             } catch (Exception e) {
                 e.printStackTrace();
                 showAlert(Alert.AlertType.ERROR, "Error", "Failed to load profile picture: " + e.getMessage());
+                setDefaultProfileImage();
             }
         } else {
             System.out.println("No file selected.");
+        }
+    }
+
+    @FXML
+    private void handle_delete_save_button(ActionEvent event) {
+        if (userId == 0) {
+            showAlert(Alert.AlertType.ERROR, "Error", "No user ID set");
+            return;
+        }
+
+        try (Connection conn = db_connect.getConnection()) {
+            PreparedStatement selectStmt = conn.prepareStatement(
+                    "SELECT profile_picture FROM users WHERE user_id = ?");
+            selectStmt.setInt(1, userId);
+            ResultSet rs = selectStmt.executeQuery();
+
+            String profilePicName = null;
+            if (rs.next()) {
+                profilePicName = rs.getString("profile_picture");
+            }
+
+            PreparedStatement updateStmt = conn.prepareStatement(
+                    "UPDATE users SET profile_picture = NULL WHERE user_id = ?");
+            updateStmt.setInt(1, userId);
+            updateStmt.executeUpdate();
+
+            if (profilePicName != null && !profilePicName.isEmpty()) {
+                File profilePicFile = new File("src/main/resources/images/profiles/" + profilePicName);
+                if (profilePicFile.exists()) {
+                    Files.deleteIfExists(profilePicFile.toPath());
+                    System.out.println("Deleted profile picture file: " + profilePicFile.getAbsolutePath());
+                }
+            }
+
+            setDefaultProfileImage();
+            selectedImageFile = null;
+            System.out.println("Profile picture deleted for userId: " + userId);
+
+            showAlert(Alert.AlertType.INFORMATION, "Success", "Profile picture has been deleted.");
+        } catch (SQLException | IOException e) {
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Error", "Failed to delete profile picture: " + e.getMessage());
         }
     }
 
@@ -203,7 +284,7 @@ public class profile_info_edit__c {
                     ImageIO.write(croppedImage, "png", outputFile);
                     profilePicPath = fileName;
                     System.out.println("Cropped profile picture saved to: " + outputFile.getAbsolutePath());
-                    profileImageView.setImage(new Image(outputFile.toURI().toString()));
+                    loadProfileImage(fileName);
                 } else {
                     System.out.println("Cropping cancelled by user");
                     showAlert(Alert.AlertType.INFORMATION, "Cancelled", "Profile picture update cancelled.");

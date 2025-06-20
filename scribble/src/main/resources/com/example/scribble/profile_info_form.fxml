@@ -29,18 +29,35 @@
       </HBox>
       <VBox alignment="CENTER" prefHeight="200.0" prefWidth="434.0" spacing="10.0">
          <children>
-            <Button fx:id="profile_pic" mnemonicParsing="false" onAction="#handle_profile_pic" style="-fx-background-color: transparent;">
-               <graphic>
-                  <ImageView fx:id="profileImageView" fitHeight="120.0" fitWidth="120.0" pickOnBounds="true" preserveRatio="true">
-                     <image>
-                        <Image url="@../../../images/profiles/demo_profile.png" />
-                     </image>
-                  </ImageView>
-               </graphic>
-               <VBox.margin>
-                  <Insets bottom="10.0" />
-               </VBox.margin>
-            </Button>
+            <HBox alignment="TOP_CENTER" prefHeight="100.0" prefWidth="200.0">
+               <children>
+                  <HBox prefHeight="128.0" prefWidth="167.0">
+                     <children>
+                        <Button fx:id="profile_pic" mnemonicParsing="false" onAction="#handle_profile_pic" style="-fx-background-color: transparent;">
+                           <graphic>
+                              <ImageView fx:id="profileImageView" fitHeight="120.0" fitWidth="120.0" pickOnBounds="true" preserveRatio="true">
+                                 <image>
+                                    <Image url="@../../../images/profiles/hollow_circle.png" />
+                                 </image>
+                              </ImageView>
+                           </graphic>
+                        </Button>
+                        <Button fx:id="delete_profile_pic" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#handle_delete_save_button" prefHeight="30.0" prefWidth="30.0" style="-fx-background-radius: 5; -fx-background-color: transparent;" stylesheets="@../../../style/style.css">
+                           <graphic>
+                              <ImageView fx:id="delete_" fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
+                                 <image>
+                                    <Image url="@../../../images/icons/delete.png" />
+                                 </image>
+                              </ImageView>
+                           </graphic>
+                        </Button>
+                     </children>
+                     <HBox.margin>
+                        <Insets left="30.0" />
+                     </HBox.margin>
+                  </HBox>
+               </children>
+            </HBox>
             <TextField fx:id="edit_name" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="30.0" prefWidth="270.0" promptText="edit your name" style="-fx-background-color: #fff; -fx-background-radius: 5;">
                <font>
                   <Font size="14.0" />
