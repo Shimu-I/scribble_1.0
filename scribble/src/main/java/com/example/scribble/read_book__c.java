@@ -413,24 +413,43 @@ public class read_book__c {
         }
     }
 
+    // Handle rating selection
     private void handleRating(ActionEvent event) {
         if (!UserSession.getInstance().isLoggedIn()) {
             showAlert(Alert.AlertType.WARNING, "Login Required", "Please log in to rate this book.");
+            LOGGER.warning("Rating attempt failed: User not logged in for bookId: " + bookId);
             return;
         }
+
+        int userId = UserSession.getInstance().getCurrentUserId();
+        if (isAuthorOrCoAuthor(bookId, userId)) {
+            showAlert(Alert.AlertType.WARNING, "Permission Denied", "Authors cannot rate their own book.");
+            LOGGER.warning("Rating attempt failed: User " + userId + " is an author or co-author of bookId: " + bookId);
+            return;
+        }
+
         Integer rating = ratingComboBox.getValue();
-        if (rating == null) return;
+        if (rating == null) {
+            LOGGER.warning("No rating selected for bookId: " + bookId);
+            return;
+        }
+        if (rating == 0) {
+            showAlert(Alert.AlertType.WARNING, "Invalid Rating", "Please select a rating between 1 and 5.");
+            LOGGER.warning("Invalid rating (0) selected for bookId: " + bookId);
+            return;
+        }
         try (PreparedStatement stmt = conn.prepareStatement(
                 "INSERT INTO ratings (book_id, user_id, rating) VALUES (?, ?, ?) " +
                         "ON DUPLICATE KEY UPDATE rating = ?")) {
             stmt.setInt(1, bookId);
-            stmt.setInt(2, UserSession.getInstance().getCurrentUserId());
+            stmt.setInt(2, userId);
             stmt.setInt(3, rating);
             stmt.setInt(4, rating);
             stmt.executeUpdate();
+            LOGGER.info("Rating " + rating + " submitted for bookId: " + bookId + " by userId: " + userId);
             fetchBookDetails();
         } catch (SQLException e) {
-            LOGGER.severe("Error updating rating: " + e.getMessage());
+            LOGGER.severe("Error updating rating for bookId: " + bookId + ": " + e.getMessage());
             showAlert(Alert.AlertType.ERROR, "Error", "Failed to submit rating.");
         }
     }
