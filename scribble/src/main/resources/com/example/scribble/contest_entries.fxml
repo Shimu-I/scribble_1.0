@@ -48,6 +48,34 @@
                   </Label>
                </children>
             </HBox>
+            <VBox alignment="CENTER" prefHeight="102.0" prefWidth="1400.0" spacing="5.0">
+               <children>
+                  <HBox alignment="CENTER" prefHeight="30.0" prefWidth="1400.0" spacing="2.0">
+                     <children>
+                        <Button fx:id="previous_week_button" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#handle_previous_week_button" prefHeight="30.0" prefWidth="120.0" style="-fx-background-color: #F5E0CD; -fx-background-radius: 10 0 0 10;" text="Previous Week" textFill="#014237">
+                           <font>
+                              <Font name="System Bold" size="12.0" />
+                           </font>
+                        </Button>
+                        <Button fx:id="current_week_button" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#handle_current_week_button" prefHeight="30.0" prefWidth="120.0" style="-fx-background-color: #F5E0CD; -fx-background-radius: 0 10 10 0;" text="Current Week" textFill="#014237">
+                           <font>
+                              <Font name="System Bold" size="12.0" />
+                           </font>
+                        </Button>
+                     </children>
+                  </HBox>
+                  <Label fx:id="weekly_session" text="Saturday, 21st June 2025 - Friday , 27th June 2025" textFill="WHITE">
+                     <VBox.margin>
+                        <Insets top="3.0" />
+                     </VBox.margin>
+                  </Label>
+                  <Label fx:id="countdown" text="Next reset in :  6d : 14h : 23m : 45s" textFill="WHITE">
+                     <font>
+                        <Font name="System Bold" size="14.0" />
+                     </font>
+                  </Label>
+               </children>
+            </VBox>
             <HBox alignment="CENTER_LEFT" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="50.0" prefWidth="1030.0" style="-fx-background-radius: 10;">
                <children>
                   <Button fx:id="add_entry" mnemonicParsing="false" onAction="#handle_add_entry" prefHeight="40.0" prefWidth="40.0" style="-fx-background-color: transparent;" stylesheets="@../../../style/style.css">
@@ -69,7 +97,7 @@
                   <Insets bottom="10.0" top="10.0" />
                </VBox.margin>
             </HBox>
-            <ScrollPane prefHeight="427.0" prefWidth="1400.0" style="-fx-background-color: transparent;">
+            <ScrollPane prefHeight="320.0" prefWidth="1400.0" style="-fx-background-color: transparent;">
                <content>
                   <VBox fx:id="entryContainer" alignment="TOP_CENTER" prefHeight="496.0" prefWidth="1384.0" spacing="15.0" style="-fx-background-color: #005D4D;">
                      <children>

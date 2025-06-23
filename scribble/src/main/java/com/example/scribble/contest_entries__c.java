@@ -1,6 +1,7 @@
 package com.example.scribble;
 
 import javafx.event.ActionEvent;
+import java.util.concurrent.atomic.AtomicReference;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
@@ -20,9 +21,29 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
+import java.util.Timer;
+import java.util.TimerTask;
+import javafx.fxml.Initializable;
+import java.net.URL;
+import java.util.ResourceBundle;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.ChronoUnit;
 import java.util.logging.Logger;
+import java.sql.Timestamp;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import javafx.fxml.Initializable;
+import java.net.URL;
+import java.util.ResourceBundle;
 
-public class contest_entries__c {
+public class contest_entries__c implements Initializable{
 
     private static final Logger LOGGER = Logger.getLogger(contest_entries__c.class.getName());
 
@@ -30,10 +51,16 @@ public class contest_entries__c {
     @FXML private Button add_entry;
     @FXML private VBox entryContainer;
     @FXML private Label genre_name;
+    @FXML private Button previous_week_button;
+    @FXML private Button current_week_button;
+    @FXML private Label weekly_session;
+    @FXML private Label countdown;
     private int contestId;
     private String genre;
     private int userId;
     private String username;
+    private boolean isCurrentWeekView = true;
+
     @FXML private nav_bar__c mainController;
 
     public void setMainController(nav_bar__c mainController) {
@@ -46,7 +73,9 @@ public class contest_entries__c {
         this.genre = genre;
         this.userId = userId;
         this.username = username;
+        updateWeeklySessionLabel(true);
         updateGenreLabel();
+        startCountdownTimer();
         loadEntries();
     }
 
@@ -55,9 +84,20 @@ public class contest_entries__c {
         this.genre = genre;
         this.userId = UserSession.getInstance().getUserId();
         this.username = UserSession.getInstance().getUsername();
+        updateWeeklySessionLabel(true);
         updateGenreLabel();
+        startCountdownTimer();
         loadEntries();
     }
+
+        @Override
+        public void initialize(URL location, ResourceBundle resources) {
+            previous_week_button.setOnMouseEntered(e -> previous_week_button.setStyle("-fx-background-color: #C9B8A9; -fx-background-radius: 10 0 0 10; -fx-text-fill: #014237; -fx-translate-y: -2px;"));
+            previous_week_button.setOnMouseExited(e -> previous_week_button.setStyle(isCurrentWeekView ? "-fx-background-color: #F5E0CD; -fx-background-radius: 10 0 0 10; -fx-text-fill: #014237;" : "-fx-background-color: #C9B8A9; -fx-background-radius: 10 0 0 10; -fx-text-fill: #014237;"));
+            current_week_button.setOnMouseEntered(e -> current_week_button.setStyle("-fx-background-color: #C9B8A9; -fx-background-radius: 0 10 10 0; -fx-text-fill: #014237; -fx-translate-y: -2px;"));
+            current_week_button.setOnMouseExited(e -> current_week_button.setStyle(isCurrentWeekView ? "-fx-background-color: #C9B8A9; -fx-background-radius: 0 10 10 0; -fx-text-fill: #014237;" : "-fx-background-color: #F5E0CD; -fx-background-radius: 0 10 10 0; -fx-text-fill: #014237;"));
+        }
+
 
     private void updateGenreLabel() {
         if (genre_name != null && genre != null) {
@@ -95,7 +135,7 @@ public class contest_entries__c {
             Parent root = loader.load();
             Object controller = loader.getController();
 
-            // Use reflection or interface to handle setMainController safely
+            // Use reflection to call setMainController safely
             try {
                 if (controller != null) {
                     java.lang.reflect.Method setMainControllerMethod = controller.getClass().getMethod("setMainController", nav_bar__c.class);
@@ -116,6 +156,8 @@ public class contest_entries__c {
         }
     }
 
+
+
     @FXML
     private void handle_add_entry(ActionEvent event) {
         if (!UserSession.getInstance().isLoggedIn()) {
@@ -128,6 +170,68 @@ public class contest_entries__c {
             LOGGER.severe("User ID mismatch: userId=" + userId + ", session userId=" + UserSession.getInstance().getUserId());
             return;
         }
+
+        // Check for existing entry in current week
+        LocalDateTime weekStart = getCurrentWeekStart();
+        LocalDateTime weekEnd = weekStart.plusDays(6).withHour(23).withMinute(59).withSecond(59);
+        try (Connection conn = db_connect.getConnection()) {
+            if (conn == null) {
+                LOGGER.severe("Database connection is null, cannot check existing entry.");
+                showErrorAlert("Database Error", "Failed to connect to the database.");
+                return;
+            }
+            String query = "SELECT COUNT(*) FROM contest_entries WHERE contest_id = ? AND user_id = ? AND submission_date BETWEEN ? AND ?";
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setInt(1, contestId);
+                stmt.setInt(2, userId);
+                stmt.setTimestamp(3, Timestamp.valueOf(weekStart));
+                stmt.setTimestamp(4, Timestamp.valueOf(weekEnd));
+                ResultSet rs = stmt.executeQuery();
+                if (rs.next() && rs.getInt(1) > 0) {
+                    showErrorAlert("Submission Error", "You have already added your contest entry for this week.");
+                    LOGGER.warning("User " + userId + " attempted to submit multiple entries for contestId=" + contestId);
+                    return;
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.severe("Failed to check existing entry: " + e.getMessage());
+            showErrorAlert("Database Error", "Failed to verify submission status: " + e.getMessage());
+            return;
+        }
+
+        // Check for winner cooldown
+        try (Connection conn = db_connect.getConnection()) {
+            if (conn == null) {
+                LOGGER.severe("Database connection is null, cannot check winner cooldown.");
+                showErrorAlert("Database Error", "Failed to connect to the database.");
+                return;
+            }
+            String query = "SELECT ce.submission_date FROM contest_entries ce " +
+                    "JOIN (SELECT contest_id, submission_date, vote_count, " +
+                    "RANK() OVER (PARTITION BY contest_id ORDER BY vote_count DESC, (SELECT MIN(created_at) FROM contest_votes cv WHERE cv.contest_entry_id = ce.entry_id) ASC) as rnk " +
+                    "FROM contest_entries ce WHERE ce.user_id = ? AND ce.submission_date < ?) as ranked " +
+                    "WHERE ranked.rnk <= 3 AND ce.contest_id = ranked.contest_id AND ce.submission_date = ranked.submission_date";
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setInt(1, userId);
+                stmt.setTimestamp(2, Timestamp.valueOf(weekStart));
+                ResultSet rs = stmt.executeQuery();
+                if (rs.next()) {
+                    LocalDateTime winDate = rs.getTimestamp("submission_date").toLocalDateTime();
+                    LocalDateTime eligibleSaturday = winDate.with(DayOfWeek.SATURDAY).plusWeeks(3);
+                    if (LocalDateTime.now(ZoneOffset.ofHours(6)).isBefore(eligibleSaturday)) {
+                        long daysRemaining = ChronoUnit.DAYS.between(LocalDateTime.now(ZoneOffset.ofHours(6)), eligibleSaturday);
+                        showErrorAlert("Submission Error", "You have already achieved a position. Please wait 2 weeks before submitting a new contest entry. Days remaining: " + daysRemaining);
+                        LOGGER.warning("User " + userId + " is in cooldown until " + eligibleSaturday);
+                        return;
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.severe("Failed to check winner cooldown: " + e.getMessage());
+            showErrorAlert("Database Error", "Failed to verify cooldown status: " + e.getMessage());
+            return;
+        }
+
         if (mainController == null) {
             LOGGER.severe("Main controller is null, cannot navigate to contest_write.fxml");
             showErrorAlert("Error", "Navigation failed: main controller is not initialized.");
@@ -276,6 +380,8 @@ public class contest_entries__c {
         }
     }
 
+
+
     private void loadEntries() {
         if (entryContainer == null) {
             LOGGER.severe("entryContainer is null; cannot load entries.");
@@ -287,34 +393,54 @@ public class contest_entries__c {
             return;
         }
 
+        LocalDateTime weekStart = isCurrentWeekView ? getCurrentWeekStart() : getPreviousWeekStart();
+        LocalDateTime weekEnd = weekStart.plusDays(6).withHour(23).withMinute(59).withSecond(59);
+        Timestamp weekStartTs = Timestamp.valueOf(weekStart);
+        Timestamp weekEndTs = Timestamp.valueOf(weekEnd);
+
         try (Connection conn = db_connect.getConnection()) {
             if (conn == null) {
                 showErrorAlert("Database Error", "Failed to connect to the database.");
                 return;
             }
 
-            String query = "SELECT ce.entry_id, ce.entry_title, ce.submission_date, ce.vote_count, ce.cover_photo, u.username " +
-                    "FROM contest_entries ce JOIN users u ON ce.user_id = u.user_id " +
-                    "WHERE ce.contest_id = ? ORDER BY ce.vote_count DESC, ce.submission_date ASC";
+            String query = isCurrentWeekView ?
+                    "SELECT ce.entry_id, ce.entry_title, ce.submission_date, ce.vote_count, ce.cover_photo, u.username " +
+                            "FROM contest_entries ce JOIN users u ON ce.user_id = u.user_id " +
+                            "WHERE ce.contest_id = ? AND ce.submission_date BETWEEN ? AND ? " +
+                            "ORDER BY ce.submission_date ASC" :
+                    "SELECT ce.entry_id, ce.entry_title, ce.submission_date, ce.vote_count, ce.cover_photo, u.username, " +
+                            "(SELECT MIN(created_at) FROM contest_votes cv WHERE cv.contest_entry_id = ce.entry_id) as first_vote " +
+                            "FROM contest_entries ce JOIN users u ON ce.user_id = u.user_id " +
+                            "WHERE ce.contest_id = ? AND ce.submission_date BETWEEN ? AND ? " +
+                            "ORDER BY ce.vote_count DESC, first_vote ASC";
+
             try (PreparedStatement stmt = conn.prepareStatement(query)) {
                 stmt.setInt(1, contestId);
-                LOGGER.info("Executing query for contestId: " + contestId);
+                stmt.setTimestamp(2, weekStartTs);
+                stmt.setTimestamp(3, weekEndTs);
+                LOGGER.info("Executing query for contestId: " + contestId + ", week: " + weekStartTs + " to " + weekEndTs);
                 ResultSet rs = stmt.executeQuery();
                 int entryNumber = 1;
                 while (rs.next()) {
                     HBox entryHBox = createEntryHBox(
                             rs.getInt("entry_id"),
-                            entryNumber++,
+                            entryNumber,
                             rs.getString("entry_title"),
                             rs.getString("username"),
                             rs.getTimestamp("submission_date"),
                             rs.getInt("vote_count"),
                             rs.getString("cover_photo")
                     );
+                    if (!isCurrentWeekView && entryNumber <= 3 && rs.getInt("vote_count") > 0) {
+                        HBox numberBox = (HBox) entryHBox.getChildren().get(0);
+                        numberBox.setStyle("-fx-background-color: #014237; -fx-background-radius: 20; -fx-border-color: #FFD700; -fx-border-width: 2;");
+                    }
                     entryContainer.getChildren().add(entryHBox);
+                    entryNumber++;
                 }
                 if (entryNumber == 1) {
-                    LOGGER.info("No entries found for contestId: " + contestId);
+                    LOGGER.info("No entries found for contestId: " + contestId + ", week: " + weekStartTs + " to " + weekEndTs);
                 }
             }
         } catch (SQLException e) {
@@ -375,8 +501,9 @@ public class contest_entries__c {
         StackPane voteButtonsPane = new StackPane();
         voteButtonsPane.setAlignment(javafx.geometry.Pos.CENTER);
         voteButtonsPane.setPrefHeight(30.0);
-        voteButtonsPane.setPrefWidth(30.0);
-        voteButtonsPane.setStyle("-fx-pref-height: 30.0; -fx-pref-width: 30.0; -fx-max-height: 30.0; -fx-max-width: 30.0;");
+        voteButtonsPane.setPrefWidth(60.0); // Adjusted to fit both buttons
+        voteButtonsPane.setMaxHeight(30.0);
+        voteButtonsPane.setMaxWidth(60.0);
 
         Button notVotedButton = new Button();
         ImageView notVotedIcon = new ImageView(new Image(getClass().getResource("/images/icons/star5.png").toExternalForm()));
@@ -387,6 +514,7 @@ public class contest_entries__c {
         notVotedButton.setPrefWidth(30.0);
         notVotedButton.setStyle("-fx-background-color: transparent;");
         notVotedButton.setOnAction(this::handle_not_voted_button);
+        notVotedButton.setDisable(!isCurrentWeekView);
 
         Button votedButton = new Button();
         ImageView votedIcon = new ImageView(new Image(getClass().getResource("/images/icons/star6.png").toExternalForm()));
@@ -397,6 +525,7 @@ public class contest_entries__c {
         votedButton.setPrefWidth(30.0);
         votedButton.setStyle("-fx-background-color: transparent;");
         votedButton.setOnAction(this::handle_voted_button);
+        votedButton.setDisable(!isCurrentWeekView);
 
         boolean hasVoted = UserSession.getInstance().isLoggedIn() && hasUserVoted(entryId);
         notVotedButton.setVisible(!hasVoted);
@@ -428,7 +557,7 @@ public class contest_entries__c {
         }
         try (Connection conn = db_connect.getConnection()) {
             if (conn == null) {
-                System.err.println("Database connection is null, cannot check vote status for entryId=" + entryId);
+                LOGGER.severe("Database connection is null, cannot check vote status for entryId=" + entryId);
                 return false;
             }
             String query = "SELECT vote_id FROM contest_votes WHERE contest_entry_id = ? AND user_id = ?";
@@ -440,7 +569,7 @@ public class contest_entries__c {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe("Failed to verify vote status for entryId=" + entryId + ": " + e.getMessage());
             showErrorAlert("Database Error", "Unable to verify vote status: " + e.getMessage());
             return false;
         }
@@ -567,7 +696,7 @@ public class contest_entries__c {
             int currentVoteCount = getCurrentVoteCount(entryId);
             voteCountLabel.setText("Voted by " + currentVoteCount + " people");
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe("Failed to update vote display for entryId=" + getEntryIdFromHBox(entryHBox) + ": " + e.getMessage());
             showErrorAlert("UI Error", "Failed to update vote display: " + e.getMessage());
         }
     }
@@ -575,7 +704,7 @@ public class contest_entries__c {
     private int getCurrentVoteCount(int entryId) {
         try (Connection conn = db_connect.getConnection()) {
             if (conn == null) {
-                System.err.println("Database connection is null, cannot fetch vote count for entryId=" + entryId);
+                LOGGER.severe("Database connection is null, cannot fetch vote count for entryId=" + entryId);
                 return 0;
             }
             String query = "SELECT vote_count FROM contest_entries WHERE entry_id = ?";
@@ -588,8 +717,8 @@ public class contest_entries__c {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
-            System.err.println("Failed to fetch vote count for entryId=" + entryId + ": " + e.getMessage());
+            LOGGER.severe("Failed to fetch vote count for entryId=" + entryId + ": " + e.getMessage());
+            return 0;
         }
         return 0;
     }
@@ -604,5 +733,71 @@ public class contest_entries__c {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+
+
+    private LocalDateTime getCurrentWeekStart() {
+        LocalDateTime now = LocalDateTime.now(ZoneOffset.ofHours(6));
+        LocalDateTime saturday = now.with(DayOfWeek.SATURDAY).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        if (now.isAfter(saturday)) {
+            return saturday;
+        }
+        return saturday.minusWeeks(1);
+    }
+
+    private LocalDateTime getPreviousWeekStart() {
+        return getCurrentWeekStart().minusWeeks(1);
+    }
+
+    private void updateWeeklySessionLabel(boolean isCurrentWeek) {
+        LocalDateTime weekStart = isCurrentWeek ? getCurrentWeekStart() : getPreviousWeekStart();
+        LocalDateTime weekEnd = weekStart.plusDays(6).withHour(23).withMinute(59).withSecond(59);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy");
+        weekly_session.setText(weekStart.format(formatter) + " - " + weekEnd.format(formatter));
+    }
+
+
+    private void startCountdownTimer() {
+        AtomicReference<LocalDateTime> nextSaturdayRef = new AtomicReference<>(getCurrentWeekStart().plusWeeks(1));
+        Timer timer = new Timer(true);
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                javafx.application.Platform.runLater(() -> {
+                    LocalDateTime now = LocalDateTime.now(ZoneOffset.ofHours(6));
+                    LocalDateTime nextSaturday = nextSaturdayRef.get();
+                    Duration duration = Duration.between(now, nextSaturday);
+                    if (duration.isNegative() || duration.isZero()) {
+                        updateWeeklySessionLabel(true);
+                        nextSaturdayRef.set(nextSaturday.plusWeeks(1));
+                    }
+                    long days = duration.toDays();
+                    long hours = duration.toHoursPart();
+                    long minutes = duration.toMinutesPart();
+                    long seconds = duration.toSecondsPart();
+                    countdown.setText(String.format("Next reset in: %dd: %02dh: %02dm: %02ds", days, hours, minutes, seconds));
+                });
+            }
+        }, 0, 1000);
+    }
+
+
+
+    public void handle_previous_week_button(ActionEvent actionEvent) {
+        isCurrentWeekView = false;
+        updateWeeklySessionLabel(false);
+        previous_week_button.setStyle("-fx-background-color: #C9B8A9; -fx-background-radius: 10 0 0 10; -fx-text-fill: #014237;");
+        current_week_button.setStyle("-fx-background-color: #F5E0CD; -fx-background-radius: 0 10 10 0; -fx-text-fill: #014237;");
+        add_entry.setDisable(true);
+        loadEntries();
+    }
+
+    public void handle_current_week_button(ActionEvent actionEvent) {
+        isCurrentWeekView = true;
+        updateWeeklySessionLabel(true);
+        current_week_button.setStyle("-fx-background-color: #C9B8A9; -fx-background-radius: 0 10 10 0; -fx-text-fill: #014237;");
+        previous_week_button.setStyle("-fx-background-color: #F5E0CD; -fx-background-radius: 10 0 0 10; -fx-text-fill: #014237;");
+        add_entry.setDisable(false);
+        loadEntries();
     }
 }
