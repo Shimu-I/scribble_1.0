@@ -39,7 +39,7 @@ public class sign_in__controller {
 
     private void navigateToSignUp(ActionEvent event) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("sign_up.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/sign_up.fxml"));
             Parent root = loader.load();
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
             stage.setScene(new Scene(root));
@@ -63,12 +63,11 @@ public class sign_in__controller {
         if (authenticateUser(email, password)) {
             showAlert(Alert.AlertType.INFORMATION, "Login Successful", "Welcome back!");
 
-            // Navigate to nav_bar.fxml and load Home.fxml
             try {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/nav_bar.fxml"));
                 Parent root = loader.load();
                 nav_bar__c navController = loader.getController();
-                navController.loadFXML("Home.fxml"); // Load Home.fxml into centerPane
+                navController.loadFXML("Home.fxml");
 
                 Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
                 stage.setScene(new Scene(root));
@@ -84,9 +83,8 @@ public class sign_in__controller {
         }
     }
 
-    // Method to authenticate user with email and password
     private boolean authenticateUser(String email, String password) {
-        String query = "SELECT user_id, username, email, password, profile_picture FROM Users WHERE email = ? AND password = ?";
+        String query = "SELECT user_id, username, email, password, profile_picture, role FROM Users WHERE email = ? AND password = ?";
 
         try (Connection connection = db_connect.getConnection()) {
             if (connection == null) {
@@ -96,20 +94,20 @@ public class sign_in__controller {
 
             try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
                 preparedStatement.setString(1, email);
-                preparedStatement.setString(2, password); // **TODO: Hash passwords in production**
+                preparedStatement.setString(2, password); // TODO: Hash passwords in production
 
                 ResultSet resultSet = preparedStatement.executeQuery();
 
                 if (resultSet.next()) {
                     int userId = resultSet.getInt("user_id");
                     String username = resultSet.getString("username");
+                    String role = resultSet.getString("role");
                     String profilePicture = resultSet.getString("profile_picture");
-                    // Use default photo if profile_picture is null or empty
                     String userPhotoPath = (profilePicture == null || profilePicture.trim().isEmpty())
                             ? "/images/profiles/demo_profile.png"
                             : profilePicture;
-                    UserSession.getInstance().setUser(userId, username, userPhotoPath);
-                    System.out.println("UserSession set: userId=" + userId + ", username=" + username + ", photoPath=" + userPhotoPath);
+                    UserSession.initialize(userId, username, role, userPhotoPath);
+                    System.out.println("UserSession set: userId=" + userId + ", username=" + username + ", role=" + role + ", photoPath=" + userPhotoPath);
                     return true;
                 }
             }
@@ -121,7 +119,6 @@ public class sign_in__controller {
         return false;
     }
 
-    // Show alert messages to the user
     private void showAlert(Alert.AlertType alertType, String title, String message) {
         Alert alert = new Alert(alertType);
         alert.setTitle(title);

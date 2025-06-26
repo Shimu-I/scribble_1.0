@@ -2,9 +2,12 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
@@ -13,49 +16,145 @@
 <BorderPane prefHeight="660.0" prefWidth="1400.0" style="-fx-background-color: #005D4D;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.scribble.communityChat.ui.ChatAreaController">
 
     <top>
-        <VBox spacing="10">
-            <padding>
-                <Insets bottom="10" left="10" right="10" top="10" />
-            </padding>
-            <Label text="Enter Group ID and User ID" textFill="WHITE">
-            <font>
-               <Font size="20.0" />
-            </font></Label>
-            <HBox spacing="10">
-                <TextField fx:id="groupIdField" prefHeight="30.0" prefWidth="200.0" promptText="Group ID">
-               <font>
-                  <Font size="14.0" />
-               </font></TextField>
-                <TextField fx:id="userIdField" prefHeight="30.0" prefWidth="200.0" promptText="User ID">
-               <font>
-                  <Font size="14.0" />
-               </font></TextField>
-                <Button onAction="#connectToServer" prefHeight="30.0" prefWidth="120.0" style="-fx-background-color: #F4908A; -fx-background-radius: 10;" text="Connect">
-               <font>
-                  <Font size="14.0" />
-               </font></Button>
-            </HBox>
-        </VBox>
+        <Label fx:id="welcomeLabel" alignment="CENTER" maxHeight="-Infinity" maxWidth="1.7976931348623157E308" minHeight="-Infinity" prefHeight="50.0" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-padding: 15 0 15 0; -fx-text-fill: white;" />
     </top>
+   <center>
+      <HBox alignment="CENTER" maxHeight="-Infinity" minHeight="-Infinity" prefHeight="579.0" prefWidth="1400.0" BorderPane.alignment="CENTER">
+         <children>
+              <VBox prefWidth="300.0" spacing="10.0" style="-fx-background-color: #004C3D; -fx-padding: 10; -fx-background-radius: 10 0 0 10;">
+               <VBox maxHeight="-Infinity" minHeight="-Infinity" prefHeight="73.0" prefWidth="279.0">
+                  <children>
+                        <!-- Create group -->
+                        <Label text="Create Group" textFill="WHITE">
+                            <font>
+                           <Font name="System Bold" size="18.0" />
+                        </font>
+                        </Label>
+                     <HBox alignment="CENTER" maxHeight="-Infinity" minHeight="-Infinity" prefHeight="46.0" prefWidth="279.0" spacing="10.0">
+                        <children>
+                              <ComboBox fx:id="bookGroupComboBox" prefHeight="30.0" prefWidth="200" promptText="Select a book..." style="-fx-background-color: #fff;" />
+                              <Button fx:id="createGroupButton" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onAction="#handleCreateGroup" prefHeight="30.0" prefWidth="60.0" style="-fx-background-color: #F4908A; -fx-background-radius: 5;" text="Create ">
+                              <font>
+                                 <Font name="System Bold" size="12.0" />
+                              </font>
+                           </Button>
+                        </children>
+                     </HBox>
+                  </children>
+               </VBox>
+                  <VBox maxHeight="-Infinity" minHeight="-Infinity" prefHeight="98.0" prefWidth="279.0" spacing="10.0">
+                      <children>
+                          <!-- Search & Join Section -->
+                          <Label style="-fx-font-size: 18px;" text="Search and Join Group" textFill="WHITE">
+                              <font>
+                                  <Font name="System Bold" size="12.0" />
+                              </font>
+                          </Label>
+                          <TextField fx:id="groupSearchTextField" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onAction="#handleGroupSearchTextField" prefHeight="30.0" prefWidth="218.0" promptText="select group to join" style="-fx-background-color: #fff; -fx-background-radius: 30;">
+                              <padding>
+                                  <Insets left="10.0" right="5.0" />
+                              </padding>
+                          </TextField>
+                          <Label fx:id="groupSearchMessage" prefHeight="18.0" prefWidth="276.0" textFill="YELLOW" wrapText="true" />
+                      </children>
+                  </VBox>
+               <VBox alignment="CENTER" prefHeight="363.0" prefWidth="279.0" spacing="10.0">
+                  <children>
+            
+                        <!-- Group List Section -->
+                        <Label text="Joined Groups" textFill="WHITE">
+                            <font>
+                           <Font name="System Bold" size="24.0" />
+                        </font>
+                        </Label>
+                        <!--<ListView fx:id="groupList" VBox.vgrow="ALWAYS" />-->
+                      <!--
+                      <ListView fx:id="groupList" style="-fx-font-size: 16px; -fx-background-radius: 5; -fx-padding: 10;" VBox.vgrow="ALWAYS" />
 
-    <center>
-        <ListView fx:id="chatList" VBox.vgrow="ALWAYS" />
-    </center>
+                      -->
+                      <ListView fx:id="groupList" style="-fx-font-size: 14px; -fx-text-fill: #C8E6C9; -fx-background-radius: 5; -fx-padding: 10;" VBox.vgrow="ALWAYS" />
 
-    <bottom>
-        <HBox spacing="10">
-            <padding>
-                <Insets bottom="10" left="10" right="10" top="10" />
-            </padding>
-            <TextField fx:id="messageField" promptText="Enter message..." HBox.hgrow="ALWAYS">
-            <font>
-               <Font size="14.0" />
-            </font></TextField>
-            <Button onAction="#sendMessage" prefHeight="30.0" prefWidth="120.0" style="-fx-background-color: #F4908A; -fx-background-radius: 10;" text="Send">
-            <font>
-               <Font size="14.0" />
-            </font></Button>
-        </HBox>
-    </bottom>
+
+            
+            
+                        <!-- Leave Button -->
+                        <Button fx:id="leaveGroupButton" alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onAction="#handleLeaveGroup" prefHeight="30.0" prefWidth="120.0" style="-fx-background-color: #D22B2B; -fx-background-radius: 5;" text="Leave Group" textFill="WHITE">
+                            <font>
+                           <Font name="System Bold" size="14.0" />
+                        </font>
+                        </Button>
+                  </children>
+               </VBox>
+              </VBox>
+              <BorderPane prefHeight="610.0" prefWidth="917.0">
+                  <!-- TOP of CENTER: Group ID and User ID Input -->
+                  <top>
+                      <VBox alignment="CENTER" spacing="10" style="-fx-background-color: #004C3D; -fx-background-radius: 0 10 0 0;">
+                          <padding>
+                              <Insets bottom="10" left="10" right="10" top="10" />
+                          </padding>
+                     <Label fx:id="currently_joined_group" text="Your Currently Joined in Group_name" textFill="WHITE">
+                        <font>
+                           <Font name="System Bold" size="18.0" />
+                        </font>
+                     </Label>
+                          <HBox spacing="10">
+                              <TextField fx:id="groupIdField" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="30.0" prefWidth="200.0" promptText="Group ID" style="-fx-background-radius: 10;">
+                                  <font>
+                                      <Font size="16.0" />
+                                  </font>
+                              </TextField>
+                              <TextField fx:id="userIdField" disable="true" editable="false" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="30.0" prefWidth="200.0" promptText="User ID" style="-fx-background-radius: 10;">
+                                  <font>
+                                      <Font size="16.0" />
+                                  </font>
+                              </TextField>
+                              <Button maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onAction="#connectToServer" prefHeight="30.0" prefWidth="120.0" style="-fx-background-color: #F4908A; -fx-background-radius: 10;" stylesheets="@../../../style/style.css" text="Connect">
+                                  <font>
+                                      <Font size="14.0" />
+                                  </font>
+                              </Button>
+                          </HBox>
+                      </VBox>
+                  </top>
+      
+                  <!-- CENTER of CENTER: Chat Messages -->
+                  <center>
+                      <!--<ListView fx:id="chatList" VBox.vgrow="ALWAYS" />-->
+                      <!--<ListView fx:id="chatList" prefHeight="400.0" prefWidth="600.0" />-->
+                      <ListView fx:id="chatList" minWidth="-Infinity" prefHeight="436.0" prefWidth="885.0" style="-fx-background-color: #f0f0f0; -fx-background-radius: 5;" VBox.vgrow="ALWAYS" />
+      
+      
+                  </center>
+      
+                  <!-- BOTTOM of CENTER: Message Input -->
+                  <bottom>
+                      <HBox spacing="10" style="-fx-background-color: #004C3D; -fx-background-radius: 0 0 10 0;">
+                          <padding>
+                              <Insets bottom="10" left="10" right="10" top="10" />
+                          </padding>
+                          <TextField fx:id="messageField" maxHeight="-Infinity" minHeight="-Infinity" prefHeight="30.0" promptText="Enter message..." style="-fx-background-radius: 50;" HBox.hgrow="ALWAYS">
+                              <font>
+                                  <Font size="16.0" />
+                              </font>
+                          </TextField>
+                          <Button maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onAction="#sendMessage" prefHeight="30.0" prefWidth="30.0" style="-fx-background-color: transparent;">
+                              <font>
+                                  <Font size="16.0" />
+                              </font>
+                        <graphic>
+                           <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
+                              <image>
+                                 <Image url="@../../../images/icons/send.png" />
+                              </image>
+                           </ImageView>
+                        </graphic>
+                          </Button>
+                      </HBox>
+                  </bottom>
+              </BorderPane>
+         </children>
+      </HBox>
+   </center>
 
 </BorderPane>

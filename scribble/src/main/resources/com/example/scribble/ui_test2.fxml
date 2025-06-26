@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane prefHeight="660.0" prefWidth="1400.0" styleClass="main-pane"
+            stylesheets="@../../../style/style.css"
+            xmlns="http://javafx.com/javafx/23.0.1"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.example.scribble.contest_read_entry__c">
+
+    <!-- Top Bar -->
+    <top>
+        <HBox spacing="20.0" alignment="CENTER_LEFT" prefHeight="60.0"
+              styleClass="header" BorderPane.alignment="CENTER">
+            <children>
+                <Button fx:id="back_button" text="← Back" onAction="#handle_back_button"
+                        prefHeight="35.0" prefWidth="100.0"
+                        styleClass="main-button"/>
+                <Label text="Reading Chapter" styleClass="header-label">
+                    <font>
+                        <Font size="20.0"/>
+                    </font>
+                </Label>
+            </children>
+            <padding>
+                <Insets left="30.0"/>
+            </padding>
+        </HBox>
+    </top>
+
+    <!-- Center Body -->
+    <center>
+        <VBox alignment="TOP_CENTER" spacing="15.0" BorderPane.alignment="CENTER">
+            <!-- Title & Genre -->
+            <VBox alignment="CENTER" spacing="5.0">
+                <padding>
+                    <Insets top="10.0" bottom="10.0"/>
+                </padding>
+                <children>
+                    <Label fx:id="book_tittle" text="Book Name" styleClass="book-title">
+                        <font>
+                            <Font size="26.0"/>
+                        </font>
+                    </Label>
+                    <Label fx:id="genre_name" text="(Genre: Crime Horror)" styleClass="genre-label">
+                        <font>
+                            <Font size="14.0"/>
+                        </font>
+                    </Label>
+                </children>
+            </VBox>
+
+            <!-- Cover + Text -->
+            <HBox alignment="CENTER" spacing="30.0">
+            <padding>
+                <Insets top="20.0" right="30.0" bottom="30.0" left="30.0"/>
+            </padding>
+            <children>
+                <!-- Cover -->
+                <VBox alignment="TOP_CENTER">
+                <children>
+                    <ImageView fx:id="cover_photo"
+                               fitHeight="200.0" fitWidth="140.0"
+                               pickOnBounds="true" preserveRatio="true"
+                               styleClass="cover-image"/>
+                    <image>
+                        <Image url="@../../../images/contest_book_cover/demo_cover_photo.png"/>
+                    </image>
+                </ImageView>
+            </children>
+        </VBox>
+
+        <!-- Writing Area -->
+        <TextArea fx:id="writing_area"
+                  promptText="Start your writing from here..."
+                  prefHeight="500.0" prefWidth="1000.0"
+                  wrapText="true"
+                  editable="false"
+                  styleClass="reading-textarea"/>
+    </children>
+</HBox>
+        </VBox>
+        </center>
+        </BorderPane>

@@ -36,7 +36,6 @@ public class sign_up__controller {
     @FXML
     private Button signInButton;
 
-    // Handle Sign-Up Button Click
     @FXML
     private void handleSignUp(ActionEvent event) {
         String name = nameField.getText().trim();
@@ -50,16 +49,19 @@ public class sign_up__controller {
 
         int userId = registerUser(name, email, password);
         if (userId != -1) {
-            // Store user data in UserSession with the default photo path
+            // Store user data in UserSession with the default photo path and role
             String userPhotoPath = "/images/profiles/demo_profile.png";
-            UserSession.getInstance().setUser(userId, name, userPhotoPath);
-            System.out.println("UserSession set: userId=" + userId + ", username=" + name + ", photoPath=" + userPhotoPath);
+            String role = "User"; // Default role for new users
+            UserSession.getInstance().setUser(userId, name, role, userPhotoPath);
+            System.out.println("UserSession set: userId=" + userId + ", username=" + name + ", role=" + role + ", photoPath=" + userPhotoPath);
             showAlert(Alert.AlertType.INFORMATION, "Success", "Account created successfully!");
 
             // Navigate to home page (nav_bar.fxml)
             try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("nav_bar.fxml"));
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/nav_bar.fxml"));
                 Parent root = loader.load();
+                nav_bar__c navController = loader.getController();
+                navController.loadFXML("Home.fxml");
                 Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
                 stage.setScene(new Scene(root));
                 stage.show();
@@ -72,15 +74,13 @@ public class sign_up__controller {
         }
     }
 
-    // Handle Sign-In Button Click (Navigates to Sign In Page)
     @FXML
     private void handleSignIn(ActionEvent event) {
         navigateToSignIn(event);
     }
 
-    // Method to insert user data into the database and return user_id
     private int registerUser(String name, String email, String password) {
-        String query = "INSERT INTO users (username, email, password, profile_picture) VALUES (?, ?, ?, ?)";
+        String query = "INSERT INTO users (username, email, password, profile_picture, role) VALUES (?, ?, ?, ?, ?)";
 
         try (Connection connection = db_connect.getConnection()) {
             if (connection == null) {
@@ -91,15 +91,15 @@ public class sign_up__controller {
             try (PreparedStatement preparedStatement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
                 preparedStatement.setString(1, name);
                 preparedStatement.setString(2, email);
-                preparedStatement.setString(3, password); // Plain-text password (insecure for production)
-                preparedStatement.setString(4, "/images/profiles/demo_profile.png"); // Default profile picture
+                preparedStatement.setString(3, password); // TODO: Hash passwords in production
+                preparedStatement.setString(4, "/images/profiles/demo_profile.png");
+                preparedStatement.setString(5, "User"); // Default role
 
                 int rowsInserted = preparedStatement.executeUpdate();
                 if (rowsInserted > 0) {
-                    // Retrieve generated user_id
                     ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
                     if (generatedKeys.next()) {
-                        return generatedKeys.getInt(1); // user_id as int
+                        return generatedKeys.getInt(1); // user_id
                     }
                 }
                 return -1;
@@ -111,10 +111,9 @@ public class sign_up__controller {
         }
     }
 
-    // Method to navigate to Sign In page
     private void navigateToSignIn(ActionEvent event) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("sign_in.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/sign_in.fxml"));
             Parent root = loader.load();
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
             stage.setScene(new Scene(root));
@@ -125,7 +124,6 @@ public class sign_up__controller {
         }
     }
 
-    // Method to show alerts
     private void showAlert(Alert.AlertType alertType, String title, String message) {
         Alert alert = new Alert(alertType);
         alert.setTitle(title);

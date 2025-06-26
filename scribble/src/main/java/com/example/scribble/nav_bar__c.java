@@ -189,9 +189,16 @@ public class nav_bar__c {
     }
 
     @FXML
+
     void action_community(ActionEvent event) {
-        System.out.println("Community page is opening!!!");
-        loadFXML("chat_area.fxml");
+        System.out.println("Community page access attempted!!!");
+        if (UserSession.getInstance().isLoggedIn()) {
+            System.out.println("Community page is opening!!!");
+            loadFXML("chat_area.fxml");
+        } else {
+            System.out.println("Guest user; login required to view community.");
+            showAlert(Alert.AlertType.WARNING, "Login Required", "Please sign in to access the community section.");
+        }
     }
 
     @FXML

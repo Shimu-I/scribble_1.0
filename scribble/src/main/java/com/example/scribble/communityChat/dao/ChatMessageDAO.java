@@ -4,10 +4,8 @@ import com.example.scribble.db_connect;
 
 import com.example.scribble.communityChat.models.ChatMessage;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,6 +27,45 @@ public class ChatMessageDAO {
             e.printStackTrace();
         }
     }
+
+    public static List<String> getFormattedMessagesForGroup(int groupId, int currentUserId) {
+        List<String> messages = new ArrayList<>();
+        String sql = "SELECT cm.message_id, cm.sender_id, u.username, cm.message, cm.created_at " +
+                "FROM chat_messages cm " +
+                "JOIN users u ON cm.sender_id = u.user_id " +
+                "WHERE cm.group_id = ? ORDER BY cm.created_at ASC";
+
+        try (Connection conn = db_connect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, groupId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                int senderId = rs.getInt("sender_id");
+                String sender = rs.getString("username");
+                String message = rs.getString("message");
+                Timestamp timestamp = rs.getTimestamp("created_at");
+
+                String formattedTime = timestamp.toLocalDateTime().format(DateTimeFormatter.ofPattern("HH:mm"));
+                String formattedMsg;
+
+                if (senderId == currentUserId) {
+                    formattedMsg = "[me] " + message + " (" + formattedTime + ")";
+                } else {
+                    formattedMsg = "[" + sender + "] " + message + " (" + formattedTime + ")";
+                }
+
+                messages.add(formattedMsg);
+            }
+
+        } catch (SQLException e) {
+            System.err.println("❌ Error fetching chat history: " + e.getMessage());
+        }
+
+        return messages;
+    }
+
 
     // ✅ Retrieve all messages from a specific group
     public static List<ChatMessage> getMessages(int groupId) {

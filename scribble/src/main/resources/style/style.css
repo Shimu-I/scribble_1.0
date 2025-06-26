@@ -173,5 +173,141 @@ read_book css
 
 
 /*
-for contest_entries page
+for ui test page
 */
+
+.main-pane {
+    -fx-background-color: #005D4D;
+}
+
+.header {
+    -fx-background-color: transparent;
+}
+
+.back-button {
+    -fx-background-color: #E8A87C;
+    -fx-background-radius: 10;
+    -fx-text-fill: #2E2E2E;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 5, 0, 0, 2);
+}
+
+.back-button:hover {
+    -fx-background-color: #D6956A;
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+
+.title-section {
+    -fx-alignment: center;
+}
+
+.book-title {
+    -fx-text-fill: #FFFFFF;
+    -fx-font-family: "Georgia";
+    -fx-font-weight: bold;
+}
+
+.genre-label {
+    -fx-text-fill: #FFFFFF;
+    -fx-font-family: "Georgia";
+    -fx-font-style: italic;
+}
+
+.cover-image {
+    -fx-border-color: #F5F6E1;
+    -fx-border-width: 3;
+    -fx-border-radius: 5;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 10, 0, 0, 3);
+}
+
+.content-container {
+    -fx-background-color: transparent;
+    -fx-padding: 20;
+}
+
+.writing-area {
+    -fx-background-color: #F5F6E1;
+    /* Cream paper-like color */
+    -fx-background-radius: 5;
+    -fx-border-color: #4A6A5F;
+    -fx-border-width: 1;
+    -fx-border-radius: 5;
+    -fx-text-fill: #2E2E2E;
+    -fx-prompt-text-fill: #A0A0A0;
+    -fx-font-family: "Georgia";
+    -fx-font-size: 18px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 5, 0, 0, 2);
+    /* Subtle shadow for depth */
+    -fx-background-insets: 0; /* Remove default insets */
+    -fx-control-inner-background: #F5F6E1;
+; /* Match background */
+    -fx-focus-color: transparent; /* Remove focus border */
+    -fx-faint-focus-color: transparent; /* Remove faint focus */
+}
+
+/* Optional: Add paper texture (uncomment and provide texture image) */
+/*.writing-area {
+    -fx-background-image: url('paper_texture.png');
+    -fx-background-size: cover;
+}*/
+
+.writing-area .scroll-pane {
+    -fx-background-color: transparent;
+}
+
+.writing-area .scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+
+.writing-area .scroll-bar {
+    -fx-background-color: #F5F6E1;
+    -fx-background-radius: 5;
+}
+
+.writing-area .scroll-bar .thumb {
+    -fx-background-color: #4A6A5F;
+    -fx-background-radius: 5;
+}
+
+.writing-area .scroll-bar .thumb:hover {
+    -fx-background-color: #3A5A4F;
+}
+
+
+
+
+/*
+UI test 2
+*/
+/* Primary button styling */
+.main-button {
+    -fx-background-color: #F4908A;
+    -fx-text-fill: #014237;
+    -fx-background-radius: 15;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 3, 0.3, 0, 1);
+}
+
+.main-button:hover {
+    -fx-translate-y: -2px;
+    -fx-background-color: #FFD6D3;
+}
+
+/* Reading area styled like a card */
+.reading-textarea {
+    -fx-background-color: #FAFAFA;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-color: #D9D9D9;
+    -fx-border-width: 1.2;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 10, 0.3, 0, 2);
+    -fx-text-fill: #014237;
+    -fx-font-size: 18px;
+    -fx-padding: 15;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
