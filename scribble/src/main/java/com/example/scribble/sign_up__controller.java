@@ -51,7 +51,7 @@ public class sign_up__controller {
         if (userId != -1) {
             // Store user data in UserSession with the default photo path and role
             String userPhotoPath = "/images/profiles/demo_profile.png";
-            String role = "User"; // Default role for new users
+            String role = "Regular User"; // Fixed typo from "wrinkles User"
             UserSession.getInstance().setUser(userId, name, role, userPhotoPath);
             System.out.println("UserSession set: userId=" + userId + ", username=" + name + ", role=" + role + ", photoPath=" + userPhotoPath);
             showAlert(Alert.AlertType.INFORMATION, "Success", "Account created successfully!");
@@ -92,8 +92,8 @@ public class sign_up__controller {
                 preparedStatement.setString(1, name);
                 preparedStatement.setString(2, email);
                 preparedStatement.setString(3, password); // TODO: Hash passwords in production
-                preparedStatement.setString(4, "/images/profiles/demo_profile.png");
-                preparedStatement.setString(5, "User"); // Default role
+                preparedStatement.setString(4, "demo_profile.png"); // Use only filename
+                preparedStatement.setString(5, "Regular User"); // Fixed from "User" to match ENUM('Admin', 'Regular User')
 
                 int rowsInserted = preparedStatement.executeUpdate();
                 if (rowsInserted > 0) {
