@@ -39,30 +39,28 @@ public class ChatMessageCell extends ListCell<String> {
             textFlow.getChildren().clear();
 
             // Parse message: expected format "[username] message (time)"
-            String username = "";
+            String senderId = "";
             String messageContent = message;
             String time = "";
 
-            // Extract username (in brackets)
             if (message.startsWith("[")) {
                 int endBracket = message.indexOf("]");
                 if (endBracket != -1) {
-                    username = message.substring(0, endBracket + 1); // e.g., "[me]"
+                    senderId = message.substring(0, endBracket + 1); // e.g., "[111123]"
                     messageContent = message.substring(endBracket + 1).trim();
                 }
             }
 
-            // Extract time (in parentheses)
             if (messageContent.contains("(") && messageContent.endsWith(")")) {
                 int startParen = messageContent.lastIndexOf("(");
-                time = messageContent.substring(startParen); // e.g., "(12:34)"
+                time = messageContent.substring(startParen); // e.g., "(14:27)"
                 messageContent = messageContent.substring(0, startParen).trim();
             }
 
-            // Create styled Text nodes
-            Text usernameText = new Text(username);
+// Create styled Text nodes
+            Text usernameText = new Text(senderId + " "); // Use senderId instead of username
             usernameText.setFont(Font.font("Arial", FontWeight.BOLD, 12));
-            usernameText.setFill(javafx.scene.paint.Color.GRAY);
+            usernameText.setFill(senderId.equals("[me]") ? javafx.scene.paint.Color.GREEN : javafx.scene.paint.Color.GRAY);
 
             Text messageText = new Text(messageContent + " ");
             messageText.setFont(Font.font("Arial", FontWeight.NORMAL, 16));
@@ -72,7 +70,7 @@ public class ChatMessageCell extends ListCell<String> {
             timeText.setFont(Font.font("Arial", FontWeight.NORMAL, 12));
             timeText.setFill(javafx.scene.paint.Color.GRAY);
 
-            // Add Text nodes to TextFlow
+// Add Text nodes to TextFlow
             textFlow.getChildren().addAll(usernameText, messageText, timeText);
 
             // Set TextFlow as the bubble's graphic

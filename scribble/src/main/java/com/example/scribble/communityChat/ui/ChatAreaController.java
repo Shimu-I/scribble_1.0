@@ -988,17 +988,10 @@ public class ChatAreaController implements Initializable {
         String message = messageField.getText().trim();
 
         if (!message.isEmpty() && out != null) {
-            String username = UserSession.getInstance().getUsername();
-            String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"));
-
-            // Format: username: message (HH:mm)
-            String formattedMessage = username + ":" + message + " (" + time + ")";
-            out.println(formattedMessage);  // Send to server
-
+            out.println(message);  // Send only the raw message
             messageField.clear();
         }
     }
-
 
 
 
