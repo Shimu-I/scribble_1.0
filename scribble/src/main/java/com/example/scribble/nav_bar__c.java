@@ -183,6 +183,12 @@ public class nav_bar__c {
     }
 
     @FXML
+    void action_games(ActionEvent event) {
+        System.out.println("Games page is opening!!!");
+        loadFXML("games.fxml");
+    }
+
+    @FXML
     void action_books(ActionEvent event) {
         System.out.println("Books page is opening!!!");
         loadFXML("reading_list.fxml");

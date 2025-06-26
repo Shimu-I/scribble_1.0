@@ -103,6 +103,20 @@
                                     </Button>
                                  </children>
                               </VBox>
+                              <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0">
+                                 <children>
+                                    <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@../../../images/icons/game.png" />
+                                       </image>
+                                    </ImageView>
+                                    <Button fx:id="games" mnemonicParsing="false" onAction="#action_games" style="-fx-background-color: transparent;" styleClass="white-underline-btn" stylesheets="@../../../style/style.css" text="Games" textFill="WHITE">
+                                       <font>
+                                          <Font size="18.0" />
+                                       </font>
+                                    </Button>
+                                 </children>
+                              </VBox>
                            </children>
                         </HBox>
                         <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0">
