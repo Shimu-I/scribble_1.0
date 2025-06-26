@@ -70,24 +70,27 @@ public class groups_joined_owned__c {
         int userId = UserSession.getInstance().getUserId();
         LOGGER.info("Fetching counts for user ID: " + userId);
 
-        // Count Joined groups
-        String joinedQuery = "SELECT COUNT(DISTINCT ugs.group_id) AS joined_count " +
-                "FROM user_group_status ugs " +
-                "JOIN community_groups cg ON ugs.group_id = cg.group_id " +
-                "WHERE ugs.user_id = ? AND ugs.status = 'joined' AND cg.admin_id != ?";
+        //count of joined groups
+        String joinedQuery = "SELECT COUNT(DISTINCT gm.group_id) AS joined_count " +
+                "FROM group_members gm " +
+                "JOIN community_groups cg ON gm.group_id = cg.group_id " +
+                "WHERE gm.user_id = ? " +
+                "UNION " +
+                "SELECT COUNT(*) FROM community_groups cg " +
+                "WHERE cg.group_id = 21 AND cg.admin_id = ?";
         try (Connection conn = db_connect.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(joinedQuery)) {
             pstmt.setInt(1, userId);
             pstmt.setInt(2, userId);
             ResultSet rs = pstmt.executeQuery();
-            if (rs.next()) {
-                joinedCount = rs.getInt("joined_count");
-                LOGGER.info("Joined groups count: " + joinedCount);
-            } else {
-                LOGGER.info("Joined groups count query returned no results.");
+            joinedCount = 0;
+            while (rs.next()) {
+                joinedCount += rs.getInt("joined_count");
             }
+            LOGGER.info("Joined groups count: " + joinedCount);
         } catch (SQLException e) {
-            LOGGER.severe("SQL error fetching joined groups count: " + e.getMessage());
+            LOGGER.severe("SQL error fetching joined groups count: " + e.getMessage() + ", SQLState: " + e.getSQLState());
+            e.printStackTrace();
         }
 
         // Count Owned groups
@@ -109,6 +112,9 @@ public class groups_joined_owned__c {
         }
     }
 
+
+
+
     private void updateLabels() {
         if (total_joined_record != null) {
             total_joined_record.setText("(" + joinedCount + ")");
@@ -128,13 +134,26 @@ public class groups_joined_owned__c {
         int userId = UserSession.getInstance().getUserId();
         System.out.println("Loading joined groups for user ID: " + userId);
 
-        String query = "SELECT cg.group_id, b.title AS book_name, u.username AS author_name, b.cover_photo " +
-                "FROM user_group_status ugs " +
-                "JOIN community_groups cg ON ugs.group_id = cg.group_id " +
-                "JOIN books b ON cg.book_id = b.book_id " +
-                "LEFT JOIN book_authors ba ON b.book_id = ba.book_id " +
-                "LEFT JOIN users u ON ba.user_id = u.user_id " +
-                "WHERE ugs.user_id = ? AND ugs.status = 'joined' AND cg.admin_id != ? ORDER BY cg.created_at DESC";
+        // Ensure the user is a member of the default group (ID 21)
+        ensureDefaultGroupMembership(userId);
+
+        String query = "SELECT DISTINCT cg.group_id, cg.group_name, COALESCE(b.title, cg.group_name) COLLATE utf8mb4_0900_ai_ci AS book_name, " +
+                "COUNT(gm2.user_id) AS member_count, b.cover_photo " +
+                "FROM group_members gm " +
+                "JOIN community_groups cg ON gm.group_id = cg.group_id " +
+                "LEFT JOIN books b ON cg.book_id = b.book_id " +
+                "LEFT JOIN group_members gm2 ON cg.group_id = gm2.group_id " +
+                "WHERE gm.user_id = ? " +
+                "GROUP BY cg.group_id, cg.group_name, b.title, b.cover_photo " +
+                "UNION " +
+                "SELECT cg.group_id, cg.group_name, COALESCE(b.title, cg.group_name) COLLATE utf8mb4_0900_ai_ci AS book_name, " +
+                "COUNT(gm2.user_id) AS member_count, b.cover_photo " +
+                "FROM community_groups cg " +
+                "LEFT JOIN books b ON cg.book_id = b.book_id " +
+                "LEFT JOIN group_members gm2 ON cg.group_id = gm2.group_id " +
+                "WHERE cg.group_id = 21 AND cg.admin_id = ? " +
+                "GROUP BY cg.group_id, cg.group_name, b.title, b.cover_photo " +
+                "ORDER BY group_id DESC";
         try (Connection conn = db_connect.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setInt(1, userId);
@@ -143,20 +162,54 @@ public class groups_joined_owned__c {
             int rowCount = 0;
             while (rs.next()) {
                 rowCount++;
-                String bookName = rs.getString("book_name");
-                String authorName = rs.getString("author_name") != null ? rs.getString("author_name") : "Unknown Author";
-                String coverPhoto = rs.getString("cover_photo");
                 int groupId = rs.getInt("group_id");
-                System.out.println("Found joined group: ID=" + groupId + ", Book=" + bookName + ", Author=" + authorName + ", Cover=" + (coverPhoto != null ? coverPhoto : "null"));
-                HBox groupBox = createGroupBox(bookName, authorName, "joined", groupId, true, coverPhoto);
+                String groupName = rs.getString("group_name");
+                String bookName = rs.getString("book_name");
+                int memberCount = rs.getInt("member_count");
+                String coverPhoto = rs.getString("cover_photo");
+                // Format subtitle to show member count
+                String subtitle = memberCount + (memberCount == 1 ? " person joined" : " people joined");
+                // Log all fields to debug
+                System.out.println("Found joined group: ID=" + groupId +
+                        ", Group Name=" + groupName +
+                        ", Book=" + (bookName != null ? bookName : "null") +
+                        ", Members=" + subtitle +
+                        ", Cover=" + (coverPhoto != null ? coverPhoto : "null"));
+                HBox groupBox = createGroupBox(bookName, subtitle, "View Group", groupId, true, coverPhoto);
                 groupJoinedContainer.getChildren().add(groupBox);
             }
             System.out.println("Total joined groups loaded: " + rowCount);
             if (rowCount == 0) {
+                Label noGroupsLabel = new Label("No joined groups found.");
+                noGroupsLabel.setTextFill(javafx.scene.paint.Color.GRAY);
+                noGroupsLabel.setFont(new Font(14.0));
+                groupJoinedContainer.getChildren().add(noGroupsLabel);
                 System.out.println("No joined groups found for user ID: " + userId);
             }
         } catch (SQLException e) {
-            System.err.println("SQL error loading joined groups: " + e.getMessage());
+            System.err.println("SQL error loading joined groups: " + e.getMessage() + ", SQLState: " + e.getSQLState());
+            e.printStackTrace();
+        }
+    }
+
+    private void ensureDefaultGroupMembership(int userId) {
+        String checkQuery = "SELECT COUNT(*) AS count FROM group_members WHERE group_id = 21 AND user_id = ?";
+        String insertQuery = "INSERT INTO group_members (group_id, user_id) VALUES (21, ?)";
+        try (Connection conn = db_connect.getConnection();
+             PreparedStatement checkStmt = conn.prepareStatement(checkQuery)) {
+            checkStmt.setInt(1, userId);
+            ResultSet rs = checkStmt.executeQuery();
+            if (rs.next() && rs.getInt("count") == 0) {
+                try (PreparedStatement insertStmt = conn.prepareStatement(insertQuery)) {
+                    insertStmt.setInt(1, userId);
+                    int rowsAffected = insertStmt.executeUpdate();
+                    LOGGER.info("Added user ID " + userId + " to default group ID 21, rows affected: " + rowsAffected);
+                }
+            } else {
+                LOGGER.info("User ID " + userId + " is already a member of default group ID 21");
+            }
+        } catch (SQLException e) {
+            LOGGER.severe("Error ensuring default group membership: " + e.getMessage() + ", SQLState: " + e.getSQLState());
             e.printStackTrace();
         }
     }
