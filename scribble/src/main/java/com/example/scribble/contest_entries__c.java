@@ -76,6 +76,7 @@ public class contest_entries__c implements Initializable{
         updateWeeklySessionLabel(true);
         updateGenreLabel();
         startCountdownTimer();
+        initializeComboBox();
         loadEntries();
     }
 
@@ -87,6 +88,7 @@ public class contest_entries__c implements Initializable{
         updateWeeklySessionLabel(true);
         updateGenreLabel();
         startCountdownTimer();
+        initializeComboBox();
         loadEntries();
     }
 
@@ -96,6 +98,8 @@ public class contest_entries__c implements Initializable{
             previous_week_button.setOnMouseExited(e -> previous_week_button.setStyle(isCurrentWeekView ? "-fx-background-color: #F5E0CD; -fx-background-radius: 10 0 0 10; -fx-text-fill: #014237;" : "-fx-background-color: #C9B8A9; -fx-background-radius: 10 0 0 10; -fx-text-fill: #014237;"));
             current_week_button.setOnMouseEntered(e -> current_week_button.setStyle("-fx-background-color: #C9B8A9; -fx-background-radius: 0 10 10 0; -fx-text-fill: #014237; -fx-translate-y: -2px;"));
             current_week_button.setOnMouseExited(e -> current_week_button.setStyle(isCurrentWeekView ? "-fx-background-color: #C9B8A9; -fx-background-radius: 0 10 10 0; -fx-text-fill: #014237;" : "-fx-background-color: #F5E0CD; -fx-background-radius: 0 10 10 0; -fx-text-fill: #014237;"));
+            initializeComboBox();
+
         }
 
 
@@ -458,6 +462,145 @@ public class contest_entries__c implements Initializable{
                             backgroundColor = "#BA3D3E"; // 3rd position
                         }
                        numberBox.setStyle("-fx-background-color: " + backgroundColor + "; -fx-background-radius: 20; -fx-border-width: 2;");
+                    }
+
+                    entryContainer.getChildren().add(entryHBox);
+                    entryNumber++;
+                }
+                if (entryNumber == 1) {
+                    LOGGER.info("No entries found for contestId: " + contestId + ", week: " + weekStartTs + " to " + weekEndTs);
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.severe("Failed to load contest entries: " + e.getMessage());
+            showErrorAlert("Database Error", "Failed to load contest entries: " + e.getMessage());
+        }
+    }
+
+    @FXML private ComboBox<String> filter_combo_box;
+    private String currentSortField = "submission_date";
+    private boolean isAscending = false;
+
+    private void initializeComboBox() {
+        if (filter_combo_box == null) {
+            LOGGER.severe("filter_combo_box is null; cannot initialize ComboBox.");
+            return;
+        }
+        filter_combo_box.getItems().clear();
+        filter_combo_box.getItems().addAll(
+                "Submission Date (Des)",
+                "Submission Date (Asc)",
+                "Book Name (Asc)",
+                "Book Name (Des)",
+                "Votes (Asc)",
+                "Votes (Des)"
+        );
+        filter_combo_box.setValue("Submission Date (Des)");
+        currentSortField = "submission_date";
+        isAscending = false;
+        filter_combo_box.setOnAction(event -> {
+            String selected = filter_combo_box.getValue();
+            if (selected != null) {
+                switch (selected) {
+                    case "Submission Date (Asc)":
+                        currentSortField = "submission_date";
+                        isAscending = true;
+                        break;
+                    case "Submission Date (Des)":
+                        currentSortField = "submission_date";
+                        isAscending = false;
+                        break;
+                    case "Book Name (Asc)":
+                        currentSortField = "entry_title";
+                        isAscending = true;
+                        break;
+                    case "Book Name (Des)":
+                        currentSortField = "entry_title";
+                        isAscending = false;
+                        break;
+                    case "Votes (Asc)":
+                        currentSortField = "vote_count";
+                        isAscending = true;
+                        break;
+                    case "Votes (Des)":
+                        currentSortField = "vote_count";
+                        isAscending = false;
+                        break;
+                    default:
+                        LOGGER.warning("Unknown sort option selected: " + selected);
+                        return;
+                }
+                loadSortedEntries();
+            }
+        });
+        LOGGER.info("ComboBox initialized with options: " + filter_combo_box.getItems());
+    }
+
+    private void loadSortedEntries() {
+        if (entryContainer == null) {
+            LOGGER.severe("entryContainer is null; cannot load entries.");
+            return;
+        }
+        entryContainer.getChildren().clear();
+        if (contestId <= 0) {
+            showErrorAlert("Invalid Contest", "Invalid contest ID: " + contestId);
+            return;
+        }
+
+        LocalDateTime weekStart = isCurrentWeekView ? getCurrentWeekStart() : getPreviousWeekStart();
+        LocalDateTime weekEnd = weekStart.plusDays(6).withHour(23).withMinute(59).withSecond(59);
+        Timestamp weekStartTs = Timestamp.valueOf(weekStart);
+        Timestamp weekEndTs = Timestamp.valueOf(weekEnd);
+
+        try (Connection conn = db_connect.getConnection()) {
+            if (conn == null) {
+                showErrorAlert("Database Error", "Failed to connect to the database.");
+                return;
+            }
+
+            String baseQuery = isCurrentWeekView ?
+                    "SELECT ce.entry_id, ce.entry_title, ce.submission_date, ce.vote_count, ce.cover_photo, u.username " +
+                            "FROM contest_entries ce JOIN users u ON ce.user_id = u.user_id " +
+                            "WHERE ce.contest_id = ? AND ce.submission_date BETWEEN ? AND ? " :
+                    "SELECT ce.entry_id, ce.entry_title, ce.submission_date, ce.vote_count, ce.cover_photo, u.username, " +
+                            "(SELECT MIN(created_at) FROM contest_votes cv WHERE cv.contest_entry_id = ce.entry_id) as first_vote " +
+                            "FROM contest_entries ce JOIN users u ON ce.user_id = u.user_id " +
+                            "WHERE ce.contest_id = ? AND ce.submission_date BETWEEN ? AND ? ";
+
+            String orderByClause = isCurrentWeekView ?
+                    String.format("ORDER BY ce.%s %s", currentSortField, isAscending ? "ASC" : "DESC") :
+                    String.format("ORDER BY ce.%s %s, ce.vote_count DESC, first_vote ASC", currentSortField, isAscending ? "ASC" : "DESC");
+
+            String query = baseQuery + orderByClause;
+
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setInt(1, contestId);
+                stmt.setTimestamp(2, weekStartTs);
+                stmt.setTimestamp(3, weekEndTs);
+                LOGGER.info("Executing query for contestId: " + contestId + ", week: " + weekStartTs + " to " + weekEndTs + ", sorted by: " + currentSortField + " " + (isAscending ? "ASC" : "DESC"));
+                ResultSet rs = stmt.executeQuery();
+                int entryNumber = 1;
+                while (rs.next()) {
+                    HBox entryHBox = createEntryHBox(
+                            rs.getInt("entry_id"),
+                            entryNumber,
+                            rs.getString("entry_title"),
+                            rs.getString("username"),
+                            rs.getTimestamp("submission_date"),
+                            rs.getInt("vote_count"),
+                            rs.getString("cover_photo")
+                    );
+                    if (!isCurrentWeekView && entryNumber <= 3 && rs.getInt("vote_count") > 0) {
+                        HBox numberBox = (HBox) entryHBox.getChildren().get(0);
+                        String backgroundColor;
+                        if (entryNumber == 1) {
+                            backgroundColor = "#721415";
+                        } else if (entryNumber == 2) {
+                            backgroundColor = "#AC2324";
+                        } else {
+                            backgroundColor = "#BA3D3E";
+                        }
+                        numberBox.setStyle("-fx-background-color: " + backgroundColor + "; -fx-background-radius: 20; -fx-border-width: 2;");
                     }
 
                     entryContainer.getChildren().add(entryHBox);
