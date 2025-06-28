@@ -185,6 +185,22 @@ public class contest_write__c {
             return;
         }
 
+
+        // New validation: Check for minimum 200 words in content
+        String[] words = content.split("\\s+");
+        if (words.length < 200) {
+            showErrorAlert("Input Error", "Please provide at least 200 words in the content.");
+            System.out.println("Validation failed: Content has only " + words.length + " words");
+            return;
+        }
+
+        // New validation: Check for cover photo
+        if (selectedCoverPhotoPath == null) {
+            showErrorAlert("Input Error", "Please upload a cover photo for your entry.");
+            System.out.println("Validation failed: No cover photo selected");
+            return;
+        }
+
         try (Connection conn = db_connect.getConnection()) {
             System.out.println("Database connection established: " + (conn != null));
             conn.setAutoCommit(false);

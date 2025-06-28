@@ -37,14 +37,14 @@
    <center>
       <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
          <children>
-            <VBox prefHeight="64.0" prefWidth="100.0">
+            <VBox alignment="CENTER" prefHeight="64.0" prefWidth="100.0">
                <children>
-                  <TextField fx:id="book_tittle" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="47.0" prefWidth="700.0" promptText="write the tittle of this book" style="-fx-background-color: transparent;">
+                  <TextField fx:id="book_tittle" alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="47.0" prefWidth="700.0" promptText="write the tittle of this book" style="-fx-background-color: transparent;">
                      <font>
                         <Font name="System Bold" size="24.0" />
                      </font>
                   </TextField>
-                  <Label fx:id="genre_name" maxHeight="-Infinity" minHeight="-Infinity" prefHeight="33.0" prefWidth="322.0" text="(genre: crime horror)" textFill="WHITE">
+                  <Label fx:id="genre_name" alignment="CENTER" contentDisplay="CENTER" maxHeight="-Infinity" minHeight="-Infinity" prefHeight="33.0" prefWidth="322.0" text="(genre: crime horror)" textAlignment="CENTER" textFill="WHITE">
                      <font>
                         <Font size="14.0" />
                      </font>
@@ -53,9 +53,6 @@
                      </padding>
                   </Label>
                </children>
-               <padding>
-                  <Insets left="270.0" />
-               </padding>
                <VBox.margin>
                   <Insets bottom="10.0" />
                </VBox.margin>

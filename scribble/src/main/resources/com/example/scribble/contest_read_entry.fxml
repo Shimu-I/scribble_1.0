@@ -29,22 +29,19 @@
     <center>
         <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
             <children>
-            <VBox prefHeight="64.0" prefWidth="100.0">
+            <VBox alignment="CENTER" prefHeight="64.0" prefWidth="100.0">
                <children>
-                        <Label fx:id="book_tittle" prefHeight="35.0" prefWidth="700.0" text="Book Name" textFill="WHITE">
+                        <Label fx:id="book_tittle" alignment="CENTER" contentDisplay="CENTER" prefHeight="35.0" prefWidth="700.0" text="Book Name" textAlignment="CENTER" textFill="WHITE">
                             <font>
-                                <Font size="24.0" />
+                                <Font name="System Bold" size="24.0" />
                             </font>
                         </Label>
-                        <Label fx:id="genre_name" prefHeight="20.0" prefWidth="325.0" text="(genre: crime horror)" textFill="WHITE">
+                        <Label fx:id="genre_name" alignment="CENTER" contentDisplay="CENTER" prefHeight="20.0" prefWidth="325.0" text="(genre: crime horror)" textAlignment="CENTER" textFill="WHITE">
                             <font>
                                 <Font size="14.0" />
                             </font>
                         </Label>
                </children>
-               <padding>
-                  <Insets left="270.0" />
-               </padding>
                <VBox.margin>
                   <Insets bottom="10.0" />
                </VBox.margin>

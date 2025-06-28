@@ -171,7 +171,7 @@ public class contest_entries__c implements Initializable{
             return;
         }
 
-        // Check for existing entry in current week
+        // Check for existing entry in current week for this genre (contestId)
         LocalDateTime weekStart = getCurrentWeekStart();
         LocalDateTime weekEnd = weekStart.plusDays(6).withHour(23).withMinute(59).withSecond(59);
         try (Connection conn = db_connect.getConnection()) {
@@ -188,7 +188,7 @@ public class contest_entries__c implements Initializable{
                 stmt.setTimestamp(4, Timestamp.valueOf(weekEnd));
                 ResultSet rs = stmt.executeQuery();
                 if (rs.next() && rs.getInt(1) > 0) {
-                    showErrorAlert("Submission Error", "You have already added your contest entry for this week.");
+                    showErrorAlert("Submission Error", "You have already added your contest entry for this week in this genre.");
                     LOGGER.warning("User " + userId + " attempted to submit multiple entries for contestId=" + contestId);
                     return;
                 }
@@ -199,31 +199,46 @@ public class contest_entries__c implements Initializable{
             return;
         }
 
-        // Check for winner cooldown
+        // Check for winner cooldown in this genre (contestId)
+        // Check for winner cooldown in this genre (contestId)
         try (Connection conn = db_connect.getConnection()) {
             if (conn == null) {
                 LOGGER.severe("Database connection is null, cannot check winner cooldown.");
                 showErrorAlert("Database Error", "Failed to connect to the database.");
                 return;
             }
+            LocalDateTime currentWeekStart = getCurrentWeekStart(); // Saturday of current week (June 28, 2025)
+            LocalDateTime previousWeekStart = currentWeekStart.minusWeeks(1); // Saturday of previous week (June 21, 2025)
+            LocalDateTime previousWeekEnd = previousWeekStart.plusDays(6); // Friday of previous week (June 27, 2025)
             String query = "SELECT ce.submission_date FROM contest_entries ce " +
                     "JOIN (SELECT contest_id, submission_date, vote_count, " +
                     "RANK() OVER (PARTITION BY contest_id ORDER BY vote_count DESC, (SELECT MIN(created_at) FROM contest_votes cv WHERE cv.contest_entry_id = ce.entry_id) ASC) as rnk " +
-                    "FROM contest_entries ce WHERE ce.user_id = ? AND ce.submission_date < ?) as ranked " +
+                    "FROM contest_entries ce WHERE ce.user_id = ? AND ce.contest_id = ? AND ce.submission_date BETWEEN ? AND ?) as ranked " +
                     "WHERE ranked.rnk <= 3 AND ce.contest_id = ranked.contest_id AND ce.submission_date = ranked.submission_date";
             try (PreparedStatement stmt = conn.prepareStatement(query)) {
                 stmt.setInt(1, userId);
-                stmt.setTimestamp(2, Timestamp.valueOf(weekStart));
+                stmt.setInt(2, contestId);
+                stmt.setTimestamp(3, Timestamp.valueOf(previousWeekStart));
+                stmt.setTimestamp(4, Timestamp.valueOf(previousWeekEnd));
                 ResultSet rs = stmt.executeQuery();
                 if (rs.next()) {
                     LocalDateTime winDate = rs.getTimestamp("submission_date").toLocalDateTime();
-                    LocalDateTime eligibleSaturday = winDate.with(DayOfWeek.SATURDAY).plusWeeks(3);
-                    if (LocalDateTime.now(ZoneOffset.ofHours(6)).isBefore(eligibleSaturday)) {
-                        long daysRemaining = ChronoUnit.DAYS.between(LocalDateTime.now(ZoneOffset.ofHours(6)), eligibleSaturday);
-                        showErrorAlert("Submission Error", "You have already achieved a position. Please wait 2 weeks before submitting a new contest entry. Days remaining: " + daysRemaining);
-                        LOGGER.warning("User " + userId + " is in cooldown until " + eligibleSaturday);
+                    LocalDateTime cooldownStart = currentWeekStart; // Start cooldown from current week's Saturday
+                    LocalDateTime eligibleDate = cooldownStart.plusDays(14); // 14 days from current week's Saturday
+                    LocalDateTime now = LocalDateTime.now(ZoneOffset.ofHours(6));
+                    LOGGER.info("Debug - Now: " + now.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + ", WinDate: " + winDate.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + ", CooldownStart: " + cooldownStart.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + ", EligibleDate: " + eligibleDate.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+                    if (now.isBefore(eligibleDate)) {
+                        long daysRemaining = ChronoUnit.DAYS.between(now, eligibleDate);
+                        String fullMessage = "You achieved a top position last week. Please wait 2 weeks from " + cooldownStart.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + " before submitting a new entry. Days remaining: " + daysRemaining;
+                        LOGGER.info("Full cooldown message: " + fullMessage);
+                        showErrorAlert("Submission Error", fullMessage);
+                        LOGGER.warning("User " + userId + " is in cooldown until " + eligibleDate + " for contestId=" + contestId);
                         return;
+                    } else {
+                        LOGGER.info("Cooldown expired. Now: " + now + " is after EligibleDate: " + eligibleDate);
                     }
+                } else {
+                    LOGGER.info("No top 3 position found in previous week for user " + userId + " in contestId " + contestId);
                 }
             }
         } catch (SQLException e) {
@@ -434,8 +449,17 @@ public class contest_entries__c implements Initializable{
                     );
                     if (!isCurrentWeekView && entryNumber <= 3 && rs.getInt("vote_count") > 0) {
                         HBox numberBox = (HBox) entryHBox.getChildren().get(0);
-                        numberBox.setStyle("-fx-background-color: #014237; -fx-background-radius: 20; -fx-border-color: #FFD700; -fx-border-width: 2;");
+                        String backgroundColor;
+                        if (entryNumber == 1) {
+                            backgroundColor = "#721415"; // 1st position
+                        } else if (entryNumber == 2) {
+                            backgroundColor = "#AC2324"; // 2nd position
+                        } else {
+                            backgroundColor = "#BA3D3E"; // 3rd position
+                        }
+                       numberBox.setStyle("-fx-background-color: " + backgroundColor + "; -fx-background-radius: 20; -fx-border-width: 2;");
                     }
+
                     entryContainer.getChildren().add(entryHBox);
                     entryNumber++;
                 }
@@ -731,7 +755,13 @@ public class contest_entries__c implements Initializable{
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle(title);
         alert.setHeaderText(null);
-        alert.setContentText(message);
+        // Use a Label with wrapText enabled instead of relying on TextArea
+        Label contentLabel = new Label(message);
+        contentLabel.setWrapText(true);
+        alert.getDialogPane().setContent(contentLabel);
+        // Increase width to ensure full text is visible
+        alert.getDialogPane().setMinWidth(450); // Increased from 300
+        alert.getDialogPane().setPrefWidth(500); // Increased from 350
         alert.showAndWait();
     }
 
