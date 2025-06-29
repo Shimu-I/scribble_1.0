@@ -4,11 +4,14 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -86,12 +89,8 @@ public class support_author__c {
             double amount = Double.parseDouble(taka_amount.getText());
             String message = message_box.getText().trim();
 
-            if (saveSupportToDatabase(quantity, amount, message)) {
-                showAlert("Success", "Support sent successfully!");
-                clearFields();
-            } else {
-                showAlert("Error", "Failed to send support. Please try again.");
-            }
+            // Navigate to dummy transaction page in a new window
+            navigateToTransactionPage(quantity, amount, message);
 
         } catch (NumberFormatException e) {
             showAlert("Error", "Please enter a valid number for flowers.");
@@ -162,7 +161,7 @@ public class support_author__c {
         return false;
     }
 
-    private boolean saveSupportToDatabase(int quantity, double amount, String message) {
+    public boolean saveSupportToDatabase(int quantity, double amount, String message) {
         if (!UserSession.getInstance().isLoggedIn()) {
             showAlert("Error", "You must be logged in to send support.");
             return false;
@@ -192,6 +191,7 @@ public class support_author__c {
             return false;
         }
     }
+
     private void calculateTotal(String numberInput) {
         try {
             if (numberInput == null || numberInput.trim().isEmpty()) {
@@ -241,7 +241,7 @@ public class support_author__c {
         }
     }
 
-    private void clearFields() {
+    public void clearFields() {
         flower_number.clear();
         taka_amount.setText("0.00");
         message_box.clear();
@@ -254,6 +254,29 @@ public class support_author__c {
         alert.setHeaderText(null);
         alert.setContentText(content);
         alert.showAndWait();
+    }
+
+    private void navigateToTransactionPage(int quantity, double amount, String message) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/transaction_page.fxml"));
+            Parent page = loader.load();
+            transaction_page__c controller = loader.getController();
+            controller.setSupportController(this);
+            controller.setSupportDetails(quantity, amount, message);
+
+            // Create a new modal window
+            Stage transactionStage = new Stage();
+            transactionStage.setTitle("Dummy Transaction");
+            transactionStage.initModality(Modality.APPLICATION_MODAL); // Make the window modal
+            transactionStage.setScene(new Scene(page));
+            transactionStage.setResizable(false);
+            transactionStage.showAndWait(); // Show and wait until the window is closed
+
+            LOGGER.info("Displayed transaction_page.fxml in a new window");
+        } catch (IOException e) {
+            LOGGER.severe("Failed to open transaction page window: " + e.getMessage());
+            showAlert("Error", "Failed to open transaction page: " + e.getMessage());
+        }
     }
 
     private void updateAuthorName() {
@@ -325,5 +348,9 @@ public class support_author__c {
         this.bookId = bookId;
         LOGGER.info("Book ID set: " + bookId);
         updateAuthorName();
+    }
+
+    public int getBookId() {
+        return bookId;
     }
 }

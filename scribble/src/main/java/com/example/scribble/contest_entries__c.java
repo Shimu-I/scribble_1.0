@@ -697,7 +697,7 @@ public class contest_entries__c implements Initializable{
         votedButton.setDisable(!isCurrentWeekView);
         votedButton.setOnMouseEntered(e -> votedButton.setStyle("-fx-background-color: transparent; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 5, 0, 0, 2); -fx-scale-x: 1.05; -fx-scale-y: 1.05; -fx-cursor: hand;"));
         votedButton.setOnMouseExited(e -> votedButton.setStyle("-fx-background-color: transparent; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 5, 0, 0, 2); -fx-cursor: hand;"));
-        
+
         boolean hasVoted = UserSession.getInstance().isLoggedIn() && hasUserVoted(entryId);
         notVotedButton.setVisible(!hasVoted);
         votedButton.setVisible(hasVoted);

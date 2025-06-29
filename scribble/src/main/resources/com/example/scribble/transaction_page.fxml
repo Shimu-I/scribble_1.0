@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Text?>
+
+<VBox alignment="CENTER" maxWidth="-Infinity" minWidth="-Infinity" prefHeight="306.0" prefWidth="386.0" spacing="10.0" style="-fx-background-radius: 10; -fx-border-radius: 10;" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/23.0.1" fx:controller="com.example.scribble.transaction_page__c">
+    <Label style="-fx-font-size: 18px; -fx-font-weight: bold;" text="Dummy Transaction Page" />
+    <Text text="Enter your account details to proceed with the support." />
+    <Label text="Account Number:" />
+    <TextField fx:id="account_number" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="200.0" promptText="Enter account number" />
+    <Label text="PIN:" />
+    <TextField fx:id="pin" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="200.0" promptText="Enter PIN" />
+    <Button fx:id="transaction_send_button" onAction="#handleTransactionSend" text="Confirm Transaction" />
+    <Button fx:id="cancel_button" onAction="#handleCancel" text="Cancel" />
+</VBox>
