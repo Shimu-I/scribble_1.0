@@ -220,37 +220,61 @@ public class profile__c {
         showSupportersList();
     }
 
+
+    private void showMessagePopup(String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Supporter Message");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
     private void showSupportersList() {
         try (Connection conn = db_connect.getConnection();
              PreparedStatement stmt = conn.prepareStatement(
-                     "SELECT u.username, s.message, s.amount " +
+                     "SELECT s.support_id, u.username, s.message, s.amount, s.book_id, b.title " +
                              "FROM support s " +
                              "JOIN users u ON s.user_id = u.user_id " +
+                             "LEFT JOIN books b ON s.book_id = b.book_id " +
                              "WHERE s.author_id = ?")) {
+            LOGGER.info("Executing query for showSupportersList with author_id: " + userId);
             stmt.setInt(1, userId);
             ResultSet rs = stmt.executeQuery();
 
-            // Create a list to hold supporter data
             List<Supporter> supporters = new ArrayList<>();
+            int recordCount = 0;
             while (rs.next()) {
+                recordCount++;
+                String message = rs.getString("message");
+                String bookTitle = rs.getString("title");
+                int bookId = rs.getInt("book_id");
+                String username = rs.getString("username");
+                double amount = rs.getDouble("amount");
+                LOGGER.info(String.format("Support Record %d: support_id=%d, username=%s, book_id=%d, book_title=%s, amount=%.2f, message=%s",
+                        recordCount, rs.getInt("support_id"), username, bookId,
+                        (bookTitle != null ? bookTitle : "NULL"), amount,
+                        (message != null ? message : "No message")));
                 supporters.add(new Supporter(
-                        rs.getString("username"),
-                        rs.getString("message") != null ? rs.getString("message") : "No message",
-                        rs.getDouble("amount")
+                        username,
+                        message != null ? message : "No message",
+                        amount,
+                        bookTitle != null ? bookTitle : "No Book Associated"
                 ));
             }
+            LOGGER.info("Total support records retrieved: " + recordCount);
 
-            // Check if no supporters exist
             if (supporters.isEmpty()) {
+                LOGGER.info("No supporters found for author_id: " + userId);
                 showAlert("Info", "You haven't received any support");
                 return;
             }
 
-            // Create TableView
+            LOGGER.info("Populating TableView with " + supporters.size() + " supporters");
             TableView<Supporter> tableView = new TableView<>();
+            tableView.setPrefWidth(480); // Fixed width to match column totals
+            tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY); // Distribute space among columns
             tableView.setPlaceholder(new Label("No supporters yet."));
 
-            // Serial number column
             TableColumn<Supporter, Integer> serialColumn = new TableColumn<>("Serial");
             serialColumn.setCellFactory(col -> new TableCell<>() {
                 @Override
@@ -259,18 +283,20 @@ public class profile__c {
                     if (empty) {
                         setText(null);
                     } else {
-                        setText(String.valueOf(getIndex() + 1)); // Serial number starts from 1
+                        setText(String.valueOf(getIndex() + 1));
                     }
                 }
             });
-            serialColumn.setPrefWidth(50);
+            serialColumn.setPrefWidth(30);
 
-            // Username column
             TableColumn<Supporter, String> usernameColumn = new TableColumn<>("Username");
             usernameColumn.setCellValueFactory(new PropertyValueFactory<>("username"));
-            usernameColumn.setPrefWidth(150);
+            usernameColumn.setPrefWidth(120);
 
-            // Message column with "Open" button
+            TableColumn<Supporter, String> bookTitleColumn = new TableColumn<>("Book Title");
+            bookTitleColumn.setCellValueFactory(new PropertyValueFactory<>("bookTitle"));
+            bookTitleColumn.setPrefWidth(150);
+
             TableColumn<Supporter, Void> messageColumn = new TableColumn<>("Message");
             messageColumn.setCellFactory(col -> new TableCell<>() {
                 private final Button openButton = new Button("Open");
@@ -278,23 +304,25 @@ public class profile__c {
                 {
                     openButton.setOnAction(event -> {
                         Supporter supporter = getTableView().getItems().get(getIndex());
-                        showMessagePopup(supporter.getMessage());
+                        if (supporter != null) {
+                            String message = supporter.getMessage();
+                            LOGGER.info("Displaying message for supporter: " + supporter.getUsername() + ", message: " + message);
+                            showMessagePopup(message != null ? message : "No message");
+                        } else {
+                            LOGGER.warning("Supporter is null at index: " + getIndex());
+                            showAlert("Error", "Unable to display message: No supporter data available.");
+                        }
                     });
                 }
 
                 @Override
                 protected void updateItem(Void item, boolean empty) {
                     super.updateItem(item, empty);
-                    if (empty) {
-                        setGraphic(null);
-                    } else {
-                        setGraphic(openButton);
-                    }
+                    setGraphic(empty ? null : openButton);
                 }
             });
-            messageColumn.setPrefWidth(100);
+            messageColumn.setPrefWidth(80);
 
-            // Amount column
             TableColumn<Supporter, Double> amountColumn = new TableColumn<>("Amount");
             amountColumn.setCellValueFactory(new PropertyValueFactory<>("amount"));
             amountColumn.setCellFactory(col -> new TableCell<>() {
@@ -308,20 +336,20 @@ public class profile__c {
                     }
                 }
             });
-            amountColumn.setPrefWidth(100);
+            amountColumn.setPrefWidth(80);
 
-            // Add columns to table
-            tableView.getColumns().addAll(serialColumn, usernameColumn, messageColumn, amountColumn);
+            tableView.getColumns().addAll(serialColumn, usernameColumn, bookTitleColumn, messageColumn, amountColumn);
             tableView.getItems().addAll(supporters);
+            LOGGER.info("TableView populated with columns: Serial, Username, Book Title, Message, Amount");
 
-            // Create popup window
             Stage popupStage = new Stage();
             popupStage.initModality(Modality.APPLICATION_MODAL);
             popupStage.setTitle("Supporters List");
             VBox root = new VBox(10, tableView);
             root.setPadding(new javafx.geometry.Insets(10));
-            Scene scene = new Scene(root, 450, 300); // Adjusted width to accommodate serial column
+            Scene scene = new Scene(root, 550, 300); // Keeping original scene size for flexibility
             popupStage.setScene(scene);
+            LOGGER.info("Displaying Supporters List popup");
             popupStage.showAndWait();
 
         } catch (SQLException e) {
@@ -330,24 +358,17 @@ public class profile__c {
         }
     }
 
-    private void showMessagePopup(String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Supporter Message");
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
-    }
-
-    // Model class for supporter data
     public static class Supporter {
         private final String username;
         private final String message;
         private final double amount;
+        private final String bookTitle;
 
-        public Supporter(String username, String message, double amount) {
+        public Supporter(String username, String message, double amount, String bookTitle) {
             this.username = username;
             this.message = message;
             this.amount = amount;
+            this.bookTitle = bookTitle;
         }
 
         public String getUsername() {
@@ -361,9 +382,11 @@ public class profile__c {
         public double getAmount() {
             return amount;
         }
+
+        public String getBookTitle() {
+            return bookTitle;
+        }
     }
-
-
 
     @FXML
     private void handle_back_button(ActionEvent event) {

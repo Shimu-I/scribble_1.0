@@ -140,20 +140,51 @@ public class support_author__c {
         }
     }
 
-    private boolean saveSupportToDatabase(int quantity, double amount, String message) {
-        if (userId == authorId) {
-            showAlert("Error", "You cannot support yourself.");
+    private boolean isUserAuthor() {
+        if (bookId <= 0 || !UserSession.getInstance().isLoggedIn()) {
+            LOGGER.warning("Invalid bookId or user not logged in: bookId=" + bookId);
             return false;
         }
-        String sql = "INSERT INTO support (user_id, author_id, amount, message) VALUES (?, ?, ?, ?)";
+        String sql = "SELECT COUNT(*) FROM book_authors WHERE book_id = ? AND user_id = ? AND role = 'Owner'";
         try (Connection conn = db_connect.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setInt(1, userId);
+            pstmt.setInt(1, bookId);
+            pstmt.setInt(2, UserSession.getInstance().getCurrentUserId());
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                boolean isAuthor = rs.getInt(1) > 0;
+                LOGGER.info("User " + UserSession.getInstance().getCurrentUserId() + " is " + (isAuthor ? "" : "not ") + "the author of bookId=" + bookId);
+                return isAuthor;
+            }
+        } catch (SQLException e) {
+            LOGGER.severe("Error checking author status: " + e.getMessage());
+        }
+        return false;
+    }
+
+    private boolean saveSupportToDatabase(int quantity, double amount, String message) {
+        if (!UserSession.getInstance().isLoggedIn()) {
+            showAlert("Error", "You must be logged in to send support.");
+            return false;
+        }
+        if (bookId <= 0) {
+            showAlert("Error", "Invalid book selected.");
+            return false;
+        }
+        if (isUserAuthor()) {
+            showAlert("Error", "You cannot support your own book.");
+            return false;
+        }
+        String sql = "INSERT INTO support (user_id, author_id, book_id, amount, message) VALUES (?, ?, ?, ?, ?)";
+        try (Connection conn = db_connect.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, UserSession.getInstance().getCurrentUserId());
             pstmt.setInt(2, authorId);
-            pstmt.setDouble(3, amount);
-            pstmt.setString(4, message.isEmpty() ? null : message);
+            pstmt.setInt(3, bookId);
+            pstmt.setDouble(4, amount);
+            pstmt.setString(5, message.isEmpty() ? null : message);
             int rowsAffected = pstmt.executeUpdate();
-            LOGGER.info("Support saved to database: userId=" + userId + ", authorId=" + authorId + ", amount=" + amount);
+            LOGGER.info("Support saved: userId=" + UserSession.getInstance().getCurrentUserId() + ", authorId=" + authorId + ", bookId=" + bookId + ", amount=" + amount);
             return rowsAffected > 0;
         } catch (SQLException e) {
             LOGGER.severe("Database error in saveSupportToDatabase: " + e.getMessage());
@@ -161,7 +192,6 @@ public class support_author__c {
             return false;
         }
     }
-
     private void calculateTotal(String numberInput) {
         try {
             if (numberInput == null || numberInput.trim().isEmpty()) {
