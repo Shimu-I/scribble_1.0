@@ -30,7 +30,7 @@
             </HBox>
             <HBox alignment="TOP_CENTER" prefHeight="100.0" prefWidth="200.0" spacing="30.0" stylesheets="@../../../style/style.css">
                <children>
-                  <TextArea fx:id="writing_space" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="450.0" prefWidth="1000.0" promptText="start writing from here">
+                  <TextArea fx:id="writing_space" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="450.0" prefWidth="1000.0" promptText="start writing from here" wrapText="true">
                      <font>
                         <Font size="20.0" />
                      </font>

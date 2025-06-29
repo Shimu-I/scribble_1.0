@@ -52,7 +52,7 @@
                               <Font size="16.0" />
                            </font>
                         </Label>
-                        <TextArea fx:id="book_description" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="87.0" prefWidth="400.0" promptText="book description">
+                        <TextArea fx:id="book_description" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="87.0" prefWidth="400.0" promptText="book description" wrapText="true">
                            <font>
                               <Font size="14.0" />
                            </font></TextArea>
