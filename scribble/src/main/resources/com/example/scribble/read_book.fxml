@@ -36,7 +36,7 @@
                            <children>
                               <VBox alignment="CENTER" prefHeight="62.0" prefWidth="91.0">
                                  <children>
-                                    <HBox prefHeight="25.0" prefWidth="100.0" spacing="5.0">
+                                    <HBox alignment="CENTER" prefHeight="25.0" prefWidth="100.0" spacing="5.0">
                                        <children>
                                           <ComboBox fx:id="ratingComboBox" maxWidth="-Infinity" minWidth="-Infinity" prefHeight="27.0" prefWidth="28.0" style="-fx-background-color: transparent; -fx-border-color: #fff; -fx-border-radius: 5;" />
                                           <Label text="Rate" textFill="WHITE" />
@@ -92,13 +92,24 @@
                                  </children>
                               </VBox>
                               <Separator orientation="VERTICAL" prefHeight="200.0" />
-                              <VBox alignment="CENTER" maxHeight="-Infinity" minHeight="-Infinity" prefHeight="60.0" prefWidth="80.0" spacing="10.0">
+                              <VBox alignment="CENTER" maxHeight="-Infinity" minHeight="-Infinity" prefHeight="60.0" prefWidth="80.0">
                                  <children>
-                                    <Label text="Status" textFill="WHITE" />
-                                    <Label fx:id="status" text="ongoing" textFill="WHITE">
+                                    <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="6.0">
+                                       <children>
+                                          <ComboBox fx:id="statusComboBox" maxWidth="-Infinity" minWidth="-Infinity" prefHeight="27.0" prefWidth="28.0" style="-fx-background-color: transparent; -fx-border-color: #fff; -fx-border-radius: 5;" />
+                                          <Label text="Status" textFill="WHITE">
+                                             <padding>
+                                                <Insets bottom="5.0" />
+                                             </padding></Label>
+                                       </children>
+                                    </HBox>
+                                    <Label fx:id="status" prefWidth="56.0" text="ongoing" textFill="WHITE">
                                        <font>
-                                          <Font name="System Bold" size="14.0" />
+                                          <Font name="System Bold" size="12.0" />
                                        </font>
+                                       <padding>
+                                          <Insets bottom="6.0" />
+                                       </padding>
                                     </Label>
                                  </children>
                               </VBox>

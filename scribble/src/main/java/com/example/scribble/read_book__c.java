@@ -36,6 +36,7 @@ public class read_book__c {
     @FXML private HBox authorContainerHBox;
     @FXML private ImageView coverImage;
     @FXML private TextField comment_box;
+    @FXML private ComboBox<String> statusComboBox;
 
     private nav_bar__c mainController;
 
@@ -49,6 +50,14 @@ public class read_book__c {
             ratingComboBox.setOnAction(this::handleRating);
         } else {
             LOGGER.severe("ratingComboBox is null");
+        }
+
+        if (statusComboBox != null) {
+            statusComboBox.getItems().addAll("Ongoing", "Complete", "Hiatus");
+            statusComboBox.setOnAction(this::handleStatusUpdate);
+            updateStatusComboBoxVisibility();
+        } else {
+            LOGGER.severe("statusComboBox is null");
         }
 
         checkNullElements();
@@ -135,9 +144,36 @@ public class read_book__c {
         loadDrafts();
         updateAddChapterButtonVisibility();
         updateDraftContainerVisibility();
-        updateViewCount();
+        updateStatusComboBoxVisibility(); // Ensure statusComboBox visibility is updated after bookId is set
     }
 
+    // Replace the existing isAuthor method with this for improved debugging
+    private boolean isAuthor(int bookId, int userId) {
+        if (conn == null) {
+            LOGGER.severe("No database connection for owner check for bookId: " + bookId + ", userId: " + userId);
+            showAlert(Alert.AlertType.ERROR, "Database Error", "No database connection available.");
+            return false;
+        }
+        String query = "SELECT COUNT(*) FROM book_authors WHERE book_id = ? AND user_id = ? AND role = 'Owner'";
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, bookId);
+            stmt.setInt(2, userId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                int count = rs.getInt(1);
+                boolean isOwner = count > 0;
+                LOGGER.info("Owner check for bookId: " + bookId + ", userId: " + userId + ", role='Owner' -> count: " + count + ", isOwner: " + isOwner);
+                return isOwner;
+            } else {
+                LOGGER.warning("No result returned from owner check for bookId: " + bookId + ", userId: " + userId);
+                return false;
+            }
+        } catch (SQLException e) {
+            LOGGER.severe("Error verifying owner for bookId: " + bookId + ", userId: " + userId + ": " + e.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Database Error", "Failed to verify ownership: " + e.getMessage());
+            return false;
+        }
+    }
     public void setMainController(nav_bar__c mainController) {
         this.mainController = mainController;
         LOGGER.info("Main controller set for navigation.");
@@ -546,6 +582,12 @@ public class read_book__c {
             return;
         }
 
+        if (status != null && status.getText().equals("Complete")) {
+            LOGGER.info("Cannot edit chapter with chapterId: " + chapterId + " for bookId: " + bookId + " as book is Complete");
+            showAlert(Alert.AlertType.WARNING, "Permission Denied", "Cannot edit chapters for a completed book.");
+            return;
+        }
+
         if (mainController == null) {
             LOGGER.severe("Main controller is null, cannot navigate to write_chapter.fxml for chapterId: " + chapterId);
             showAlert(Alert.AlertType.ERROR, "Navigation Error", "Failed to open chapter for edit due to missing main controller.");
@@ -568,8 +610,19 @@ public class read_book__c {
         }
     }
 
-
     private void openDraft(int draftId) {
+        if (!UserSession.getInstance().isLoggedIn()) {
+            LOGGER.info("User not logged in, cannot open draft with draftId: " + draftId + " for bookId: " + bookId);
+            showAlert(Alert.AlertType.WARNING, "Login Required", "Please log in to view this draft.");
+            return;
+        }
+
+        if (status != null && status.getText().equals("Complete")) {
+            LOGGER.info("Cannot edit draft with draftId: " + draftId + " for bookId: " + bookId + " as book is Complete");
+            showAlert(Alert.AlertType.WARNING, "Permission Denied", "Cannot edit drafts for a completed book.");
+            return;
+        }
+
         if (mainController == null) {
             LOGGER.severe("Main controller is null, cannot navigate to write_chapter.fxml");
             showAlert(Alert.AlertType.ERROR, "Error", "Navigation failed: main controller not initialized.");
@@ -851,6 +904,65 @@ public class read_book__c {
         } catch (SQLException e) {
             LOGGER.severe("Error recording book visit: " + e.getMessage());
             showAlert(Alert.AlertType.ERROR, "Error", "Failed to record book visit.");
+        }
+    }
+
+    private void handleStatusUpdate(ActionEvent event) {
+        if (!UserSession.getInstance().isLoggedIn()) {
+            showAlert(Alert.AlertType.WARNING, "Login Required", "Please log in to update the book status.");
+            LOGGER.warning("Status update attempt failed: User not logged in for bookId: " + bookId);
+            return;
+        }
+
+        int userId = UserSession.getInstance().getCurrentUserId();
+        if (!isAuthor(bookId, userId)) {
+            showAlert(Alert.AlertType.WARNING, "Permission Denied", "Only the book owner can update the status.");
+            LOGGER.warning("Status update attempt failed: User " + userId + " is not the owner of bookId: " + bookId);
+            return;
+        }
+
+        String selectedStatus = statusComboBox.getValue();
+        if (selectedStatus == null) {
+            LOGGER.warning("No status selected for bookId: " + bookId);
+            showAlert(Alert.AlertType.WARNING, "Invalid Selection", "Please select a status.");
+            return;
+        }
+
+        try (PreparedStatement stmt = conn.prepareStatement(
+                "UPDATE books SET status = ? WHERE book_id = ?")) {
+            stmt.setString(1, selectedStatus);
+            stmt.setInt(2, bookId);
+            int rowsAffected = stmt.executeUpdate();
+            if (rowsAffected > 0) {
+                LOGGER.info("Status updated to " + selectedStatus + " for bookId: " + bookId + " by userId: " + userId);
+                if (status != null) {
+                    status.setText(selectedStatus);
+                }
+                updateAddChapterButtonVisibility();
+                updateDraftContainerVisibility();
+                showAlert(Alert.AlertType.INFORMATION, "Success", "Book status updated to " + selectedStatus + ".");
+            } else {
+                LOGGER.warning("No rows affected when updating status for bookId: " + bookId);
+                showAlert(Alert.AlertType.ERROR, "Error", "Failed to update book status.");
+            }
+        } catch (SQLException e) {
+            String errorMsg = String.format("Error updating status: %s, SQLState: %s, ErrorCode: %d",
+                    e.getMessage(), e.getSQLState(), e.getErrorCode());
+            LOGGER.severe(errorMsg);
+            showAlert(Alert.AlertType.ERROR, "Error", "Failed to update book status: " + e.getMessage());
+        }
+    }
+
+
+    private void updateStatusComboBoxVisibility() {
+        if (statusComboBox != null) {
+            boolean isVisible = UserSession.getInstance().isLoggedIn() && isAuthor(bookId, UserSession.getInstance().getCurrentUserId());
+            statusComboBox.setVisible(isVisible);
+            statusComboBox.setManaged(isVisible);
+            if (isVisible && status != null && !status.getText().isEmpty()) {
+                statusComboBox.setValue(status.getText());
+            }
+            LOGGER.info("statusComboBox visibility: " + isVisible);
         }
     }
 
@@ -1302,17 +1414,21 @@ public class read_book__c {
 
     private void updateAddChapterButtonVisibility() {
         if (add_chapter != null) {
-            add_chapter.setVisible(isAuthorOrCoAuthor);
-            add_chapter.setManaged(isAuthorOrCoAuthor);
-            LOGGER.info("add_chapter visibility: " + isAuthorOrCoAuthor);
+            boolean isBookComplete = status != null && status.getText().equals("Complete");
+            boolean isVisible = isAuthorOrCoAuthor && !isBookComplete;
+            add_chapter.setVisible(isVisible);
+            add_chapter.setManaged(isVisible);
+            LOGGER.info("add_chapter visibility: " + isVisible + ", isBookComplete: " + isBookComplete);
         }
     }
 
     private void updateDraftContainerVisibility() {
         if (draftContainer != null) {
-            draftContainer.setVisible(isAuthorOrCoAuthor);
-            draftContainer.setManaged(isAuthorOrCoAuthor);
-            LOGGER.info("draftContainer visibility: " + isAuthorOrCoAuthor);
+            boolean isBookComplete = status != null && status.getText().equals("Complete");
+            boolean isVisible = isAuthorOrCoAuthor && !isBookComplete;
+            draftContainer.setVisible(isVisible);
+            draftContainer.setManaged(isVisible);
+            LOGGER.info("draftContainer visibility: " + isVisible + ", isBookComplete: " + isBookComplete);
         }
     }
 
