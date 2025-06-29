@@ -81,7 +81,7 @@ public class read_chapter__c {
                 String content = rs.getString("content");
 
                 if (bookNameLabel != null) {
-                    bookNameLabel.setText("Book: " + (title != null ? title : "Unknown"));
+                    bookNameLabel.setText( (title != null ? title : "Unknown"));
                 }
                 if (chapterNumberLabel != null) {
                     chapterNumberLabel.setText("Chapter " + chapterNumber);

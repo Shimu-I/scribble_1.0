@@ -29,47 +29,51 @@
     <center>
         <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
             <children>
-            <VBox alignment="CENTER" prefHeight="64.0" prefWidth="100.0">
+            <VBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="568.0" prefWidth="1290.0" style="-fx-background-color: #014237; -fx-border-color: #fff; -fx-background-radius: 5; -fx-border-radius: 5;">
                <children>
-                        <Label fx:id="book_tittle" alignment="CENTER" contentDisplay="CENTER" prefHeight="35.0" prefWidth="700.0" text="Book Name" textAlignment="CENTER" textFill="WHITE">
-                            <font>
-                                <Font name="System Bold" size="24.0" />
-                            </font>
-                        </Label>
-                        <Label fx:id="genre_name" alignment="CENTER" contentDisplay="CENTER" prefHeight="20.0" prefWidth="325.0" text="(genre: crime horror)" textAlignment="CENTER" textFill="WHITE">
-                            <font>
-                                <Font size="14.0" />
-                            </font>
-                        </Label>
+                  <VBox alignment="CENTER" prefHeight="64.0" prefWidth="100.0">
+                     <children>
+                              <Label fx:id="book_tittle" alignment="CENTER" contentDisplay="CENTER" prefHeight="35.0" prefWidth="700.0" text="Book Name" textAlignment="CENTER" textFill="WHITE">
+                                  <font>
+                                      <Font name="System Bold" size="24.0" />
+                                  </font>
+                              </Label>
+                              <Label fx:id="genre_name" alignment="CENTER" contentDisplay="CENTER" prefHeight="20.0" prefWidth="325.0" text="(genre: crime horror)" textAlignment="CENTER" textFill="WHITE">
+                                  <font>
+                                      <Font size="14.0" />
+                                  </font>
+                              </Label>
+                     </children>
+                     <VBox.margin>
+                        <Insets bottom="10.0" />
+                     </VBox.margin>
+                  </VBox>
+                      <HBox alignment="TOP_CENTER" prefHeight="582.0" prefWidth="1400.0" spacing="20.0">
+                          <children>
+                              <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0">
+                                  <children>
+                                      <ImageView fx:id="cover_photo" fitHeight="178.0" fitWidth="120.0" pickOnBounds="true" preserveRatio="true">
+                                          <image>
+                                              <Image url="@../../../images/contest_book_cover/demo_cover_photo.png" />
+                                          </image>
+                                      </ImageView>
+                                  </children>
+                              </VBox>
+                              <TextArea fx:id="writing_area" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="500.0" prefWidth="1000.0" promptText="start your writing form here" style="-fx-background-color: #fff; -fx-background-radius: 5;" wrapText="true">
+                                  <HBox.margin>
+                                      <Insets />
+                                  </HBox.margin>
+                                  <padding>
+                                      <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                  </padding>
+                                  <font>
+                                      <Font size="20.0" />
+                                  </font>
+                              </TextArea>
+                          </children>
+                      </HBox>
                </children>
-               <VBox.margin>
-                  <Insets bottom="10.0" />
-               </VBox.margin>
             </VBox>
-                <HBox alignment="TOP_CENTER" prefHeight="582.0" prefWidth="1400.0" spacing="20.0">
-                    <children>
-                        <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0">
-                            <children>
-                                <ImageView fx:id="cover_photo" fitHeight="178.0" fitWidth="120.0" pickOnBounds="true" preserveRatio="true">
-                                    <image>
-                                        <Image url="@../../../images/contest_book_cover/demo_cover_photo.png" />
-                                    </image>
-                                </ImageView>
-                            </children>
-                        </VBox>
-                        <TextArea fx:id="writing_area" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="500.0" prefWidth="1000.0" promptText="start your writing form here" style="-fx-background-color: #fff; -fx-background-radius: 5;" wrapText="true">
-                            <HBox.margin>
-                                <Insets />
-                            </HBox.margin>
-                            <padding>
-                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                            </padding>
-                            <font>
-                                <Font size="20.0" />
-                            </font>
-                        </TextArea>
-                    </children>
-                </HBox>
             </children>
             <BorderPane.margin>
                 <Insets />
