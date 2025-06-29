@@ -668,7 +668,7 @@ public class contest_entries__c implements Initializable{
         StackPane voteButtonsPane = new StackPane();
         voteButtonsPane.setAlignment(javafx.geometry.Pos.CENTER);
         voteButtonsPane.setPrefHeight(30.0);
-        voteButtonsPane.setPrefWidth(60.0); // Adjusted to fit both buttons
+        voteButtonsPane.setPrefWidth(60.0);
         voteButtonsPane.setMaxHeight(30.0);
         voteButtonsPane.setMaxWidth(60.0);
 
@@ -679,9 +679,11 @@ public class contest_entries__c implements Initializable{
         notVotedButton.setGraphic(notVotedIcon);
         notVotedButton.setPrefHeight(30.0);
         notVotedButton.setPrefWidth(30.0);
-        notVotedButton.setStyle("-fx-background-color: transparent;");
+        notVotedButton.setStyle("-fx-background-color: transparent; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 5, 0, 0, 2); -fx-cursor: hand;");
         notVotedButton.setOnAction(this::handle_not_voted_button);
         notVotedButton.setDisable(!isCurrentWeekView);
+        notVotedButton.setOnMouseEntered(e -> notVotedButton.setStyle("-fx-background-color: transparent; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 5, 0, 0, 2); -fx-scale-x: 1.05; -fx-scale-y: 1.05; -fx-cursor: hand;"));
+        notVotedButton.setOnMouseExited(e -> notVotedButton.setStyle("-fx-background-color: transparent; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 5, 0, 0, 2); -fx-cursor: hand;"));
 
         Button votedButton = new Button();
         ImageView votedIcon = new ImageView(new Image(getClass().getResource("/images/icons/star6.png").toExternalForm()));
@@ -690,10 +692,12 @@ public class contest_entries__c implements Initializable{
         votedButton.setGraphic(votedIcon);
         votedButton.setPrefHeight(30.0);
         votedButton.setPrefWidth(30.0);
-        votedButton.setStyle("-fx-background-color: transparent;");
+        votedButton.setStyle("-fx-background-color: transparent; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 5, 0, 0, 2); -fx-cursor: hand;");
         votedButton.setOnAction(this::handle_voted_button);
         votedButton.setDisable(!isCurrentWeekView);
-
+        votedButton.setOnMouseEntered(e -> votedButton.setStyle("-fx-background-color: transparent; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 5, 0, 0, 2); -fx-scale-x: 1.05; -fx-scale-y: 1.05; -fx-cursor: hand;"));
+        votedButton.setOnMouseExited(e -> votedButton.setStyle("-fx-background-color: transparent; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 5, 0, 0, 2); -fx-cursor: hand;"));
+        
         boolean hasVoted = UserSession.getInstance().isLoggedIn() && hasUserVoted(entryId);
         notVotedButton.setVisible(!hasVoted);
         votedButton.setVisible(hasVoted);
@@ -706,12 +710,12 @@ public class contest_entries__c implements Initializable{
         Button openButton = new Button("open");
         openButton.setPrefHeight(30.0);
         openButton.setPrefWidth(120.0);
-        openButton.setStyle("-fx-background-color: #F5E0CD; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0, 0, 0);");
+        openButton.setStyle("-fx-background-color: #F5E0CD; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0, 0, 0); -fx-cursor: hand;");
         openButton.setTextFill(javafx.scene.paint.Color.valueOf("#014237"));
         openButton.setFont(new Font("System Bold", 14.0));
         openButton.setOnAction(this::handle_open_entry);
-        openButton.setOnMouseEntered(e -> openButton.setStyle("-fx-background-color: #F5E0CD; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 10, 0, 0, 1); -fx-translate-y: -2px;"));
-        openButton.setOnMouseExited(e -> openButton.setStyle("-fx-background-color: #F5E0CD; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0, 0, 0);"));
+        openButton.setOnMouseEntered(e -> openButton.setStyle("-fx-background-color: #F5E0CD; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 10, 0, 0, 1); -fx-translate-y: -2px; -fx-cursor: hand;"));
+        openButton.setOnMouseExited(e -> openButton.setStyle("-fx-background-color: #F5E0CD; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0, 0, 0); -fx-cursor: hand;"));
 
         hbox.getChildren().addAll(numberBox, titleAuthorBox, dateLabel, voteBox, openButton);
         hbox.getProperties().put("entryId", entryId);
