@@ -14,6 +14,11 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.Node;
 import javafx.stage.Stage;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.Scene;
+import javafx.stage.Modality;
+import java.util.ArrayList;
+import java.util.List;
 
 import java.io.IOException;
 import java.sql.*;
@@ -34,7 +39,9 @@ public class profile__c {
     @FXML
     private Label joined_at;
     @FXML
-    private TextField earning_amount;
+    private TextField supported_amount;
+    @FXML
+    private Button show_supporters;
     @FXML
     private Button history_library_button;
     @FXML
@@ -62,7 +69,7 @@ public class profile__c {
             showAlert("Error", "No user logged in");
             return;
         }
-        earning_amount.setEditable(false);
+        supported_amount.setEditable(false);
         loadUserProfile();
         vbox_container.setPrefHeight(332.0);
         // Simulate click on history_library_button by default
@@ -99,7 +106,7 @@ public class profile__c {
                 }
                 double earnings = rs.getDouble("total_earnings");
                 if (rs.wasNull()) earnings = 0.0;
-                earning_amount.setText(String.format("$%.2f", earnings));
+                supported_amount.setText(String.format("$%.2f", earnings));
             } else {
                 showAlert("Error", "User profile not found for ID: " + userId);
             }
@@ -204,9 +211,159 @@ public class profile__c {
     }
 
     @FXML
-    private void handle_earning_amount(ActionEvent event) {
+    private void handle_supported_amount(ActionEvent event) {
         showAlert("Info", "Earnings display the total support received. This field is read-only.");
     }
+
+    @FXML
+    private void handle_show_supporters(ActionEvent event) {
+        showSupportersList();
+    }
+
+    private void showSupportersList() {
+        try (Connection conn = db_connect.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(
+                     "SELECT u.username, s.message, s.amount " +
+                             "FROM support s " +
+                             "JOIN users u ON s.user_id = u.user_id " +
+                             "WHERE s.author_id = ?")) {
+            stmt.setInt(1, userId);
+            ResultSet rs = stmt.executeQuery();
+
+            // Create a list to hold supporter data
+            List<Supporter> supporters = new ArrayList<>();
+            while (rs.next()) {
+                supporters.add(new Supporter(
+                        rs.getString("username"),
+                        rs.getString("message") != null ? rs.getString("message") : "No message",
+                        rs.getDouble("amount")
+                ));
+            }
+
+            // Check if no supporters exist
+            if (supporters.isEmpty()) {
+                showAlert("Info", "You haven't received any support");
+                return;
+            }
+
+            // Create TableView
+            TableView<Supporter> tableView = new TableView<>();
+            tableView.setPlaceholder(new Label("No supporters yet."));
+
+            // Serial number column
+            TableColumn<Supporter, Integer> serialColumn = new TableColumn<>("Serial");
+            serialColumn.setCellFactory(col -> new TableCell<>() {
+                @Override
+                protected void updateItem(Integer item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty) {
+                        setText(null);
+                    } else {
+                        setText(String.valueOf(getIndex() + 1)); // Serial number starts from 1
+                    }
+                }
+            });
+            serialColumn.setPrefWidth(50);
+
+            // Username column
+            TableColumn<Supporter, String> usernameColumn = new TableColumn<>("Username");
+            usernameColumn.setCellValueFactory(new PropertyValueFactory<>("username"));
+            usernameColumn.setPrefWidth(150);
+
+            // Message column with "Open" button
+            TableColumn<Supporter, Void> messageColumn = new TableColumn<>("Message");
+            messageColumn.setCellFactory(col -> new TableCell<>() {
+                private final Button openButton = new Button("Open");
+
+                {
+                    openButton.setOnAction(event -> {
+                        Supporter supporter = getTableView().getItems().get(getIndex());
+                        showMessagePopup(supporter.getMessage());
+                    });
+                }
+
+                @Override
+                protected void updateItem(Void item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty) {
+                        setGraphic(null);
+                    } else {
+                        setGraphic(openButton);
+                    }
+                }
+            });
+            messageColumn.setPrefWidth(100);
+
+            // Amount column
+            TableColumn<Supporter, Double> amountColumn = new TableColumn<>("Amount");
+            amountColumn.setCellValueFactory(new PropertyValueFactory<>("amount"));
+            amountColumn.setCellFactory(col -> new TableCell<>() {
+                @Override
+                protected void updateItem(Double amount, boolean empty) {
+                    super.updateItem(amount, empty);
+                    if (empty || amount == null) {
+                        setText(null);
+                    } else {
+                        setText(String.format("$%.2f", amount));
+                    }
+                }
+            });
+            amountColumn.setPrefWidth(100);
+
+            // Add columns to table
+            tableView.getColumns().addAll(serialColumn, usernameColumn, messageColumn, amountColumn);
+            tableView.getItems().addAll(supporters);
+
+            // Create popup window
+            Stage popupStage = new Stage();
+            popupStage.initModality(Modality.APPLICATION_MODAL);
+            popupStage.setTitle("Supporters List");
+            VBox root = new VBox(10, tableView);
+            root.setPadding(new javafx.geometry.Insets(10));
+            Scene scene = new Scene(root, 450, 300); // Adjusted width to accommodate serial column
+            popupStage.setScene(scene);
+            popupStage.showAndWait();
+
+        } catch (SQLException e) {
+            LOGGER.severe("Failed to load supporters: " + e.getMessage());
+            showAlert("Error", "Failed to load supporters: " + e.getMessage());
+        }
+    }
+
+    private void showMessagePopup(String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Supporter Message");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    // Model class for supporter data
+    public static class Supporter {
+        private final String username;
+        private final String message;
+        private final double amount;
+
+        public Supporter(String username, String message, double amount) {
+            this.username = username;
+            this.message = message;
+            this.amount = amount;
+        }
+
+        public String getUsername() {
+            return username;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public double getAmount() {
+            return amount;
+        }
+    }
+
+
 
     @FXML
     private void handle_back_button(ActionEvent event) {

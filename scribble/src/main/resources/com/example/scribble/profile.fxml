@@ -86,18 +86,19 @@
                                 <Insets left="20.0" />
                             </padding>
                         </VBox>
-                        <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" spacing="10.0">
+                        <VBox alignment="CENTER" prefHeight="166.0" prefWidth="131.0" spacing="10.0">
                             <children>
-                                <Label text="Earning amount" textFill="WHITE">
+                                <Label text="Supported amount" textFill="WHITE">
                                     <font>
-                                        <Font size="16.0" />
+                                        <Font name="System Bold" size="14.0" />
                                     </font>
                                 </Label>
-                                <TextField fx:id="earning_amount" alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onAction="#handle_earning_amount" prefHeight="30.0" prefWidth="116.0" promptText="\$0" style="-fx-background-color: #fff; -fx-border-radius: 5;">
+                                <TextField fx:id="supported_amount" alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onAction="#handle_supported_amount" prefHeight="30.0" prefWidth="116.0" promptText="\$0" style="-fx-background-color: #fff; -fx-border-radius: 5;">
                                     <font>
                                         <Font size="18.0" />
                                     </font>
                                 </TextField>
+                        <Button fx:id="show_supporters" mnemonicParsing="false" onAction="#handle_show_supporters" style="-fx-background-radius: 5; -fx-background-color: #cf7c7c;" text="show supporters" textFill="WHITE" />
                             </children>
                         </VBox>
                     </children>
