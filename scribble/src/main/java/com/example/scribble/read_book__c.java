@@ -637,6 +637,13 @@ public class read_book__c {
             showAlert(Alert.AlertType.WARNING, "Login Required", "Please log in to request collaboration.");
             return;
         }
+
+        if (isAuthorOrCoAuthor(bookId, UserSession.getInstance().getCurrentUserId())) {
+            showAlert(Alert.AlertType.WARNING, "Permission Denied", "You cannot request collaboration on your own book.");
+            LOGGER.warning("Collaboration request failed: User " + UserSession.getInstance().getCurrentUserId() + " is an author or co-author of bookId: " + bookId);
+            return;
+        }
+
         Stage popupStage = new Stage();
         popupStage.initModality(Modality.APPLICATION_MODAL);
         popupStage.setTitle("Collaboration Request");
