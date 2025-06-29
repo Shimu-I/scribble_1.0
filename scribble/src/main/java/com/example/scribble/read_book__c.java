@@ -413,7 +413,33 @@ public class read_book__c {
         }
     }
 
-    // Handle rating selection
+    private void deleteRating(int userId, int bookId) {
+        if (conn == null) {
+            LOGGER.severe("No database connection for deleting rating.");
+            showAlert(Alert.AlertType.ERROR, "Database Error", "No database connection available.");
+            return;
+        }
+
+        String deleteQuery = "DELETE FROM ratings WHERE user_id = ? AND book_id = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(deleteQuery)) {
+            stmt.setInt(1, userId);
+            stmt.setInt(2, bookId);
+            int rowsAffected = stmt.executeUpdate();
+            if (rowsAffected > 0) {
+                LOGGER.info("Rating deleted for userId: " + userId + ", bookId: " + bookId);
+                fetchBookDetails(); // Refresh book details to update average rating
+                showAlert(Alert.AlertType.INFORMATION, "Success", "Your rating has been removed.");
+            } else {
+                LOGGER.warning("No rating found to delete for userId: " + userId + ", bookId: " + bookId);
+                showAlert(Alert.AlertType.WARNING, "No Rating", "You have not rated this book.");
+            }
+        } catch (SQLException e) {
+            LOGGER.severe("Error deleting rating for userId: " + userId + ", bookId: " + bookId + ": " + e.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Error", "Failed to delete rating.");
+        }
+    }
+
+    // Modified handleRating method to include deletion logic
     private void handleRating(ActionEvent event) {
         if (!UserSession.getInstance().isLoggedIn()) {
             showAlert(Alert.AlertType.WARNING, "Login Required", "Please log in to rate this book.");
@@ -433,11 +459,18 @@ public class read_book__c {
             LOGGER.warning("No rating selected for bookId: " + bookId);
             return;
         }
+
         if (rating == 0) {
-            showAlert(Alert.AlertType.WARNING, "Invalid Rating", "Please select a rating between 1 and 5.");
-            LOGGER.warning("Invalid rating (0) selected for bookId: " + bookId);
+            deleteRating(userId, bookId);
             return;
         }
+
+        if (rating < 0 || rating > 5) {
+            showAlert(Alert.AlertType.WARNING, "Invalid Rating", "Please select a rating between 1 and 5.");
+            LOGGER.warning("Invalid rating (" + rating + ") selected for bookId: " + bookId);
+            return;
+        }
+
         try (PreparedStatement stmt = conn.prepareStatement(
                 "INSERT INTO ratings (book_id, user_id, rating) VALUES (?, ?, ?) " +
                         "ON DUPLICATE KEY UPDATE rating = ?")) {
@@ -453,7 +486,6 @@ public class read_book__c {
             showAlert(Alert.AlertType.ERROR, "Error", "Failed to submit rating.");
         }
     }
-
 
     private void openChapter(int chapterId) {
         if (!UserSession.getInstance().isLoggedIn()) {
