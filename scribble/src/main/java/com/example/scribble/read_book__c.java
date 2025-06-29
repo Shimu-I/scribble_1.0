@@ -942,6 +942,12 @@ public class read_book__c {
             return;
         }
 
+        if (isAuthorOrCoAuthor(bookId, UserSession.getInstance().getCurrentUserId())) {
+            showAlert(Alert.AlertType.WARNING, "Permission Denied", "You cannot support your own book.");
+            LOGGER.warning("Support attempt failed: User " + UserSession.getInstance().getCurrentUserId() + " is an author or co-author of bookId: " + bookId);
+            return;
+        }
+
         if (mainController == null) {
             LOGGER.severe("Main controller is null, cannot navigate to support author page for bookId: " + bookId);
             showAlert(Alert.AlertType.ERROR, "Error", "Navigation failed: main controller is not initialized.");
