@@ -142,6 +142,7 @@ public class read_book__c {
         loadChapters();
         loadComments();
         loadDrafts();
+        updateViewCount(); // Add this to record the book visit
         updateAddChapterButtonVisibility();
         updateDraftContainerVisibility();
         updateStatusComboBoxVisibility(); // Ensure statusComboBox visibility is updated after bookId is set
@@ -423,17 +424,19 @@ public class read_book__c {
             ResultSet rs = checkStmt.executeQuery();
             if (rs.next()) {
                 PreparedStatement updateStmt = conn.prepareStatement(
-                        "UPDATE book_visits SET visited_at = CURRENT_TIMESTAMP WHERE user_id = ? AND book_id = ?");
-                updateStmt.setInt(1, userId);
-                updateStmt.setInt(2, bookId);
-                updateStmt.executeUpdate();
-                LOGGER.info("Updated visit timestamp for userId: " + userId + ", bookId: " + bookId);
+                        "UPDATE book_visits SET visited_at = ? WHERE user_id = ? AND book_id = ?");
+                updateStmt.setTimestamp(1, Timestamp.valueOf(java.time.LocalDateTime.now()));
+                updateStmt.setInt(2, userId);
+                updateStmt.setInt(3, bookId);
+                int rowsAffected = updateStmt.executeUpdate();
+                LOGGER.info("Updated visit timestamp for userId: " + userId + ", bookId: " + bookId + ", rows affected: " + rowsAffected);
             } else {
                 PreparedStatement insertStmt = conn.prepareStatement(
-                        "INSERT INTO book_visits (user_id, book_id, visited_at) VALUES (?, ?, CURRENT_TIMESTAMP)");
+                        "INSERT INTO book_visits (user_id, book_id, visited_at) VALUES (?, ?, ?)");
                 insertStmt.setInt(1, userId);
                 insertStmt.setInt(2, bookId);
-                insertStmt.executeUpdate();
+                insertStmt.setTimestamp(3, Timestamp.valueOf(java.time.LocalDateTime.now()));
+                int rowsAffected = insertStmt.executeUpdate();
                 PreparedStatement updateViewStmt = conn.prepareStatement(
                         "UPDATE books SET view_count = view_count + 1 WHERE book_id = ?");
                 updateViewStmt.setInt(1, bookId);
@@ -441,7 +444,7 @@ public class read_book__c {
                 if (views != null) {
                     views.setText(String.valueOf(Integer.parseInt(views.getText()) + 1));
                 }
-                LOGGER.info("Inserted new visit for userId: " + userId + ", bookId: " + bookId);
+                LOGGER.info("Inserted new visit for userId: " + userId + ", bookId: " + bookId + ", rows affected: " + rowsAffected);
             }
         } catch (SQLException e) {
             LOGGER.severe("Error updating view count: " + e.getMessage());

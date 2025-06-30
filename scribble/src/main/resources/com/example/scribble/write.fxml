@@ -80,7 +80,7 @@
                         <Insets bottom="30.0" />
                      </VBox.margin>
                   </HBox>
-                  <Button fx:id="write_button" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#handleWriteButton" prefHeight="30.0" prefWidth="120.0" style="-fx-background-color: #F4908A; -fx-background-radius: 10;" stylesheets="@../../../style/style.css" text="Button" textFill="#014237">
+                  <Button fx:id="write_button" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#handleWriteButton" prefHeight="30.0" prefWidth="120.0" style="-fx-background-color: #F4908A; -fx-background-radius: 10;" stylesheets="@../../../style/style.css" text="Save" textFill="#014237">
                      <font>
                         <Font size="14.0" />
                      </font>

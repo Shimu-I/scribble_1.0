@@ -49,7 +49,7 @@ public class transaction_page__c {
         }
 
         // Print account number and PIN to terminal (dummy transaction)
-        System.out.println("Dummy Transaction Confirmation:");
+        System.out.println("Transaction Confirmation:");
         System.out.println("Account Number: " + accountNumber);
         System.out.println("PIN: " + pinText);
 

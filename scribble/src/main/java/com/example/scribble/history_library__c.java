@@ -122,19 +122,26 @@ public class history_library__c implements nav_bar__cAware {
              PreparedStatement stmt = conn.prepareStatement(
                      "SELECT b.book_id, b.title, b.cover_photo, bv.visited_at " +
                              "FROM book_visits bv JOIN books b ON bv.book_id = b.book_id " +
-                             "WHERE bv.user_id = ? ORDER BY bv.visited_at DESC LIMIT 5")) {
+                             "WHERE bv.user_id = ? ORDER BY bv.visited_at DESC")) {
             stmt.setInt(1, userId);
             ResultSet rs = stmt.executeQuery();
+            int recordCount = 0;
             while (rs.next()) {
+                recordCount++;
+                int bookId = rs.getInt("book_id");
+                String title = rs.getString("title");
+                String coverPath = rs.getString("cover_photo");
+                String visitedAt = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(rs.getTimestamp("visited_at"));
+                LOGGER.info("History record " + recordCount + ": bookId=" + bookId + ", title=" + title + ", visited_at=" + visitedAt);
                 historyContainer.getChildren().add(createBookCard(
-                        rs.getInt("book_id"),
-                        rs.getString("title"),
-                        rs.getString("cover_photo"),
-
-                        new SimpleDateFormat("dd/MM/yyyy").format(rs.getTimestamp("visited_at")),
+                        bookId,
+                        title,
+                        coverPath,
+                        visitedAt,
                         "last visited at",
                         null));
             }
+            LOGGER.info("Populated history with " + recordCount + " records for userId: " + userId);
         } catch (SQLException e) {
             LOGGER.severe("Failed to load history: " + e.getMessage());
             showAlert("Error", "Failed to load history: " + e.getMessage());

@@ -193,7 +193,7 @@ public class TicTacToeController {
     }
 
     private void scheduleMarkDeletion(Button button, String mark, boolean isPlayer) {
-        double duration = isPlayer ? 10.0 : 20.0;
+        double duration = isPlayer ? 20.0 : 20.0;
         PauseTransition pause = new PauseTransition(Duration.seconds(duration));
         pause.setOnFinished(e -> {
             if (button.getText().equals(mark)) {
