@@ -176,11 +176,6 @@ public class profile__c {
 
     @FXML
     private void handle_edit_profile(ActionEvent event) {
-        AnchorPane parentPane = getParentPane(event);
-        if (parentPane == null) {
-            showAlert("Error", "Cannot show edit overlay: parentPane is null");
-            return;
-        }
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/profile_info_form.fxml"));
             Parent editPage = loader.load();
@@ -188,22 +183,25 @@ public class profile__c {
             editController.setParentController(this);
             editController.setUserId(userId);
 
-            editOverlay = new Pane();
-            editOverlay.setStyle("-fx-background-color: rgba(0, 0, 0, 0.2);");
-            editOverlay.getChildren().add(editPage);
+            // Create a new modal stage
+            Stage modalStage = new Stage();
+            modalStage.initModality(Modality.APPLICATION_MODAL);
+            modalStage.setTitle("Edit Profile");
+            Scene scene = new Scene(editPage);
+            modalStage.setScene(scene);
+            modalStage.setResizable(false);
 
-            for (Node child : parentPane.getChildren()) {
-                child.setEffect(new GaussianBlur(10.0));
+            // Remove blur effect from parent window
+            AnchorPane parentPane = getParentPane(event);
+            if (parentPane != null) {
+                for (Node child : parentPane.getChildren()) {
+                    child.setEffect(null); // Remove any existing blur
+                }
             }
 
-            AnchorPane.setTopAnchor(editPage, 10.0);
-            AnchorPane.setLeftAnchor(editPage, 10.0);
-
-            parentPane.getChildren().add(editOverlay);
-            AnchorPane.setTopAnchor(editOverlay, 0.0);
-            AnchorPane.setBottomAnchor(editOverlay, 0.0);
-            AnchorPane.setLeftAnchor(editOverlay, 0.0);
-            AnchorPane.setRightAnchor(editOverlay, 0.0);
+            // Show the modal window
+            modalStage.showAndWait();
+            loadUserProfile(); // Refresh profile data after modal closes
         } catch (IOException e) {
             LOGGER.severe("Failed to load profile edit form: " + e.getMessage());
             showAlert("Error", "Failed to load profile edit form: " + e.getMessage());

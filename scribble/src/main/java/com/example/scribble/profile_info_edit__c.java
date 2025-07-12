@@ -1,3 +1,4 @@
+// profile_info_edit__c.java
 package com.example.scribble;
 
 import javafx.event.ActionEvent;
@@ -18,8 +19,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.geom.Ellipse2D;
@@ -54,6 +55,7 @@ public class profile_info_edit__c {
 
     private profile__c parentController;
     private File selectedImageFile;
+    private BufferedImage croppedImage;
     private int userId;
 
     public void setParentController(profile__c parentController) {
@@ -133,12 +135,9 @@ public class profile_info_edit__c {
 
     @FXML
     private void handle_end(ActionEvent event) {
-        System.out.println("End button clicked, closing edit overlay");
-        if (parentController != null) {
-            parentController.closeEditOverlay();
-        } else {
-            showAlert(Alert.AlertType.ERROR, "Error", "Cannot close edit overlay: parentController is null");
-        }
+        System.out.println("End button clicked, closing modal");
+        Stage stage = (Stage) end.getScene().getWindow();
+        stage.close();
     }
 
     @FXML
@@ -159,6 +158,15 @@ public class profile_info_edit__c {
                 profileImageView.setImage(image);
                 selectedImageFile = file;
                 System.out.println("Selected profile picture: " + file.getAbsolutePath());
+                croppedImage = showCroppingDialog(selectedImageFile);
+                if (croppedImage != null) {
+                    Image croppedFxImage = convertBufferedImageToFxImage(croppedImage);
+                    profileImageView.setImage(croppedFxImage);
+                    System.out.println("Cropped image set in ImageView");
+                } else {
+                    System.out.println("Cropping cancelled, reverting to original image");
+                    profileImageView.setImage(image);
+                }
             } catch (Exception e) {
                 e.printStackTrace();
                 showAlert(Alert.AlertType.ERROR, "Error", "Failed to load profile picture: " + e.getMessage());
@@ -202,6 +210,7 @@ public class profile_info_edit__c {
 
             setDefaultProfileImage();
             selectedImageFile = null;
+            croppedImage = null;
             System.out.println("Profile picture deleted for userId: " + userId);
 
             showAlert(Alert.AlertType.INFORMATION, "Success", "Profile picture has been deleted.");
@@ -216,10 +225,8 @@ public class profile_info_edit__c {
         System.out.println("Save button clicked");
         String name = edit_name.getText().trim();
         String email = edit_email.getText().trim();
-        String oldPassword = old_password.getText().trim();
-        String newPassword = new_password.getText().trim();
 
-        if (name.isEmpty() && email.isEmpty() && newPassword.isEmpty() && selectedImageFile == null) {
+        if (name.isEmpty() && email.isEmpty() && croppedImage == null) {
             showAlert(Alert.AlertType.WARNING, "Validation Error", "At least one field must be provided to update");
             return;
         }
@@ -227,17 +234,6 @@ public class profile_info_edit__c {
         if (!email.isEmpty() && !email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
             showAlert(Alert.AlertType.WARNING, "Validation Error", "Invalid email format");
             return;
-        }
-
-        if (!newPassword.isEmpty()) {
-            if (oldPassword.isEmpty()) {
-                showAlert(Alert.AlertType.WARNING, "Validation Error", "Old password is required to change password");
-                return;
-            }
-            if (newPassword.trim().isEmpty()) {
-                showAlert(Alert.AlertType.WARNING, "Validation Error", "New password cannot be empty");
-                return;
-            }
         }
 
         try (Connection conn = db_connect.getConnection()) {
@@ -254,42 +250,15 @@ public class profile_info_edit__c {
                 }
             }
 
-            if (!oldPassword.isEmpty()) {
-                PreparedStatement pwdStmt = conn.prepareStatement(
-                        "SELECT password FROM users WHERE user_id = ?");
-                pwdStmt.setInt(1, userId);
-                ResultSet pwdRs = pwdStmt.executeQuery();
-                if (pwdRs.next()) {
-                    String storedPassword = pwdRs.getString("password");
-                    if (!storedPassword.equals(oldPassword)) {
-                        showAlert(Alert.AlertType.WARNING, "Validation Error", "Incorrect old password");
-                        return;
-                    }
-                } else {
-                    showAlert(Alert.AlertType.ERROR, "Error", "User not found");
-                    return;
-                }
-            }
-
             String profilePicPath = null;
-            if (selectedImageFile != null) {
+            if (croppedImage != null) {
                 String destDirPath = "src/main/resources/images/profiles/";
                 Files.createDirectories(Paths.get(destDirPath));
                 String fileName = "profile_" + userId + "_" + System.currentTimeMillis() + ".png";
                 File outputFile = new File(destDirPath + fileName);
-
-                System.out.println("Opening cropping dialog for: " + selectedImageFile.getAbsolutePath());
-                BufferedImage croppedImage = showCroppingDialog(selectedImageFile);
-                if (croppedImage != null) {
-                    ImageIO.write(croppedImage, "png", outputFile);
-                    profilePicPath = fileName;
-                    System.out.println("Cropped profile picture saved to: " + outputFile.getAbsolutePath());
-                    loadProfileImage(fileName);
-                } else {
-                    System.out.println("Cropping cancelled by user");
-                    showAlert(Alert.AlertType.INFORMATION, "Cancelled", "Profile picture update cancelled.");
-                    return;
-                }
+                ImageIO.write(croppedImage, "png", outputFile);
+                profilePicPath = fileName;
+                System.out.println("Cropped profile picture saved to: " + outputFile.getAbsolutePath());
             }
 
             StringBuilder updateQuery = new StringBuilder("UPDATE users SET ");
@@ -307,10 +276,6 @@ public class profile_info_edit__c {
                 updateParts.add("profile_picture = ?");
                 params.add(profilePicPath);
             }
-            if (!newPassword.isEmpty()) {
-                updateParts.add("password = ?");
-                params.add(newPassword);
-            }
             if (updateParts.isEmpty()) {
                 showAlert(Alert.AlertType.WARNING, "Validation Error", "No valid fields to update");
                 return;
@@ -327,14 +292,11 @@ public class profile_info_edit__c {
             System.out.println("User profile updated: " +
                     (name.isEmpty() ? "" : "username=" + name + ", ") +
                     (email.isEmpty() ? "" : "email=" + email + ", ") +
-                    (profilePicPath != null ? "profile_picture=" + profilePicPath + ", " : "") +
-                    (newPassword.isEmpty() ? "" : "password updated"));
+                    (profilePicPath != null ? "profile_picture=" + profilePicPath : ""));
 
-            if (parentController != null) {
-                parentController.closeEditOverlay();
-            } else {
-                showAlert(Alert.AlertType.ERROR, "Error", "Cannot close edit overlay: parentController is null");
-            }
+            Stage stage = (Stage) save_button.getScene().getWindow();
+            stage.close();
+            showAlert(Alert.AlertType.INFORMATION, "Success", "Profile updated successfully");
         } catch (SQLException | IOException e) {
             e.printStackTrace();
             showAlert(Alert.AlertType.ERROR, "Error", "Failed to save profile: " + e.getMessage());
@@ -379,7 +341,6 @@ public class profile_info_edit__c {
             final double[] dragStartY = {0};
             final boolean[] isResizing = {false};
 
-            // Change cursor when hovering near edge
             cropCircle.setOnMouseMoved(event -> {
                 double dx = event.getX() - cropCircle.getCenterX();
                 double dy = event.getY() - cropCircle.getCenterY();
@@ -405,7 +366,6 @@ public class profile_info_edit__c {
                 double deltaX = event.getX() - dragStartX[0];
                 double deltaY = event.getY() - dragStartY[0];
                 if (isResizing[0]) {
-                    // Resize based on distance from center
                     double dx = event.getX() - cropCircle.getCenterX();
                     double dy = event.getY() - cropCircle.getCenterY();
                     double newRadius = Math.sqrt(dx * dx + dy * dy);
@@ -434,7 +394,7 @@ public class profile_info_edit__c {
             cancelButton.setLayoutX(100);
             cancelButton.setLayoutY(imageView.getFitHeight() + imageView.getY() + 10);
 
-            final BufferedImage[] croppedImage = {null};
+            final BufferedImage[] croppedImageResult = {null};
 
             confirmButton.setOnAction(e -> {
                 try {
@@ -453,7 +413,7 @@ public class profile_info_edit__c {
                     g2d.drawImage(originalImage, -centerX + radius, -centerY + radius, null);
                     g2d.dispose();
 
-                    croppedImage[0] = outputImage;
+                    croppedImageResult[0] = outputImage;
                     System.out.println("Crop confirmed: size=" + size + ", centerX=" + centerX + ", centerY=" + centerY);
                     dialog.close();
                 } catch (IOException ex) {
@@ -475,7 +435,7 @@ public class profile_info_edit__c {
             System.out.println("Showing cropping dialog");
             dialog.showAndWait();
 
-            return croppedImage[0];
+            return croppedImageResult[0];
         } catch (IOException e) {
             e.printStackTrace();
             showAlert(Alert.AlertType.ERROR, "Error", "Failed to load image for cropping: " + e.getMessage());
@@ -483,9 +443,18 @@ public class profile_info_edit__c {
         }
     }
 
-    private String getExtension(String fileName) {
-        int dotIndex = fileName.lastIndexOf('.');
-        return (dotIndex == -1) ? "" : fileName.substring(dotIndex);
+    private Image convertBufferedImageToFxImage(BufferedImage bufferedImage) {
+        try {
+            File tempFile = File.createTempFile("cropped_", ".png");
+            ImageIO.write(bufferedImage, "png", tempFile);
+            Image fxImage = new Image(tempFile.toURI().toString());
+            tempFile.deleteOnExit();
+            return fxImage;
+        } catch (IOException e) {
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Error", "Failed to convert cropped image: " + e.getMessage());
+            return null;
+        }
     }
 
     private void showAlert(Alert.AlertType type, String title, String content) {
