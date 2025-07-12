@@ -347,26 +347,97 @@ public class colab_sent_received__c {
     }
 
     private void deleteRecord(int inviteId) {
-        try (Connection conn = db_connect.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(
-                     "DELETE FROM collaboration_invites WHERE invite_id = ?")) {
-            stmt.setInt(1, inviteId);
-            int rowsAffected = stmt.executeUpdate();
-            if (rowsAffected > 0) {
-                LOGGER.info("Deleted collaboration invite with invite_id " + inviteId);
-                loadSentRequests();
-                loadReceivedRequests();
-                int[] counts = getRecordCounts();
-                total_sent_record.setText("(" + counts[0] + ")");
-                total_received_record.setText("(" + counts[1] + ")");
-                showAlert(Alert.AlertType.INFORMATION, "Success", "Collaboration request deleted.");
-            } else {
-                LOGGER.warning("No collaboration invite found for invite_id " + inviteId);
-                showAlert(Alert.AlertType.ERROR, "Error", "No collaboration request found to delete.");
+        boolean autoCommit = true;
+        try (Connection conn = db_connect.getConnection()) {
+            autoCommit = conn.getAutoCommit();
+            conn.setAutoCommit(false); // Start transaction
+
+            // Step 1: Retrieve the book_id, inviter_id, and status for the invite
+            int bookId = -1;
+            int inviterId = -1;
+            String status = null;
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    "SELECT book_id, inviter_id, status FROM collaboration_invites WHERE invite_id = ?")) {
+                stmt.setInt(1, inviteId);
+                ResultSet rs = stmt.executeQuery();
+                if (rs.next()) {
+                    bookId = rs.getInt("book_id");
+                    inviterId = rs.getInt("inviter_id");
+                    status = rs.getString("status");
+                } else {
+                    LOGGER.warning("No collaboration invite found for invite_id " + inviteId);
+                    showAlert(Alert.AlertType.ERROR, "Error", "No collaboration request found to delete.");
+                    conn.rollback();
+                    return;
+                }
+            }
+
+            // Step 2: If the status is "Accepted", remove the co-author from book_authors
+            if ("Accepted".equals(status)) {
+                try (PreparedStatement checkStmt = conn.prepareStatement(
+                        "SELECT 1 FROM book_authors WHERE book_id = ? AND user_id = ? AND role = 'Co-Author'")) {
+                    checkStmt.setInt(1, bookId);
+                    checkStmt.setInt(2, inviterId);
+                    ResultSet rs = checkStmt.executeQuery();
+                    if (rs.next()) {
+                        // Co-author exists, proceed to delete
+                        try (PreparedStatement deleteStmt = conn.prepareStatement(
+                                "DELETE FROM book_authors WHERE book_id = ? AND user_id = ? AND role = 'Co-Author'")) {
+                            deleteStmt.setInt(1, bookId);
+                            deleteStmt.setInt(2, inviterId);
+                            int rowsAffected = deleteStmt.executeUpdate();
+                            if (rowsAffected > 0) {
+                                LOGGER.info("Removed co-author for book_id " + bookId + " and user_id " + inviterId);
+                                // Update works_created_count
+                                try (PreparedStatement updateStmt = conn.prepareStatement(
+                                        "UPDATE users SET works_created_count = GREATEST(works_created_count - 1, 0) WHERE user_id = ?")) {
+                                    updateStmt.setInt(1, inviterId);
+                                    updateStmt.executeUpdate();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Step 3: Delete the collaboration invite
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    "DELETE FROM collaboration_invites WHERE invite_id = ?")) {
+                stmt.setInt(1, inviteId);
+                int rowsAffected = stmt.executeUpdate();
+                if (rowsAffected > 0) {
+                    LOGGER.info("Deleted collaboration invite with invite_id " + inviteId);
+                    // Step 4: Commit the transaction
+                    conn.commit();
+                    // Step 5: Refresh UI and counts
+                    loadSentRequests();
+                    loadReceivedRequests();
+                    int[] counts = getRecordCounts();
+                    total_sent_record.setText("(" + counts[0] + ")");
+                    total_received_record.setText("(" + counts[1] + ")");
+                    showAlert(Alert.AlertType.INFORMATION, "Success", "Collaboration request deleted successfully.");
+                } else {
+                    LOGGER.warning("No collaboration invite found for invite_id " + inviteId);
+                    showAlert(Alert.AlertType.ERROR, "Error", "No collaboration request found to delete.");
+                    conn.rollback();
+                    return;
+                }
             }
         } catch (SQLException e) {
             LOGGER.severe("Failed to delete collaboration invite: " + e.getMessage());
+            try {
+                conn.rollback();
+                LOGGER.info("Transaction rolled back due to error.");
+            } catch (SQLException rollbackEx) {
+                LOGGER.severe("Error during rollback: " + rollbackEx.getMessage());
+            }
             showAlert(Alert.AlertType.ERROR, "Error", "Failed to delete collaboration request: " + e.getMessage());
+        } finally {
+            try {
+                conn.setAutoCommit(autoCommit);
+            } catch (SQLException e) {
+                LOGGER.severe("Error restoring auto-commit: " + e.getMessage());
+            }
         }
     }
 
