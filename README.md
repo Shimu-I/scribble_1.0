@@ -1,3 +1,4 @@
+🎬 [Watch Full Video on YouTube](https://youtu.be/PdtZroIYYjE)
 
 # Scribble: A Story Sharing & Writing Platform
 
