@@ -220,12 +220,12 @@
                               </Label>
                               <HBox prefHeight="30.0" prefWidth="565.0" spacing="10.0">
                                  <children>
+                                    <TextField fx:id="comment_box" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="30.0" prefWidth="432.0" promptText="type your comment" style="-fx-background-color: transparent; -fx-border-color: #fff; -fx-border-radius: 10; -fx-text-fill: #fff;" />
                                     <Button fx:id="add_comment" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#handle_add_comment" prefHeight="30.0" prefWidth="120.0" style="-fx-background-color: #F5E0CD; -fx-border-color: #fff; -fx-border-radius: 5;" stylesheets="@../../../style/style.css" text="add comment" textFill="WHITE">
                                        <font>
                                           <Font name="System Bold" size="10.0" />
                                        </font>
                                     </Button>
-                                    <TextField fx:id="comment_box" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="30.0" prefWidth="432.0" promptText="type your comment" style="-fx-background-color: transparent; -fx-border-color: #fff; -fx-border-radius: 10; -fx-text-fill: #fff;" />
                                  </children>
                               </HBox>
                               <ScrollPane fx:id="comment_scrollpane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="193.0" prefWidth="565.0" style="-fx-border-color: #fff; -fx-border-radius: 5; -fx-background-color: transparent;">

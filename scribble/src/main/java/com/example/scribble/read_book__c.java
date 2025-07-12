@@ -251,6 +251,7 @@ public class read_book__c {
         if (coverImage != null) coverImage.setImage(null);
     }
 
+
     private void loadComments() {
         if (conn == null || commentContainer == null) {
             LOGGER.severe("No database connection or commentContainer is null.");
@@ -258,7 +259,7 @@ public class read_book__c {
             return;
         }
 
-        String query = "SELECT u.username, r.comment FROM ratings r " +
+        String query = "SELECT u.username, r.comment, r.user_id, r.rating_id FROM ratings r " +
                 "JOIN users u ON r.user_id = u.user_id WHERE r.book_id = ? AND r.comment IS NOT NULL " +
                 "ORDER BY r.rating_id DESC";
         try (PreparedStatement stmt = conn.prepareStatement(query)) {
@@ -266,21 +267,41 @@ public class read_book__c {
             ResultSet rs = stmt.executeQuery();
             commentContainer.getChildren().clear();
             int commentCount = 0;
+            int currentUserId = UserSession.getInstance().isLoggedIn() ? UserSession.getInstance().getCurrentUserId() : -1;
+
             while (rs.next()) {
                 commentCount++;
-                VBox commentBox = new VBox(5);
+                int commentUserId = rs.getInt("user_id");
+                int ratingId = rs.getInt("rating_id");
+                String username = rs.getString("username");
+                String commentText = rs.getString("comment");
+
+                HBox commentBox = new HBox(10);
                 commentBox.setPadding(new Insets(5, 5, 5, 10));
 
-                Label usernameLabel = new Label("user: " + rs.getString("username"));
+                VBox commentContent = new VBox(5);
+                Label usernameLabel = new Label("user: " + username);
                 usernameLabel.setTextFill(javafx.scene.paint.Color.WHITE);
                 usernameLabel.setFont(javafx.scene.text.Font.font("System", javafx.scene.text.FontWeight.BOLD, 14.0));
 
-                Label commentLabel = new Label(rs.getString("comment"));
+                Label commentLabel = new Label(commentText);
                 commentLabel.setTextFill(javafx.scene.paint.Color.WHITE);
                 commentLabel.setFont(javafx.scene.text.Font.font("System", 14.0));
                 commentLabel.setPadding(new Insets(0, 0, 0, 50));
 
-                commentBox.getChildren().addAll(usernameLabel, commentLabel);
+                commentContent.getChildren().addAll(usernameLabel, commentLabel);
+                commentBox.getChildren().add(commentContent);
+
+                // Add delete button if the current user is the comment author
+                if (currentUserId == commentUserId) {
+                    Button deleteButton = new Button("x");
+                    deleteButton.setStyle("-fx-background-color: #FF5555; -fx-text-fill: #FFFFFF; -fx-background-radius: 50%; " +
+                            "-fx-min-width: 20; -fx-min-height: 20; -fx-max-width: 20; -fx-max-height: 20; " +
+                            "-fx-font-size: 14; -fx-alignment: center; -fx-padding: 0; -fx-effect: dropshadow(gaussian, #000000, 2, 0.5, 0, 0);");
+                    deleteButton.setOnAction(e -> deleteComment(ratingId));
+                    commentBox.getChildren().add(deleteButton);
+                }
+
                 commentContainer.getChildren().add(commentBox);
             }
             if (total_comments != null) total_comments.setText("Comments (" + commentCount + ")");
@@ -307,6 +328,32 @@ public class read_book__c {
         } catch (SQLException e) {
             LOGGER.severe("Error loading comments: " + e.getMessage());
             if (total_comments != null) total_comments.setText("Comments (0)");
+        }
+    }
+
+    private void deleteComment(int ratingId) {
+        if (conn == null) {
+            LOGGER.severe("No database connection for deleting comment.");
+            showAlert(Alert.AlertType.ERROR, "Database Error", "No database connection available.");
+            return;
+        }
+
+        String deleteQuery = "DELETE FROM ratings WHERE rating_id = ? AND user_id = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(deleteQuery)) {
+            stmt.setInt(1, ratingId);
+            stmt.setInt(2, UserSession.getInstance().getCurrentUserId());
+            int rowsAffected = stmt.executeUpdate();
+            if (rowsAffected > 0) {
+                LOGGER.info("Comment deleted for ratingId: " + ratingId + ", userId: " + UserSession.getInstance().getCurrentUserId());
+                loadComments(); // Refresh comments
+                showAlert(Alert.AlertType.INFORMATION, "Success", "Your comment has been deleted.");
+            } else {
+                LOGGER.warning("No comment found to delete for ratingId: " + ratingId + ", userId: " + UserSession.getInstance().getCurrentUserId());
+                showAlert(Alert.AlertType.WARNING, "No Comment", "You are not authorized to delete this comment.");
+            }
+        } catch (SQLException e) {
+            LOGGER.severe("Error deleting comment for ratingId: " + ratingId + ": " + e.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Error", "Failed to delete comment.");
         }
     }
 
