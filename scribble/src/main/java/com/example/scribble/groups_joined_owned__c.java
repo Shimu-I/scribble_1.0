@@ -248,13 +248,19 @@ public class groups_joined_owned__c {
 
     private HBox createGroupBox(String bookName, String subtitle, String buttonText, int groupId, boolean isJoined, String coverPhoto) {
         HBox groupBox = new HBox();
-        groupBox.setAlignment(javafx.geometry.Pos.CENTER); // Match FXML's HBox alignment
-        groupBox.setPrefSize(270, 105);
-        groupBox.setMaxSize(270, 105);
-        groupBox.setMinSize(270, 105);
-        groupBox.setStyle("-fx-background-color: #F28888; -fx-background-radius: 5; -fx-border-color: #fff; -fx-border-radius: 5;");
+        groupBox.setAlignment(javafx.geometry.Pos.CENTER);
+        groupBox.setStyle("-fx-background-color: #F28888; -fx-background-radius: 5; -fx-border-color: #fff; -fx-border-radius: 5; -fx-padding: 5;");
+        groupBox.setPrefHeight(105.0);
+        groupBox.setPrefWidth(270.0);
+        groupBox.setMaxHeight(Double.NEGATIVE_INFINITY);
+        groupBox.setMaxWidth(Double.NEGATIVE_INFINITY);
+        groupBox.setMinHeight(Double.NEGATIVE_INFINITY);
+        groupBox.setMinWidth(Double.NEGATIVE_INFINITY);
 
-        // ImageView setup
+        Region spacer = new Region();
+        spacer.setPrefWidth(26.0);
+        spacer.setPrefHeight(104.0);
+
         ImageView imageView = new ImageView();
         imageView.setFitHeight(76.0);
         imageView.setFitWidth(50.0);
@@ -272,63 +278,50 @@ public class groups_joined_owned__c {
             imageView.setImage(loadImage("/images/book_covers/hollow_rectangle.png"));
             LOGGER.info("Loaded default book cover: hollow_rectangle.png");
         }
-        HBox.setMargin(imageView, new Insets(5, 5, 5, 5)); // Consistent margins
+        HBox.setMargin(imageView, new Insets(5, 5, 5, 5));
 
-        // Spacer region to match FXML
-        Region spacer = new Region();
-        spacer.setPrefWidth(26.0);
-        spacer.setPrefHeight(104.0);
-
-        // TextBox setup
         VBox textBox = new VBox();
         textBox.setPrefHeight(76.0);
-        textBox.setPrefWidth(141.0); // Match FXML's vbox_1 width
+        textBox.setPrefWidth(141.0);
         textBox.setSpacing(5.0);
         textBox.setPadding(new Insets(0, 10, 0, 10));
-        HBox.setMargin(textBox, new Insets(5, 5, 5, 5)); // Consistent margins
-        HBox.setHgrow(textBox, javafx.scene.layout.Priority.ALWAYS); // Ensure textBox expands
+        HBox.setMargin(textBox, new Insets(5, 5, 5, 5));
+        HBox.setHgrow(textBox, javafx.scene.layout.Priority.ALWAYS);
 
-        // Book name label
         Label bookNameLabel = new Label(bookName);
         bookNameLabel.setTextFill(javafx.scene.paint.Color.WHITE);
         bookNameLabel.setPrefHeight(37.0);
         bookNameLabel.setPrefWidth(122.0);
         bookNameLabel.setWrapText(true);
-        bookNameLabel.setFont(Font.font("System", FontWeight.BOLD, 12.0)); // Match FXML's font
+        bookNameLabel.setFont(Font.font("System", FontWeight.BOLD, 12.0));
 
-        // Subtitle label
         Label subtitleLabel = new Label(subtitle);
         subtitleLabel.setTextFill(javafx.scene.paint.Color.WHITE);
-        subtitleLabel.setFont(new Font(9.0)); // Match FXML's font size
+        subtitleLabel.setFont(new Font(9.0));
         subtitleLabel.setPrefHeight(24.0);
         subtitleLabel.setPrefWidth(123.0);
         subtitleLabel.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
         subtitleLabel.setWrapText(true);
 
-        // Action button
         Button actionButton = new Button(buttonText);
-        actionButton.setPrefHeight(22.0);
-        actionButton.setPrefWidth(83.0);
-        actionButton.setStyle("-fx-border-radius: 5; -fx-background-color: #fff");
-        actionButton.setFont(new Font(10.0));
-        VBox.setMargin(actionButton, new Insets(5.0, 0, 0, 0));
+        actionButton.setPrefHeight(18.0);
+        actionButton.setPrefWidth(80.0);
+        actionButton.setStyle("-fx-border-radius: 5; -fx-border-color: #fff; -fx-background-color: #fff;");
+        actionButton.setFont(new Font(9.0));
         actionButton.setUserData(groupId);
         actionButton.setId(isJoined ? "joined_status" : "owned_status");
         actionButton.setOnAction(isJoined ? this::handle_joined_group : this::handle_owned_group);
 
-        // Add elements to textBox
         textBox.getChildren().addAll(bookNameLabel, subtitleLabel, actionButton);
 
-        // Delete button VBox
         VBox deleteButtonBox = new VBox();
-        deleteButtonBox.setAlignment(javafx.geometry.Pos.TOP_RIGHT); // Match FXML's TOP_RIGHT alignment
+        deleteButtonBox.setAlignment(javafx.geometry.Pos.TOP_RIGHT);
         deleteButtonBox.setPrefHeight(104.0);
         deleteButtonBox.setPrefWidth(22.0);
-        deleteButtonBox.setPadding(new Insets(5.0, 0, 0, 0)); // Match FXML's top padding
+        deleteButtonBox.setPadding(new Insets(5.0, 0, 0, 0));
 
-        // Delete button
         Button deleteButton = new Button();
-        deleteButton.setId("delete_record"); // Match FXML's fx:id
+        deleteButton.setId("delete_record");
         deleteButton.setPrefHeight(18.0);
         deleteButton.setPrefWidth(18.0);
         deleteButton.setMaxHeight(Double.NEGATIVE_INFINITY);
@@ -344,10 +337,8 @@ public class groups_joined_owned__c {
         deleteButton.setGraphic(deleteIcon);
         deleteButton.setOnAction(e -> deleteGroupRecord(groupId, isJoined));
 
-        // Add delete button to its VBox
         deleteButtonBox.getChildren().add(deleteButton);
 
-        // Add elements to groupBox
         groupBox.getChildren().addAll(spacer, imageView, textBox, deleteButtonBox);
 
         return groupBox;
@@ -365,9 +356,9 @@ public class groups_joined_owned__c {
                     int rowsAffected = stmt.executeUpdate();
                     if (rowsAffected > 0) {
                         LOGGER.info("Deleted membership for group_id " + groupId + " and user_id " + userId);
-                        loadJoinedGroups(); // Refresh joined groups
-                        fetchGroupCounts(); // Update counts
-                        updateLabels(); // Update labels
+                        loadJoinedGroups();
+                        fetchGroupCounts();
+                        updateLabels();
                         showAlert("Success", "Left the group successfully.");
                     } else {
                         LOGGER.warning("No membership found for group_id " + groupId + " and user_id " + userId);
@@ -383,9 +374,9 @@ public class groups_joined_owned__c {
                     int rowsAffected = stmt.executeUpdate();
                     if (rowsAffected > 0) {
                         LOGGER.info("Deleted owned group with group_id " + groupId + " for admin_id " + userId);
-                        loadOwnedGroups(); // Refresh owned groups
-                        fetchGroupCounts(); // Update counts
-                        updateLabels(); // Update labels
+                        loadOwnedGroups();
+                        fetchGroupCounts();
+                        updateLabels();
                         showAlert("Success", "Group deleted successfully.");
                     } else {
                         LOGGER.warning("No owned group found for group_id " + groupId + " and admin_id " + userId);
