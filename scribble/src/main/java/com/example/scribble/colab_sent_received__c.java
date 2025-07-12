@@ -1,15 +1,19 @@
 package com.example.scribble;
 
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -27,17 +31,14 @@ public class colab_sent_received__c {
 
     @FXML private VBox colabSentContainer;
     @FXML private VBox colabReceivedContainer;
-    @FXML private Label total_sent_record; // Added to match FXML
-    @FXML private Label total_received_record; // Added to match FXML
+    @FXML private Label total_sent_record;
+    @FXML private Label total_received_record;
 
-
-    // New method to get counts
     private int[] getRecordCounts() {
         int sentCount = 0;
         int receivedCount = 0;
         int currentUserId = UserSession.getInstance().getCurrentUserId();
 
-        // Count Sent requests
         try (PreparedStatement stmt = conn.prepareStatement(
                 "SELECT COUNT(*) FROM collaboration_invites WHERE inviter_id = ?")) {
             stmt.setInt(1, currentUserId);
@@ -50,7 +51,6 @@ public class colab_sent_received__c {
             showAlert(Alert.AlertType.ERROR, "Error", "Failed to count Sent requests: " + e.getMessage());
         }
 
-        // Count Received requests
         try (PreparedStatement stmt = conn.prepareStatement(
                 "SELECT COUNT(*) FROM collaboration_invites WHERE invitee_email = (SELECT email FROM users WHERE user_id = ?)")) {
             stmt.setInt(1, currentUserId);
@@ -78,7 +78,17 @@ public class colab_sent_received__c {
             return;
         }
 
-        // Get and set record counts
+        colabSentContainer.setStyle("-fx-background-color: #005D4D;");
+        colabSentContainer.setAlignment(Pos.TOP_CENTER);
+        colabSentContainer.setPrefHeight(289.0);
+        colabSentContainer.setPrefWidth(307.0);
+        colabSentContainer.setSpacing(10.0);
+        colabReceivedContainer.setStyle("-fx-background-color: #005D4D;");
+        colabReceivedContainer.setAlignment(Pos.TOP_CENTER);
+        colabReceivedContainer.setPrefHeight(289.0);
+        colabReceivedContainer.setPrefWidth(307.0);
+        colabReceivedContainer.setSpacing(10.0);
+
         int[] counts = getRecordCounts();
         total_sent_record.setText("(" + counts[0] + ")");
         total_received_record.setText("(" + counts[1] + ")");
@@ -87,7 +97,6 @@ public class colab_sent_received__c {
         loadSentRequests();
         loadReceivedRequests();
     }
-
 
     public void setConnection(Connection conn) {
         this.conn = conn;
@@ -111,22 +120,24 @@ public class colab_sent_received__c {
                 String inviteeEmail = rs.getString("invitee_email");
                 String status = rs.getString("status");
                 String message = rs.getString("message") != null ? rs.getString("message") : "No message provided";
-                String coverPath = rs.getString("cover_photo"); // Fetch cover_photo
+                String coverPath = rs.getString("cover_photo");
 
-                HBox requestHBox = new HBox(10);
-                requestHBox.setAlignment(Pos.CENTER_LEFT);
-                requestHBox.setStyle("-fx-background-color: #F28888; -fx-background-radius: 5; -fx-border-color: #fff; -fx-border-radius: 5; -fx-padding: 0 0 0 40;");
+                HBox requestHBox = new HBox();
+                requestHBox.setAlignment(Pos.CENTER);
+                requestHBox.setStyle("-fx-background-color: #F28888; -fx-background-radius: 5; -fx-border-color: #fff; -fx-border-radius: 5; -fx-padding: 5;");
                 requestHBox.setPrefSize(270, 105);
                 requestHBox.setMaxSize(270, 105);
                 requestHBox.setMinSize(270, 105);
 
-
-
+                Region spacer = new Region();
+                spacer.setPrefWidth(26.0);
+                spacer.setPrefHeight(104.0);
 
                 ImageView bookCover = new ImageView();
                 bookCover.setFitHeight(76);
                 bookCover.setFitWidth(50);
-                // Use same image loading logic as my_works_my_drafts__c
+                bookCover.setPreserveRatio(true);
+                bookCover.setPickOnBounds(true);
                 if (coverPath != null && !coverPath.isEmpty()) {
                     try {
                         bookCover.setImage(new Image(getClass().getResource("/images/book_covers/" + coverPath).toExternalForm()));
@@ -139,26 +150,64 @@ public class colab_sent_received__c {
                     bookCover.setImage(loadImage("/images/book_covers/hollow_rectangle.png"));
                     LOGGER.info("Loaded default book cover: hollow_rectangle.png");
                 }
+                HBox.setMargin(bookCover, new Insets(5, 5, 5, 5));
+
                 VBox details = new VBox(5);
+                details.setPrefHeight(76.0);
+                details.setPrefWidth(141.0);
+                details.setPadding(new Insets(0, 10, 0, 10));
+                HBox.setMargin(details, new Insets(5, 5, 5, 5));
+                HBox.setHgrow(details, javafx.scene.layout.Priority.ALWAYS);
+
                 Label titleLabel = new Label(title);
                 titleLabel.setTextFill(javafx.scene.paint.Color.WHITE);
                 titleLabel.setWrapText(true);
                 titleLabel.setMaxWidth(122);
-                titleLabel.setFont(Font.font("System", FontWeight.BOLD, 13));
+                titleLabel.setPrefHeight(37.0);
+                titleLabel.setFont(Font.font("System", FontWeight.BOLD, 12.0));
 
                 Label emailLabel = new Label("To: " + inviteeEmail);
                 emailLabel.setTextFill(javafx.scene.paint.Color.WHITE);
-                emailLabel.setStyle("-fx-font-size: 10;");
+                emailLabel.setStyle("-fx-font-size: 9;");
+
                 Label statusLabel = new Label("Status: " + status);
                 statusLabel.setTextFill(javafx.scene.paint.Color.WHITE);
-                statusLabel.setStyle("-fx-font-size: 10;");
+                statusLabel.setStyle("-fx-font-size: 9;");
+
                 Button editButton = new Button("Edit Message");
-                editButton.setStyle("-fx-background-color: #D9D9D9; -fx-border-radius: 5; -fx-font-size: 10;");
-                editButton.setPrefSize(83, 22);
+                editButton.setStyle("-fx-background-color: #D9D9D9; -fx-border-radius: 5; -fx-font-size: 9;");
+                editButton.setPrefSize(80, 18);
                 editButton.setOnAction(e -> handleEditMessage(inviteId, message));
+
                 details.getChildren().addAll(titleLabel, emailLabel, statusLabel, editButton);
-                details.setPadding(new javafx.geometry.Insets(0, 10, 0, 10));
-                requestHBox.getChildren().addAll(bookCover, details);
+
+                VBox deleteButtonBox = new VBox();
+                deleteButtonBox.setAlignment(Pos.TOP_RIGHT);
+                deleteButtonBox.setPrefHeight(104.0);
+                deleteButtonBox.setPrefWidth(22.0);
+                deleteButtonBox.setPadding(new Insets(5.0, 0, 0, 0));
+
+                Button deleteButton = new Button();
+                deleteButton.setId("delete_record");
+                deleteButton.setPrefHeight(18.0);
+                deleteButton.setPrefWidth(18.0);
+                deleteButton.setMaxHeight(Double.NEGATIVE_INFINITY);
+                deleteButton.setMaxWidth(Double.NEGATIVE_INFINITY);
+                deleteButton.setMinHeight(Double.NEGATIVE_INFINITY);
+                deleteButton.setMinWidth(Double.NEGATIVE_INFINITY);
+                deleteButton.setStyle("-fx-background-color: #F82020; -fx-background-radius: 50;");
+                ImageView deleteIcon = new ImageView(new Image(getClass().getResource("/images/icons/cross.png").toExternalForm()));
+                deleteIcon.setFitHeight(15.0);
+                deleteIcon.setFitWidth(15.0);
+                deleteIcon.setPickOnBounds(true);
+                deleteIcon.setPreserveRatio(true);
+                deleteButton.setGraphic(deleteIcon);
+                deleteButton.setUserData(inviteId);
+                deleteButton.setOnAction(e -> deleteRecord(inviteId));
+
+                deleteButtonBox.getChildren().add(deleteButton);
+
+                requestHBox.getChildren().addAll(spacer, bookCover, details, deleteButtonBox);
                 colabSentContainer.getChildren().add(requestHBox);
             }
         } catch (SQLException e) {
@@ -166,6 +215,7 @@ public class colab_sent_received__c {
             showAlert(Alert.AlertType.ERROR, "Error", "Failed to load sent requests: " + e.getMessage());
         }
     }
+
     private void loadReceivedRequests() {
         int currentUserId = UserSession.getInstance().getCurrentUserId();
         try (PreparedStatement stmt = conn.prepareStatement(
@@ -187,21 +237,24 @@ public class colab_sent_received__c {
                 String status = rs.getString("status");
                 String username = rs.getString("username");
                 String title = rs.getString("title") != null ? rs.getString("title") : "Unknown Book";
-                String coverPath = rs.getString("cover_photo"); // Fetch cover_photo
+                String coverPath = rs.getString("cover_photo");
 
-
-                HBox requestHBox = new HBox(10);
-                requestHBox.setAlignment(Pos.CENTER_LEFT);
-                requestHBox.setStyle("-fx-background-color: #F28888; -fx-background-radius: 5; -fx-border-color: #fff; -fx-border-radius: 5; -fx-padding: 0 0 0 40;");
+                HBox requestHBox = new HBox();
+                requestHBox.setAlignment(Pos.CENTER);
+                requestHBox.setStyle("-fx-background-color: #F28888; -fx-background-radius: 5; -fx-border-color: #fff; -fx-border-radius: 5; -fx-padding: 5;");
                 requestHBox.setPrefSize(270, 105);
                 requestHBox.setMaxSize(270, 105);
                 requestHBox.setMinSize(270, 105);
 
+                Region spacer = new Region();
+                spacer.setPrefWidth(26.0);
+                spacer.setPrefHeight(104.0);
 
                 ImageView bookCover = new ImageView();
                 bookCover.setFitHeight(76);
                 bookCover.setFitWidth(50);
-                // Use same image loading logic as my_works_my_drafts__c
+                bookCover.setPreserveRatio(true);
+                bookCover.setPickOnBounds(true);
                 if (coverPath != null && !coverPath.isEmpty()) {
                     try {
                         bookCover.setImage(new Image(getClass().getResource("/images/book_covers/" + coverPath).toExternalForm()));
@@ -214,23 +267,35 @@ public class colab_sent_received__c {
                     bookCover.setImage(loadImage("/images/book_covers/hollow_rectangle.png"));
                     LOGGER.info("Loaded default book cover: hollow_rectangle.png");
                 }
+                HBox.setMargin(bookCover, new Insets(5, 5, 5, 5));
+
                 VBox details = new VBox(5);
+                details.setPrefHeight(76.0);
+                details.setPrefWidth(141.0);
+                details.setPadding(new Insets(0, 10, 0, 10));
+                HBox.setMargin(details, new Insets(5, 5, 5, 5));
+                HBox.setHgrow(details, javafx.scene.layout.Priority.ALWAYS);
+
                 Label titleLabel = new Label(title);
                 titleLabel.setTextFill(javafx.scene.paint.Color.WHITE);
                 titleLabel.setWrapText(true);
                 titleLabel.setMaxWidth(122);
-                titleLabel.setFont(Font.font("System", FontWeight.BOLD, 13));
+                titleLabel.setPrefHeight(37.0);
+                titleLabel.setFont(Font.font("System", FontWeight.BOLD, 12.0));
 
                 Label userLabel = new Label("From: " + username);
                 userLabel.setTextFill(javafx.scene.paint.Color.WHITE);
-                userLabel.setStyle("-fx-font-size: 10;");
+                userLabel.setStyle("-fx-font-size: 9;");
+
                 Button viewRequestButton = new Button("View Request");
                 viewRequestButton.setStyle("-fx-border-radius: 5; -fx-border-color: #fff; -fx-background-color: " +
-                        (status.equals("Pending") ? "#D9D9D9" : status.equals("Accepted") ? "#4CAF50" : "#F44336") + "; -fx-font-size: 10;");
-                viewRequestButton.setPrefSize(83, 22);
+                        (status.equals("Pending") ? "#D9D9D9" : status.equals("Accepted") ? "#4CAF50" : "#F44336") + "; -fx-font-size: 8;");
+                viewRequestButton.setPrefSize(80, 18);
+
                 Button editStatusButton = new Button("Edit Status");
-                editStatusButton.setStyle("-fx-background-color: #D9D9D9; -fx-border-radius: 5; -fx-font-size: 10;");
-                editStatusButton.setPrefSize(83, 22);
+                editStatusButton.setStyle("-fx-background-color: #D9D9D9; -fx-border-radius: 5; -fx-font-size: 8;");
+                editStatusButton.setPrefSize(80, 18);
+
                 try (PreparedStatement ownerStmt = conn.prepareStatement(
                         "SELECT user_id FROM book_authors WHERE book_id = ? AND role = 'Owner'")) {
                     ownerStmt.setInt(1, bookId);
@@ -243,9 +308,36 @@ public class colab_sent_received__c {
                         editStatusButton.setDisable(true);
                     }
                 }
+
                 details.getChildren().addAll(titleLabel, userLabel, viewRequestButton, editStatusButton);
-                details.setPadding(new javafx.geometry.Insets(0, 10, 0, 10));
-                requestHBox.getChildren().addAll(bookCover, details);
+
+                VBox deleteButtonBox = new VBox();
+                deleteButtonBox.setAlignment(Pos.TOP_RIGHT);
+                deleteButtonBox.setPrefHeight(104.0);
+                deleteButtonBox.setPrefWidth(22.0);
+                deleteButtonBox.setPadding(new Insets(5.0, 0, 0, 0));
+
+                Button deleteButton = new Button();
+                deleteButton.setId("delete_record");
+                deleteButton.setPrefHeight(18.0);
+                deleteButton.setPrefWidth(18.0);
+                deleteButton.setMaxHeight(Double.NEGATIVE_INFINITY);
+                deleteButton.setMaxWidth(Double.NEGATIVE_INFINITY);
+                deleteButton.setMinHeight(Double.NEGATIVE_INFINITY);
+                deleteButton.setMinWidth(Double.NEGATIVE_INFINITY);
+                deleteButton.setStyle("-fx-background-color: #F82020; -fx-background-radius: 50;");
+                ImageView deleteIcon = new ImageView(new Image(getClass().getResource("/images/icons/cross.png").toExternalForm()));
+                deleteIcon.setFitHeight(15.0);
+                deleteIcon.setFitWidth(15.0);
+                deleteIcon.setPickOnBounds(true);
+                deleteIcon.setPreserveRatio(true);
+                deleteButton.setGraphic(deleteIcon);
+                deleteButton.setUserData(inviteId);
+                deleteButton.setOnAction(e -> deleteRecord(inviteId));
+
+                deleteButtonBox.getChildren().add(deleteButton);
+
+                requestHBox.getChildren().addAll(spacer, bookCover, details, deleteButtonBox);
                 colabReceivedContainer.getChildren().add(requestHBox);
             }
         } catch (SQLException e) {
@@ -254,6 +346,42 @@ public class colab_sent_received__c {
         }
     }
 
+    private void deleteRecord(int inviteId) {
+        try (Connection conn = db_connect.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(
+                     "DELETE FROM collaboration_invites WHERE invite_id = ?")) {
+            stmt.setInt(1, inviteId);
+            int rowsAffected = stmt.executeUpdate();
+            if (rowsAffected > 0) {
+                LOGGER.info("Deleted collaboration invite with invite_id " + inviteId);
+                loadSentRequests();
+                loadReceivedRequests();
+                int[] counts = getRecordCounts();
+                total_sent_record.setText("(" + counts[0] + ")");
+                total_received_record.setText("(" + counts[1] + ")");
+                showAlert(Alert.AlertType.INFORMATION, "Success", "Collaboration request deleted.");
+            } else {
+                LOGGER.warning("No collaboration invite found for invite_id " + inviteId);
+                showAlert(Alert.AlertType.ERROR, "Error", "No collaboration request found to delete.");
+            }
+        } catch (SQLException e) {
+            LOGGER.severe("Failed to delete collaboration invite: " + e.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Error", "Failed to delete collaboration request: " + e.getMessage());
+        }
+    }
+
+    @FXML
+    private void handle_delete(ActionEvent actionEvent) {
+        Button button = (Button) actionEvent.getSource();
+        Object userData = button.getUserData();
+        if (userData instanceof Integer) {
+            int inviteId = (Integer) userData;
+            deleteRecord(inviteId);
+        } else {
+            LOGGER.warning("No valid data found for delete action");
+            showAlert(Alert.AlertType.ERROR, "Error", "No valid data selected for deletion.");
+        }
+    }
 
     private void handleOpenRequest(int inviteId, int bookId, int inviterId) {
         try (PreparedStatement stmt = conn.prepareStatement(
@@ -273,7 +401,7 @@ public class colab_sent_received__c {
                 popupStage.setTitle("Collaboration Request Details");
 
                 VBox vbox = new VBox(10);
-                vbox.setAlignment(javafx.geometry.Pos.CENTER);
+                vbox.setAlignment(Pos.CENTER);
                 Label usernameLabel = new Label("Username: " + username);
                 usernameLabel.setStyle("-fx-font-size: 14; -fx-font-weight: bold;");
                 Label emailLabel = new Label("Email: " + email);
@@ -293,7 +421,7 @@ public class colab_sent_received__c {
                 closeButton.setOnAction(e -> popupStage.close());
 
                 vbox.getChildren().addAll(profileImageView, usernameLabel, emailLabel, messageLabel, closeButton);
-                vbox.setPadding(new javafx.geometry.Insets(10));
+                vbox.setPadding(new Insets(10));
 
                 Scene scene = new Scene(vbox, 400, 300);
                 popupStage.setScene(scene);
@@ -311,7 +439,7 @@ public class colab_sent_received__c {
         popupStage.setTitle("Edit Collaboration Request Message");
 
         VBox vbox = new VBox(10);
-        vbox.setAlignment(javafx.geometry.Pos.CENTER);
+        vbox.setAlignment(Pos.CENTER);
         Label messageLabel = new Label("Edit Message:");
         messageLabel.setStyle("-fx-font-size: 14; -fx-font-weight: bold;");
         TextArea messageArea = new TextArea(currentMessage);
@@ -334,7 +462,7 @@ public class colab_sent_received__c {
             }
         });
         vbox.getChildren().addAll(messageLabel, messageArea, saveButton);
-        vbox.setPadding(new javafx.geometry.Insets(10));
+        vbox.setPadding(new Insets(10));
 
         Scene scene = new Scene(vbox, 350, 200);
         popupStage.setScene(scene);
@@ -347,10 +475,10 @@ public class colab_sent_received__c {
         popupStage.setTitle("Edit Collaboration Request Status");
 
         VBox vbox = new VBox(10);
-        vbox.setAlignment(javafx.geometry.Pos.CENTER);
+        vbox.setAlignment(Pos.CENTER);
         Label statusLabel = new Label("Edit Status:");
         statusLabel.setStyle("-fx-font-size: 14; -fx-font-weight: bold;");
-        javafx.scene.control.ChoiceBox<String> statusChoiceBox = new javafx.scene.control.ChoiceBox<>();
+        ChoiceBox<String> statusChoiceBox = new ChoiceBox<>();
         statusChoiceBox.getItems().addAll("Pending", "Accepted", "Declined");
         statusChoiceBox.setValue(currentStatus);
         Button saveButton = new Button("Save");
@@ -378,14 +506,12 @@ public class colab_sent_received__c {
             }
         });
         vbox.getChildren().addAll(statusLabel, statusChoiceBox, saveButton);
-        vbox.setPadding(new javafx.geometry.Insets(10));
+        vbox.setPadding(new Insets(10));
 
         Scene scene = new Scene(vbox, 300, 150);
         popupStage.setScene(scene);
         popupStage.show();
     }
-
-
 
     private void updateInviteStatus(int inviteId, int bookId, int inviterId, String status) {
         boolean autoCommit = true;
@@ -478,7 +604,7 @@ public class colab_sent_received__c {
             checkStmt.setInt(1, bookId);
             checkStmt.setInt(2, userId);
             if (!checkStmt.executeQuery().next()) {
-                return; // User is not a co-author, no action needed
+                return;
             }
         } catch (SQLException e) {
             LOGGER.severe("Error checking co-author: " + e.getMessage());

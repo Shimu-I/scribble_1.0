@@ -1,23 +1,22 @@
 package com.example.scribble;
 
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
 import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.geometry.Insets;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.io.IOException;
 import java.util.logging.Logger;
 
 public class groups_joined_owned__c {
@@ -37,14 +36,12 @@ public class groups_joined_owned__c {
 
     @FXML
     private Label total_joined_record; // Renamed to match FXML
+
     @FXML
     private Label total_owned_record; // Renamed to match FXML
 
     private int joinedCount;
     private int ownedCount;
-
-
-
 
     @FXML
     private void initialize() {
@@ -70,7 +67,7 @@ public class groups_joined_owned__c {
         int userId = UserSession.getInstance().getUserId();
         LOGGER.info("Fetching counts for user ID: " + userId);
 
-        //count of joined groups
+        // Count of joined groups
         String joinedQuery = "SELECT COUNT(DISTINCT gm.group_id) AS joined_count " +
                 "FROM group_members gm " +
                 "JOIN community_groups cg ON gm.group_id = cg.group_id " +
@@ -93,7 +90,7 @@ public class groups_joined_owned__c {
             e.printStackTrace();
         }
 
-        // Count Owned groups
+        // Count owned groups
         String ownedQuery = "SELECT COUNT(*) AS owned_count " +
                 "FROM community_groups cg " +
                 "WHERE cg.admin_id = ?";
@@ -112,14 +109,11 @@ public class groups_joined_owned__c {
         }
     }
 
-
-
-
     private void updateLabels() {
         if (total_joined_record != null) {
             total_joined_record.setText("(" + joinedCount + ")");
         } else {
-            LOGGER.warning("total_joined_label is null. Check FXML fx:id.");
+            LOGGER.warning("total_joined_record is null. Check FXML fx:id.");
         }
         if (total_owned_record != null) {
             total_owned_record.setText("(" + ownedCount + ")");
@@ -254,20 +248,18 @@ public class groups_joined_owned__c {
 
     private HBox createGroupBox(String bookName, String subtitle, String buttonText, int groupId, boolean isJoined, String coverPhoto) {
         HBox groupBox = new HBox();
-        groupBox.setAlignment(javafx.geometry.Pos.CENTER);
-        
-
+        groupBox.setAlignment(javafx.geometry.Pos.CENTER); // Match FXML's HBox alignment
         groupBox.setPrefSize(270, 105);
         groupBox.setMaxSize(270, 105);
         groupBox.setMinSize(270, 105);
         groupBox.setStyle("-fx-background-color: #F28888; -fx-background-radius: 5; -fx-border-color: #fff; -fx-border-radius: 5;");
 
+        // ImageView setup
         ImageView imageView = new ImageView();
         imageView.setFitHeight(76.0);
         imageView.setFitWidth(50.0);
         imageView.setPickOnBounds(true);
         imageView.setPreserveRatio(true);
-        // Load book cover similar to colab_sent_received__c
         if (coverPhoto != null && !coverPhoto.isEmpty()) {
             try {
                 imageView.setImage(new Image(getClass().getResource("/images/book_covers/" + coverPhoto).toExternalForm()));
@@ -280,40 +272,143 @@ public class groups_joined_owned__c {
             imageView.setImage(loadImage("/images/book_covers/hollow_rectangle.png"));
             LOGGER.info("Loaded default book cover: hollow_rectangle.png");
         }
+        HBox.setMargin(imageView, new Insets(5, 5, 5, 5)); // Consistent margins
 
+        // Spacer region to match FXML
+        Region spacer = new Region();
+        spacer.setPrefWidth(26.0);
+        spacer.setPrefHeight(104.0);
+
+        // TextBox setup
         VBox textBox = new VBox();
         textBox.setPrefHeight(76.0);
-        textBox.setPrefWidth(133.0);
+        textBox.setPrefWidth(141.0); // Match FXML's vbox_1 width
         textBox.setSpacing(5.0);
         textBox.setPadding(new Insets(0, 10, 0, 10));
+        HBox.setMargin(textBox, new Insets(5, 5, 5, 5)); // Consistent margins
+        HBox.setHgrow(textBox, javafx.scene.layout.Priority.ALWAYS); // Ensure textBox expands
 
+        // Book name label
         Label bookNameLabel = new Label(bookName);
         bookNameLabel.setTextFill(javafx.scene.paint.Color.WHITE);
         bookNameLabel.setPrefHeight(37.0);
         bookNameLabel.setPrefWidth(122.0);
         bookNameLabel.setWrapText(true);
+        bookNameLabel.setFont(Font.font("System", FontWeight.BOLD, 12.0)); // Match FXML's font
 
+        // Subtitle label
         Label subtitleLabel = new Label(subtitle);
         subtitleLabel.setTextFill(javafx.scene.paint.Color.WHITE);
-        subtitleLabel.setFont(new Font(10.0));
+        subtitleLabel.setFont(new Font(9.0)); // Match FXML's font size
+        subtitleLabel.setPrefHeight(24.0);
+        subtitleLabel.setPrefWidth(123.0);
+        subtitleLabel.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+        subtitleLabel.setWrapText(true);
 
-        Button button = new Button(buttonText);
-        button.setPrefHeight(22.0);
-        button.setPrefWidth(83.0);
-        button.setStyle("-fx-border-radius: 5; -fx-border-color: 1; -fx-background-color: #fff");
-        button.setFont(new Font(10.0));
-        VBox.setMargin(button, new Insets(5.0, 0, 0, 0));
-        button.setUserData(groupId);
-        button.setId(isJoined ? "joined_status" : "owned_status");
+        // Action button
+        Button actionButton = new Button(buttonText);
+        actionButton.setPrefHeight(22.0);
+        actionButton.setPrefWidth(83.0);
+        actionButton.setStyle("-fx-border-radius: 5; -fx-border-color: #000; -fx-background-color: #fff");
+        actionButton.setFont(new Font(10.0));
+        VBox.setMargin(actionButton, new Insets(5.0, 0, 0, 0));
+        actionButton.setUserData(groupId);
+        actionButton.setId(isJoined ? "joined_status" : "owned_status");
+        actionButton.setOnAction(isJoined ? this::handle_joined_group : this::handle_owned_group);
 
-        textBox.getChildren().addAll(bookNameLabel, subtitleLabel, button);
-        groupBox.getChildren().addAll(imageView, textBox);
+        // Add elements to textBox
+        textBox.getChildren().addAll(bookNameLabel, subtitleLabel, actionButton);
+
+        // Delete button VBox
+        VBox deleteButtonBox = new VBox();
+        deleteButtonBox.setAlignment(javafx.geometry.Pos.TOP_RIGHT); // Match FXML's TOP_RIGHT alignment
+        deleteButtonBox.setPrefHeight(104.0);
+        deleteButtonBox.setPrefWidth(22.0);
+        deleteButtonBox.setPadding(new Insets(5.0, 0, 0, 0)); // Match FXML's top padding
+
+        // Delete button
+        Button deleteButton = new Button();
+        deleteButton.setId("delete_record"); // Match FXML's fx:id
+        deleteButton.setPrefHeight(18.0);
+        deleteButton.setPrefWidth(18.0);
+        deleteButton.setMaxHeight(Double.NEGATIVE_INFINITY);
+        deleteButton.setMaxWidth(Double.NEGATIVE_INFINITY);
+        deleteButton.setMinHeight(Double.NEGATIVE_INFINITY);
+        deleteButton.setMinWidth(Double.NEGATIVE_INFINITY);
+        deleteButton.setStyle("-fx-background-color: #F82020; -fx-background-radius: 50;");
+        ImageView deleteIcon = new ImageView(new Image(getClass().getResource("/images/icons/cross.png").toExternalForm()));
+        deleteIcon.setFitHeight(15.0);
+        deleteIcon.setFitWidth(15.0);
+        deleteIcon.setPickOnBounds(true);
+        deleteIcon.setPreserveRatio(true);
+        deleteButton.setGraphic(deleteIcon);
+        deleteButton.setOnAction(e -> deleteGroupRecord(groupId, isJoined));
+
+        // Add delete button to its VBox
+        deleteButtonBox.getChildren().add(deleteButton);
+
+        // Add elements to groupBox
+        groupBox.getChildren().addAll(spacer, imageView, textBox, deleteButtonBox);
 
         return groupBox;
     }
 
+    private void deleteGroupRecord(int groupId, boolean isJoined) {
+        int userId = UserSession.getInstance().getUserId();
+        try (Connection conn = db_connect.getConnection()) {
+            if (isJoined) {
+                // Delete from group_members for joined groups
+                String deleteQuery = "DELETE FROM group_members WHERE group_id = ? AND user_id = ?";
+                try (PreparedStatement stmt = conn.prepareStatement(deleteQuery)) {
+                    stmt.setInt(1, groupId);
+                    stmt.setInt(2, userId);
+                    int rowsAffected = stmt.executeUpdate();
+                    if (rowsAffected > 0) {
+                        LOGGER.info("Deleted membership for group_id " + groupId + " and user_id " + userId);
+                        loadJoinedGroups(); // Refresh joined groups
+                        fetchGroupCounts(); // Update counts
+                        updateLabels(); // Update labels
+                        showAlert("Success", "Left the group successfully.");
+                    } else {
+                        LOGGER.warning("No membership found for group_id " + groupId + " and user_id " + userId);
+                        showAlert("Error", "No membership found to delete.");
+                    }
+                }
+            } else {
+                // Delete from community_groups for owned groups
+                String deleteQuery = "DELETE FROM community_groups WHERE group_id = ? AND admin_id = ?";
+                try (PreparedStatement stmt = conn.prepareStatement(deleteQuery)) {
+                    stmt.setInt(1, groupId);
+                    stmt.setInt(2, userId);
+                    int rowsAffected = stmt.executeUpdate();
+                    if (rowsAffected > 0) {
+                        LOGGER.info("Deleted owned group with group_id " + groupId + " for admin_id " + userId);
+                        loadOwnedGroups(); // Refresh owned groups
+                        fetchGroupCounts(); // Update counts
+                        updateLabels(); // Update labels
+                        showAlert("Success", "Group deleted successfully.");
+                    } else {
+                        LOGGER.warning("No owned group found for group_id " + groupId + " and admin_id " + userId);
+                        showAlert("Error", "No group found to delete or you are not the owner.");
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.severe("Failed to delete group record: " + e.getMessage());
+            showAlert("Error", "Failed to delete group record: " + e.getMessage());
+        }
+    }
+
+    private void showAlert(String title, String content) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(content);
+        alert.showAndWait();
+    }
+
     @FXML
-    private void handle_joined_group(javafx.event.ActionEvent event) {
+    private void handle_joined_group(ActionEvent event) {
         Button button = (Button) event.getSource();
         Integer groupId = (Integer) button.getUserData();
         if (groupId != null) {
@@ -324,12 +419,12 @@ public class groups_joined_owned__c {
     }
 
     @FXML
-    private void handle_owned_group(javafx.event.ActionEvent event) {
-
+    private void handle_owned_group(ActionEvent event) {
+        // Implement navigation or other logic for owned groups if needed
     }
 
     private void navigateToGroupDetails(int groupId) {
-
+        // Implement navigation to group details page if needed
     }
 
     private Image loadImage(String path) {

@@ -9,8 +9,8 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
-import javafx.scene.Node;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.TextAlignment;
@@ -33,20 +33,17 @@ public class history_library__c implements nav_bar__cAware {
     private VBox libraryContainer;
 
     @FXML
-    private Label total_history_record; // Added to match FXML
+    private Label total_history_record;
     @FXML
-    private Label total_library_record; // Added to match FXML
+    private Label total_library_record;
 
     private nav_bar__c mainController;
     private int userId;
 
-
-    // Modified to return counts separately
     private int[] getRecordCounts() {
         int historyCount = 0;
         int libraryCount = 0;
 
-        // Count history records
         try (Connection conn = db_connect.getConnection();
              PreparedStatement stmt = conn.prepareStatement(
                      "SELECT COUNT(*) FROM book_visits WHERE user_id = ?")) {
@@ -60,7 +57,6 @@ public class history_library__c implements nav_bar__cAware {
             showAlert("Error", "Failed to count history records: " + e.getMessage());
         }
 
-        // Count library records
         try (Connection conn = db_connect.getConnection();
              PreparedStatement stmt = conn.prepareStatement(
                      "SELECT COUNT(*) FROM reading_list WHERE reader_id = ?")) {
@@ -77,7 +73,6 @@ public class history_library__c implements nav_bar__cAware {
         return new int[]{historyCount, libraryCount};
     }
 
-
     @FXML
     public void initialize() {
         userId = UserSession.getInstance().getUserId();
@@ -85,28 +80,25 @@ public class history_library__c implements nav_bar__cAware {
             showAlert("Error", "No user logged in");
             return;
         }
-        // Apply FXML styles to history_library_vbox
         history_library_vbox.setPrefHeight(332.0);
         history_library_vbox.setPrefWidth(1400.0);
         history_library_vbox.setStyle("-fx-background-color: #005D4D;");
         history_library_vbox.setAlignment(javafx.geometry.Pos.TOP_CENTER);
 
-        // Apply FXML styles to containers
         historyContainer.setStyle("-fx-background-color: #005D4D;");
         historyContainer.setAlignment(javafx.geometry.Pos.TOP_CENTER);
         historyContainer.setPrefHeight(289.0);
-        historyContainer.setPrefWidth(307.0); // Match FXML
+        historyContainer.setPrefWidth(307.0);
         historyContainer.setSpacing(10.0);
 
         libraryContainer.setStyle("-fx-background-color: #005D4D;");
         libraryContainer.setAlignment(javafx.geometry.Pos.TOP_CENTER);
         libraryContainer.setPrefHeight(289.0);
-        libraryContainer.setPrefWidth(307.0); // Match FXML
+        libraryContainer.setPrefWidth(307.0);
         libraryContainer.setSpacing(10.0);
 
         LOGGER.info("Initialized history_library_vbox and containers with FXML styles");
 
-        // Get and set record counts
         int[] counts = getRecordCounts();
         total_history_record.setText("(" + counts[0] + ")");
         total_library_record.setText("(" + counts[1] + ")");
@@ -174,15 +166,21 @@ public class history_library__c implements nav_bar__cAware {
 
     private HBox createBookCard(int bookId, String title, String coverPath, String date, String dateLabel, String readingStatus) {
         HBox card = new HBox();
-        card.setStyle("-fx-background-color: #F28888; -fx-background-radius: 5; -fx-border-color: #fff; -fx-border-radius: 5;");
+        card.setStyle("-fx-background-color: #F28888; -fx-background-radius: 5; -fx-border-color: #fff; -fx-border-radius: 5; -fx-padding: 5;");
         card.setAlignment(javafx.geometry.Pos.CENTER);
-        card.setPrefHeight(105.0); // Increased to accommodate ChoiceBox below labels
+        card.setPrefHeight(105.0);
         card.setPrefWidth(270.0);
         card.setMaxHeight(Double.NEGATIVE_INFINITY);
         card.setMaxWidth(Double.NEGATIVE_INFINITY);
         card.setMinHeight(Double.NEGATIVE_INFINITY);
         card.setMinWidth(Double.NEGATIVE_INFINITY);
 
+        // Spacer region to match FXML
+        Region spacer = new Region();
+        spacer.setPrefWidth(26.0);
+        spacer.setPrefHeight(104.0);
+
+        // ImageView setup
         ImageView coverImage = new ImageView();
         coverImage.setFitWidth(50.0);
         coverImage.setFitHeight(76.0);
@@ -200,62 +198,142 @@ public class history_library__c implements nav_bar__cAware {
             coverImage.setImage(new Image(getClass().getResource("/images/book_covers/hollow_rectangle.png").toExternalForm()));
             LOGGER.info("Loaded default book cover: hollow_rectangle.png");
         }
-
         coverImage.setOnMouseClicked(event -> openBook(bookId));
+        HBox.setMargin(coverImage, new Insets(5, 5, 5, 5));
 
+        // VBox for text content
         VBox textBox = new VBox();
-        textBox.setStyle("-fx-background-color: transparent;");
-        textBox.setMaxHeight(Double.NEGATIVE_INFINITY);
-        textBox.setMaxWidth(Double.NEGATIVE_INFINITY);
-        textBox.setMinHeight(Double.NEGATIVE_INFINITY);
-        textBox.setMinWidth(Double.NEGATIVE_INFINITY);
-        textBox.setPrefHeight(110.0); // Increased to accommodate ChoiceBox below labels
-        textBox.setPrefWidth(133.0);
+        textBox.setPrefHeight(76.0);
+        textBox.setPrefWidth(141.0);
         textBox.setSpacing(5.0);
-        textBox.setPadding(new Insets(0, 10.0, 0, 10.0));
-        textBox.setAlignment(javafx.geometry.Pos.CENTER);
+        textBox.setPadding(new Insets(0, 10, 0, 10));
+        HBox.setMargin(textBox, new Insets(5, 5, 5, 5));
+        HBox.setHgrow(textBox, javafx.scene.layout.Priority.ALWAYS);
 
+        // Title label
         Label titleLabel = new Label(title);
-        titleLabel.setMaxHeight(Double.NEGATIVE_INFINITY);
-        titleLabel.setMaxWidth(Double.NEGATIVE_INFINITY);
-        titleLabel.setMinWidth(Double.NEGATIVE_INFINITY);
         titleLabel.setPrefHeight(37.0);
         titleLabel.setPrefWidth(122.0);
         titleLabel.setTextFill(javafx.scene.paint.Color.WHITE);
         titleLabel.setWrapText(true);
         titleLabel.setFont(Font.font("System", FontWeight.BOLD, 12.0));
 
+        // Date label
         Label dateLabelText = new Label(dateLabel + " " + date);
         dateLabelText.setPrefHeight(24.0);
-        dateLabelText.setPrefWidth("last visited at".equals(dateLabel) ? 123.0 : 118.0);
+        dateLabelText.setPrefWidth(123.0);
         dateLabelText.setTextAlignment(TextAlignment.CENTER);
         dateLabelText.setTextFill(javafx.scene.paint.Color.WHITE);
         dateLabelText.setWrapText(true);
-        dateLabelText.setFont(new Font(10.0));
+        dateLabelText.setFont(new Font(8.0));
 
-        // Add labels first
+        // Add title and date to textBox
         textBox.getChildren().addAll(titleLabel, dateLabelText);
 
-        // Add ChoiceBox only for library cards, below labels
+        // Delete button VBox
+        VBox deleteButtonBox = new VBox();
+        deleteButtonBox.setAlignment(javafx.geometry.Pos.TOP_RIGHT);
+        deleteButtonBox.setPrefHeight(104.0);
+        deleteButtonBox.setPrefWidth(22.0);
+        deleteButtonBox.setPadding(new Insets(5.0, 0, 0, 0));
+
+        // Delete button
+        Button deleteButton = new Button();
+        deleteButton.setId("delete_record");
+        deleteButton.setPrefHeight(18.0);
+        deleteButton.setPrefWidth(18.0);
+        deleteButton.setMaxHeight(Double.NEGATIVE_INFINITY);
+        deleteButton.setMaxWidth(Double.NEGATIVE_INFINITY);
+        deleteButton.setMinHeight(Double.NEGATIVE_INFINITY);
+        deleteButton.setMinWidth(Double.NEGATIVE_INFINITY);
+        deleteButton.setStyle("-fx-background-color: #F82020; -fx-background-radius: 50;");
+        ImageView deleteIcon = new ImageView(new Image(getClass().getResource("/images/icons/cross.png").toExternalForm()));
+        deleteIcon.setFitHeight(15.0);
+        deleteIcon.setFitWidth(15.0);
+        deleteIcon.setPickOnBounds(true);
+        deleteIcon.setPreserveRatio(true);
+        deleteButton.setGraphic(deleteIcon);
+        deleteButton.setOnAction(e -> deleteRecord(bookId, readingStatus != null));
+
+        // Add delete button to its VBox
+        deleteButtonBox.getChildren().add(deleteButton);
+
+        // Add elements to card
+        card.getChildren().addAll(spacer, coverImage, textBox, deleteButtonBox);
+
+        // Add ChoiceBox only for library cards
         if (readingStatus != null) {
             ChoiceBox<String> statusChoiceBox = new ChoiceBox<>();
             statusChoiceBox.getItems().addAll("Reading", "Completed", "Dropped", "SavedForLater");
             statusChoiceBox.setValue(readingStatus);
-            statusChoiceBox.setPrefWidth(80.0); // Reduced width
-            statusChoiceBox.setPrefHeight(20.0); // Set smaller height
+            statusChoiceBox.setPrefWidth(80.0);
+            statusChoiceBox.setPrefHeight(20.0);
             statusChoiceBox.setMinHeight(20.0);
             statusChoiceBox.setMaxHeight(20.0);
             statusChoiceBox.setStyle("-fx-font-size: 9px;");
-
-
             statusChoiceBox.setOnAction(event -> updateReadingStatus(bookId, statusChoiceBox.getValue()));
             textBox.getChildren().add(statusChoiceBox);
         }
 
-        card.getChildren().addAll(coverImage, textBox);
-
         LOGGER.info("Created book card with FXML-matched styles");
         return card;
+    }
+
+    private void deleteRecord(int bookId, boolean isLibrary) {
+        try (Connection conn = db_connect.getConnection()) {
+            if (isLibrary) {
+                String deleteQuery = "DELETE FROM reading_list WHERE listed_book_id = ? AND reader_id = ?";
+                try (PreparedStatement stmt = conn.prepareStatement(deleteQuery)) {
+                    stmt.setInt(1, bookId);
+                    stmt.setInt(2, userId);
+                    int rowsAffected = stmt.executeUpdate();
+                    if (rowsAffected > 0) {
+                        LOGGER.info("Deleted library record for book_id " + bookId + " and user_id " + userId);
+                        populateLibrary();
+                        int[] counts = getRecordCounts();
+                        total_library_record.setText("(" + counts[1] + ")");
+                        showAlert("Success", "Book removed from library.");
+                    } else {
+                        LOGGER.warning("No library record found for book_id " + bookId + " and user_id " + userId);
+                        showAlert("Error", "No record found to delete.");
+                    }
+                }
+            } else {
+                String deleteQuery = "DELETE FROM book_visits WHERE book_id = ? AND user_id = ?";
+                try (PreparedStatement stmt = conn.prepareStatement(deleteQuery)) {
+                    stmt.setInt(1, bookId);
+                    stmt.setInt(2, userId);
+                    int rowsAffected = stmt.executeUpdate();
+                    if (rowsAffected > 0) {
+                        LOGGER.info("Deleted history record for book_id " + bookId + " and user_id " + userId);
+                        populateHistory();
+                        int[] counts = getRecordCounts();
+                        total_history_record.setText("(" + counts[0] + ")");
+                        showAlert("Success", "Visit history removed.");
+                    } else {
+                        LOGGER.warning("No history record found for book_id " + bookId + " and user_id " + userId);
+                        showAlert("Error", "No record found to delete.");
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.severe("Failed to delete record: " + e.getMessage());
+            showAlert("Error", "Failed to delete record: " + e.getMessage());
+        }
+    }
+
+    @FXML
+    public void handle_delete(ActionEvent actionEvent) {
+        Button button = (Button) actionEvent.getSource();
+        Integer bookId = (Integer) button.getUserData();
+        if (bookId != null) {
+            boolean isLibrary = button.getParent().getParent() instanceof HBox &&
+                    ((HBox) button.getParent().getParent()).getParent() == libraryContainer;
+            deleteRecord(bookId, isLibrary);
+        } else {
+            LOGGER.warning("No book ID found for delete action");
+            showAlert("Error", "No book selected for deletion.");
+        }
     }
 
     private void openBook(int bookId) {
@@ -304,7 +382,7 @@ public class history_library__c implements nav_bar__cAware {
     }
 
     private void showAlert(String title, String content) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(content);
