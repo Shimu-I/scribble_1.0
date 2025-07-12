@@ -309,7 +309,7 @@ public class groups_joined_owned__c {
         Button actionButton = new Button(buttonText);
         actionButton.setPrefHeight(22.0);
         actionButton.setPrefWidth(83.0);
-        actionButton.setStyle("-fx-border-radius: 5; -fx-border-color: #000; -fx-background-color: #fff");
+        actionButton.setStyle("-fx-border-radius: 5; -fx-background-color: #fff");
         actionButton.setFont(new Font(10.0));
         VBox.setMargin(actionButton, new Insets(5.0, 0, 0, 0));
         actionButton.setUserData(groupId);
