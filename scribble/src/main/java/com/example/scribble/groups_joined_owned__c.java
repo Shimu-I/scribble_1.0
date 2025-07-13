@@ -4,6 +4,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -17,6 +18,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 public class groups_joined_owned__c {
@@ -347,15 +349,69 @@ public class groups_joined_owned__c {
     private void deleteGroupRecord(int groupId, boolean isJoined) {
         int userId = UserSession.getInstance().getUserId();
         try (Connection conn = db_connect.getConnection()) {
-            if (isJoined) {
-                // Delete from group_members for joined groups
+            // Check if the user is the owner of the group
+            String checkOwnerQuery = "SELECT admin_id FROM community_groups WHERE group_id = ?";
+            boolean isOwner = false;
+            try (PreparedStatement checkStmt = conn.prepareStatement(checkOwnerQuery)) {
+                checkStmt.setInt(1, groupId);
+                ResultSet rs = checkStmt.executeQuery();
+                if (rs.next()) {
+                    isOwner = rs.getInt("admin_id") == userId;
+                }
+            }
+
+            if (isOwner) {
+                // Owner is attempting to delete the group (from either joined or owned section)
+                Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION);
+                confirmation.setTitle("Confirm Group Deletion");
+                confirmation.setHeaderText("Are you sure you want to delete this group?");
+                confirmation.setContentText("This will permanently delete the group, all associated messages, and memberships. This action cannot be undone.");
+                Optional<ButtonType> result = confirmation.showAndWait();
+                if (result.isPresent() && result.get() == ButtonType.OK) {
+                    // Delete user_group_status entries for the group
+                    String deleteStatusQuery = "DELETE FROM user_group_status WHERE group_id = ?";
+                    try (PreparedStatement statusStmt = conn.prepareStatement(deleteStatusQuery)) {
+                        statusStmt.setInt(1, groupId);
+                        int statusDeleted = statusStmt.executeUpdate();
+                        LOGGER.info("Deleted " + statusDeleted + " user_group_status entries for group_id " + groupId);
+                    }
+
+                    // Delete the group (this will cascade to group_members and chat_messages due to ON DELETE CASCADE)
+                    String deleteGroupQuery = "DELETE FROM community_groups WHERE group_id = ? AND admin_id = ?";
+                    try (PreparedStatement groupStmt = conn.prepareStatement(deleteGroupQuery)) {
+                        groupStmt.setInt(1, groupId);
+                        groupStmt.setInt(2, userId);
+                        int rowsAffected = groupStmt.executeUpdate();
+                        if (rowsAffected > 0) {
+                            LOGGER.info("Deleted owned group with group_id " + groupId + " for admin_id " + userId);
+                            loadJoinedGroups();
+                            loadOwnedGroups();
+                            fetchGroupCounts();
+                            updateLabels();
+                            showAlert("Success", "Group and all associated data deleted successfully.");
+                        } else {
+                            LOGGER.warning("No owned group found for group_id " + groupId + " and admin_id " + userId);
+                            showAlert("Error", "No group found to delete or you are not the owner.");
+                        }
+                    }
+                } else {
+                    LOGGER.info("Group deletion cancelled for group_id " + groupId);
+                }
+            } else if (isJoined) {
+                // Non-owner user leaving the group
                 String deleteQuery = "DELETE FROM group_members WHERE group_id = ? AND user_id = ?";
-                try (PreparedStatement stmt = conn.prepareStatement(deleteQuery)) {
+                String updateStatusQuery = "INSERT INTO user_group_status (user_id, group_id, status) VALUES (?, ?, 'left') " +
+                        "ON DUPLICATE KEY UPDATE status = 'left'";
+                try (PreparedStatement stmt = conn.prepareStatement(deleteQuery);
+                     PreparedStatement statusStmt = conn.prepareStatement(updateStatusQuery)) {
                     stmt.setInt(1, groupId);
                     stmt.setInt(2, userId);
                     int rowsAffected = stmt.executeUpdate();
                     if (rowsAffected > 0) {
-                        LOGGER.info("Deleted membership for group_id " + groupId + " and user_id " + userId);
+                        statusStmt.setInt(1, userId);
+                        statusStmt.setInt(2, groupId);
+                        statusStmt.executeUpdate();
+                        LOGGER.info("Deleted membership and updated user_group_status for group_id " + groupId + " and user_id " + userId);
                         loadJoinedGroups();
                         fetchGroupCounts();
                         updateLabels();
@@ -366,23 +422,9 @@ public class groups_joined_owned__c {
                     }
                 }
             } else {
-                // Delete from community_groups for owned groups
-                String deleteQuery = "DELETE FROM community_groups WHERE group_id = ? AND admin_id = ?";
-                try (PreparedStatement stmt = conn.prepareStatement(deleteQuery)) {
-                    stmt.setInt(1, groupId);
-                    stmt.setInt(2, userId);
-                    int rowsAffected = stmt.executeUpdate();
-                    if (rowsAffected > 0) {
-                        LOGGER.info("Deleted owned group with group_id " + groupId + " for admin_id " + userId);
-                        loadOwnedGroups();
-                        fetchGroupCounts();
-                        updateLabels();
-                        showAlert("Success", "Group deleted successfully.");
-                    } else {
-                        LOGGER.warning("No owned group found for group_id " + groupId + " and admin_id " + userId);
-                        showAlert("Error", "No group found to delete or you are not the owner.");
-                    }
-                }
+                // Should not reach here, but log for safety
+                LOGGER.warning("Invalid deletion attempt: group_id " + groupId + ", user_id " + userId + ", isJoined=" + isJoined);
+                showAlert("Error", "Invalid deletion attempt.");
             }
         } catch (SQLException e) {
             LOGGER.severe("Failed to delete group record: " + e.getMessage());
