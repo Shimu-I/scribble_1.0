@@ -23,6 +23,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
 
@@ -355,47 +357,223 @@ public class my_works_my_drafts__c implements nav_bar__cAware {
     private void deleteRecord(int bookId, boolean isWork, int chapterNumber) {
         try (Connection conn = db_connect.getConnection()) {
             if (isWork) {
-                // Fetch book title for confirmation dialog
+                // Fetch book title and check if the user is the owner
                 String title = "Unknown Book";
+                String role = "";
                 try (PreparedStatement titleStmt = conn.prepareStatement(
-                        "SELECT title FROM books WHERE book_id = ?")) {
+                        "SELECT b.title, ba.role FROM books b JOIN book_authors ba ON b.book_id = ba.book_id WHERE b.book_id = ? AND ba.user_id = ?")) {
                     titleStmt.setInt(1, bookId);
+                    titleStmt.setInt(2, userId);
                     ResultSet rs = titleStmt.executeQuery();
                     if (rs.next()) {
                         title = rs.getString("title");
+                        role = rs.getString("role");
+                    } else {
+                        LOGGER.warning("No record found for book_id " + bookId + " and user_id " + userId);
+                        showAlert("Error", "No record found for this book and user.");
+                        return;
                     }
                 } catch (SQLException e) {
-                    LOGGER.warning("Failed to fetch book title for book_id " + bookId + ": " + e.getMessage());
-                }
-
-                // Show confirmation dialog
-                Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
-                confirmAlert.setTitle("Confirm Deletion");
-                confirmAlert.setHeaderText("Delete Book");
-                confirmAlert.setContentText("Are you sure you want to delete the book '" + title + "' from My Works?");
-                Optional<ButtonType> result = confirmAlert.showAndWait();
-                if (result.isEmpty() || result.get() != ButtonType.OK) {
-                    LOGGER.info("Deletion cancelled for book_id " + bookId);
+                    LOGGER.warning("Failed to fetch book title or role for book_id " + bookId + ": " + e.getMessage());
+                    showAlert("Error", "Failed to fetch book details: " + e.getMessage());
                     return;
                 }
 
-                String deleteQuery = "DELETE FROM book_authors WHERE book_id = ? AND user_id = ?";
-                try (PreparedStatement stmt = conn.prepareStatement(deleteQuery)) {
-                    stmt.setInt(1, bookId);
-                    stmt.setInt(2, userId);
-                    int rowsAffected = stmt.executeUpdate();
-                    if (rowsAffected > 0) {
-                        LOGGER.info("Deleted work record for book_id " + bookId + " and user_id " + userId);
-                        populateMyWorks();
-                        int[] counts = getRecordCounts();
-                        total_my_works_record.setText("(" + counts[0] + ")");
-                        showAlert("Success", "Book '" + title + "' removed from My Works.");
-                    } else {
-                        LOGGER.warning("No work record found for book_id " + bookId + " and user_id " + userId);
-                        showAlert("Error", "No record found to delete.");
+                if (!role.equals("Owner")) {
+                    // Handle co-author removal (as in the previous implementation)
+                    int chapterCount = 0;
+                    int draftCount = 0;
+                    try (PreparedStatement chapterStmt = conn.prepareStatement(
+                            "SELECT COUNT(*) FROM chapters WHERE book_id = ? AND author_id = ?")) {
+                        chapterStmt.setInt(1, bookId);
+                        chapterStmt.setInt(2, userId);
+                        ResultSet rs = chapterStmt.executeQuery();
+                        if (rs.next()) {
+                            chapterCount = rs.getInt(1);
+                        }
+                    } catch (SQLException e) {
+                        LOGGER.warning("Failed to check chapters for book_id " + bookId + ": " + e.getMessage());
+                    }
+
+                    try (PreparedStatement draftStmt = conn.prepareStatement(
+                            "SELECT COUNT(*) FROM draft_chapters WHERE book_id = ? AND author_id = ?")) {
+                        draftStmt.setInt(1, bookId);
+                        draftStmt.setInt(2, userId);
+                        ResultSet rs = draftStmt.executeQuery();
+                        if (rs.next()) {
+                            draftCount = rs.getInt(1);
+                        }
+                    } catch (SQLException e) {
+                        LOGGER.warning("Failed to check draft chapters for book_id " + bookId + ": " + e.getMessage());
+                    }
+
+                    String warning = "";
+                    if (chapterCount > 0 || draftCount > 0) {
+                        warning = "\nWARNING: You have " + chapterCount + " published chapter(s) and " + draftCount + " draft chapter(s), which will be deleted.";
+                    }
+                    Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
+                    confirmAlert.setTitle("Confirm Deletion");
+                    confirmAlert.setHeaderText("Remove Co-Author from Book");
+                    confirmAlert.setContentText("Are you sure you want to remove yourself as a co-author from '" + title + "'?" + warning);
+                    Optional<ButtonType> result = confirmAlert.showAndWait();
+                    if (result.isEmpty() || result.get() != ButtonType.OK) {
+                        LOGGER.info("Co-author deletion cancelled for book_id " + bookId);
+                        return;
+                    }
+
+                    String deleteQuery = "DELETE FROM book_authors WHERE book_id = ? AND user_id = ? AND role = 'Co-Author'";
+                    try (PreparedStatement stmt = conn.prepareStatement(deleteQuery)) {
+                        stmt.setInt(1, bookId);
+                        stmt.setInt(2, userId);
+                        int rowsAffected = stmt.executeUpdate();
+                        if (rowsAffected > 0) {
+                            LOGGER.info("Deleted co-author record for book_id " + bookId + " and user_id " + userId);
+                            // Notify book owner
+                            try (PreparedStatement notifyStmt = conn.prepareStatement(
+                                    "INSERT INTO notifications (user_id, book_id, action_type, action_user_id, action_id, message) " +
+                                            "SELECT ba.user_id, ?, 'CollaborationRequest', ?, 0, " +
+                                            "CONCAT((SELECT username FROM users WHERE user_id = ?), ' has been removed as a co-author from your book ', " +
+                                            "(SELECT title FROM books WHERE book_id = ?)) " +
+                                            "FROM book_authors ba WHERE ba.book_id = ? AND ba.role = 'Owner'")) {
+                                notifyStmt.setInt(1, bookId);
+                                notifyStmt.setInt(2, userId);
+                                notifyStmt.setInt(3, userId);
+                                notifyStmt.setInt(4, bookId);
+                                notifyStmt.setInt(5, bookId);
+                                notifyStmt.executeUpdate();
+                                LOGGER.info("Notification sent to book owner for co-author removal, book_id: " + bookId);
+                            }
+                            populateMyWorks();
+                            int[] counts = getRecordCounts();
+                            total_my_works_record.setText("(" + counts[0] + ")");
+                            showAlert("Success", "You have been removed as a co-author from '" + title + "'.");
+                        } else {
+                            LOGGER.warning("No co-author record found for book_id " + bookId + " and user_id " + userId);
+                            showAlert("Error", "No co-author record found to delete.");
+                        }
+                    }
+                } else {
+                    // Handle book deletion by owner
+                    int chapterCount = 0;
+                    int coAuthorCount = 0;
+                    int groupCount = 0;
+                    try (PreparedStatement chapterStmt = conn.prepareStatement(
+                            "SELECT COUNT(*) FROM chapters WHERE book_id = ?")) {
+                        chapterStmt.setInt(1, bookId);
+                        ResultSet rs = chapterStmt.executeQuery();
+                        if (rs.next()) {
+                            chapterCount = rs.getInt(1);
+                        }
+                    }
+                    try (PreparedStatement coAuthorStmt = conn.prepareStatement(
+                            "SELECT COUNT(*) FROM book_authors WHERE book_id = ? AND role = 'Co-Author'")) {
+                        coAuthorStmt.setInt(1, bookId);
+                        ResultSet rs = coAuthorStmt.executeQuery();
+                        if (rs.next()) {
+                            coAuthorCount = rs.getInt(1);
+                        }
+                    }
+                    try (PreparedStatement groupStmt = conn.prepareStatement(
+                            "SELECT COUNT(*) FROM community_groups WHERE book_id = ?")) {
+                        groupStmt.setInt(1, bookId);
+                        ResultSet rs = groupStmt.executeQuery();
+                        if (rs.next()) {
+                            groupCount = rs.getInt(1);
+                        }
+                    }
+
+                    String warning = "\nWARNING: This will delete the book, its " + chapterCount + " chapter(s), " +
+                            coAuthorCount + " co-author(s), and " + groupCount + " associated group(s). This action cannot be undone.";
+                    Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
+                    confirmAlert.setTitle("Confirm Book Deletion");
+                    confirmAlert.setHeaderText("Delete Book");
+                    confirmAlert.setContentText("Are you sure you want to delete the book '" + title + "' and all its associated data?" + warning);
+                    Optional<ButtonType> result = confirmAlert.showAndWait();
+                    if (result.isEmpty() || result.get() != ButtonType.OK) {
+                        LOGGER.info("Book deletion cancelled for book_id " + bookId);
+                        return;
+                    }
+
+                    // Delete associated community groups (due to ON DELETE RESTRICT)
+                    try (PreparedStatement deleteGroupsStmt = conn.prepareStatement(
+                            "DELETE FROM community_groups WHERE book_id = ?")) {
+                        deleteGroupsStmt.setInt(1, bookId);
+                        deleteGroupsStmt.executeUpdate();
+                        LOGGER.info("Deleted community groups for book_id " + bookId);
+                    }
+
+                    // Fetch co-authors and group members to notify
+                    List<Integer> coAuthorIds = new ArrayList<>();
+                    try (PreparedStatement coAuthorStmt = conn.prepareStatement(
+                            "SELECT user_id FROM book_authors WHERE book_id = ? AND role = 'Co-Author'")) {
+                        coAuthorStmt.setInt(1, bookId);
+                        ResultSet rs = coAuthorStmt.executeQuery();
+                        while (rs.next()) {
+                            coAuthorIds.add(rs.getInt("user_id"));
+                        }
+                    }
+                    List<Integer> groupMemberIds = new ArrayList<>();
+                    try (PreparedStatement groupMemberStmt = conn.prepareStatement(
+                            "SELECT DISTINCT gm.user_id FROM group_members gm JOIN community_groups cg ON gm.group_id = cg.group_id WHERE cg.book_id = ?")) {
+                        groupMemberStmt.setInt(1, bookId);
+                        ResultSet rs = groupMemberStmt.executeQuery();
+                        while (rs.next()) {
+                            groupMemberIds.add(rs.getInt("user_id"));
+                        }
+                    }
+
+                    // Delete the book
+                    String deleteQuery = "DELETE FROM books WHERE book_id = ?";
+                    try (PreparedStatement stmt = conn.prepareStatement(deleteQuery)) {
+                        stmt.setInt(1, bookId);
+                        int rowsAffected = stmt.executeUpdate();
+                        if (rowsAffected > 0) {
+                            LOGGER.info("Deleted book record for book_id " + bookId);
+
+                            // Notify co-authors
+                            for (int coAuthorId : coAuthorIds) {
+                                try (PreparedStatement notifyStmt = conn.prepareStatement(
+                                        "INSERT INTO notifications (user_id, book_id, action_type, action_user_id, action_id, message) " +
+                                                "VALUES (?, ?, 'CollaborationRequest', ?, 0, CONCAT((SELECT username FROM users WHERE user_id = ?), ' deleted the book ', ?))")) {
+                                    notifyStmt.setInt(1, coAuthorId);
+                                    notifyStmt.setInt(2, bookId);
+                                    notifyStmt.setInt(3, userId);
+                                    notifyStmt.setInt(4, userId);
+                                    notifyStmt.setString(5, title);
+                                    notifyStmt.executeUpdate();
+                                    LOGGER.info("Notification sent to co-author user_id " + coAuthorId + " for book deletion, book_id: " + bookId);
+                                }
+                            }
+
+                            // Notify group members
+                            for (int memberId : groupMemberIds) {
+                                if (memberId != userId && !coAuthorIds.contains(memberId)) {
+                                    try (PreparedStatement notifyStmt = conn.prepareStatement(
+                                            "INSERT INTO notifications (user_id, book_id, action_type, action_user_id, action_id, message) " +
+                                                    "VALUES (?, ?, 'GroupMessage', ?, 0, CONCAT((SELECT username FROM users WHERE user_id = ?), ' deleted the book ', ?))")) {
+                                        notifyStmt.setInt(1, memberId);
+                                        notifyStmt.setInt(2, bookId);
+                                        notifyStmt.setInt(3, userId);
+                                        notifyStmt.setInt(4, userId);
+                                        notifyStmt.setString(5, title);
+                                        notifyStmt.executeUpdate();
+                                        LOGGER.info("Notification sent to group member user_id " + memberId + " for book deletion, book_id: " + bookId);
+                                    }
+                                }
+                            }
+
+                            populateMyWorks();
+                            int[] counts = getRecordCounts();
+                            total_my_works_record.setText("(" + counts[0] + ")");
+                            showAlert("Success", "Book '" + title + "' and all associated data have been deleted.");
+                        } else {
+                            LOGGER.warning("No book record found for book_id " + bookId);
+                            showAlert("Error", "No book record found to delete.");
+                        }
                     }
                 }
             } else {
+                // Existing draft deletion logic
                 String deleteQuery = "DELETE FROM draft_chapters WHERE book_id = ? AND author_id = ? AND chapter_number = ?";
                 try (PreparedStatement stmt = conn.prepareStatement(deleteQuery)) {
                     stmt.setInt(1, bookId);
