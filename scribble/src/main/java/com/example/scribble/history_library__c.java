@@ -336,6 +336,30 @@ public class history_library__c implements nav_bar__cAware {
         }
     }
 
+    private void addBookToLibrary(int bookId, String readingStatus) {
+        try (Connection conn = db_connect.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(
+                     "INSERT INTO reading_list (reader_id, listed_book_id, reading_status, added_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)")) {
+            stmt.setInt(1, userId);
+            stmt.setInt(2, bookId);
+            stmt.setString(3, readingStatus);
+            int rowsAffected = stmt.executeUpdate();
+            if (rowsAffected > 0) {
+                LOGGER.info("Added book_id " + bookId + " to library for user_id " + userId + " with status " + readingStatus);
+                populateLibrary();
+                int[] counts = getRecordCounts();
+                total_library_record.setText("(" + counts[1] + ")");
+                showAlert("Success", "Book added to library.");
+            } else {
+                LOGGER.warning("Failed to add book_id " + bookId + " to library for user_id " + userId);
+                showAlert("Error", "Failed to add book to library.");
+            }
+        } catch (SQLException e) {
+            LOGGER.severe("Failed to add book to library: " + e.getMessage());
+            showAlert("Error", "Failed to add book to library: " + e.getMessage());
+        }
+    }
+
     private void openBook(int bookId) {
         if (mainController == null) {
             showAlert("Error", "Navigation failed: mainController is null");
@@ -358,13 +382,16 @@ public class history_library__c implements nav_bar__cAware {
     private void updateReadingStatus(int bookId, String newStatus) {
         try (Connection conn = db_connect.getConnection();
              PreparedStatement stmt = conn.prepareStatement(
-                     "UPDATE reading_list SET reading_status = ? WHERE listed_book_id = ? AND reader_id = ?")) {
+                     "UPDATE reading_list SET reading_status = ?, added_at = CURRENT_TIMESTAMP WHERE listed_book_id = ? AND reader_id = ?")) {
             stmt.setString(1, newStatus);
             stmt.setInt(2, bookId);
             stmt.setInt(3, userId);
             int rowsAffected = stmt.executeUpdate();
             if (rowsAffected > 0) {
-                LOGGER.info("Updated reading status for book_id " + bookId + " to " + newStatus);
+                LOGGER.info("Updated reading status for book_id " + bookId + " to " + newStatus + " and reset added_at timestamp");
+                populateLibrary(); // Refresh the library to reflect the new order
+                int[] counts = getRecordCounts();
+                total_library_record.setText("(" + counts[1] + ")");
                 showAlert("Success", "Reading status updated to " + newStatus);
             } else {
                 LOGGER.warning("No rows updated for book_id " + bookId);
