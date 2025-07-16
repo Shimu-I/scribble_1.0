@@ -171,4 +171,9 @@ public class contest_read_entry__c {
         alert.setContentText(message);
         alert.showAndWait();
     }
+
+    public void setEntryId(int entryId) {
+        this.entryId = entryId;
+        loadEntryDetails();
+    }
 }

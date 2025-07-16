@@ -3,6 +3,7 @@ package com.example.scribble;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -20,6 +21,9 @@ import java.util.logging.Logger;
 
 public class contest__c {
     private static final Logger LOGGER = Logger.getLogger(contest__c.class.getName());
+
+    @FXML
+    public Button spwr_button;
 
     @FXML
     private Button fantasy_button;
@@ -168,4 +172,24 @@ public class contest__c {
         alert.setContentText(message);
         alert.showAndWait();
     }
+
+    public void handle_spwr_button(ActionEvent actionEvent) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/contest_weekly_results.fxml"));            if (loader.getLocation() == null) {
+                System.err.println("FXML file not found: /com/example/scribble/contest_weekly_results.fxml");
+                showErrorAlert("Resource Error", "contest_weekly_results resource not found.");
+                return;
+            }
+
+            // Load the FXML and create a new scene
+            Parent root = loader.load();
+            Stage stage = (Stage) ((Node) actionEvent.getSource()).getScene().getWindow();
+            stage.setScene(new Scene(root));
+            stage.show();
+        } catch (IOException e) {
+            System.err.println("Error loading FXML: " + e.getMessage());
+            showErrorAlert("Error", "Failed to load contest_weekly_results: " + e.getMessage());
+        }
+    }
+
 }

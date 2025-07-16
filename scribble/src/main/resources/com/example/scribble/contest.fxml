@@ -24,7 +24,17 @@
                   <Font size="18.0" />
                </font>
             </Label>
-            <HBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="361.0" prefWidth="1400.0" spacing="40.0">
+            <HBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="30.0" prefWidth="638.0" spacing="20.0">
+               <children>
+                  <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@../../../images/icons/point.png" />
+                     </image>
+                  </ImageView>
+                  <Button fx:id="spwr_button" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#handle_spwr_button" prefHeight="30.0" prefWidth="254.0" style="-fx-background-color: #fff; -fx-background-radius: 30;" stylesheets="@../../../style/style.css" text="   See Previous Weeks Results   " />
+               </children>
+            </HBox>
+            <HBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="317.0" prefWidth="1400.0" spacing="40.0">
                <children>
                   <VBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="270.0" prefWidth="200.0" spacing="20.0">
                      <children>
