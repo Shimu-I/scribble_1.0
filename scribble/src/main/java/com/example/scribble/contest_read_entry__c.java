@@ -1,20 +1,16 @@
 package com.example.scribble;
 
-
-
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.stage.Stage;
-
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.sql.Connection;
@@ -22,27 +18,19 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.logging.Logger;
-import com.example.scribble.AppState_c;
 
 public class contest_read_entry__c {
 
     private static final Logger LOGGER = Logger.getLogger(contest_read_entry__c.class.getName());
+    private static final String CLASSPATH_IMAGE_PATH = "/images/contest_book_cover/";
+    private static final String FILESYSTEM_IMAGE_PATH = "Uploads/contest_book_cover/";
+    private static final String DEFAULT_COVER_PHOTO = "/images/contest_book_cover/demo_cover_photo.png";
 
-
-    @FXML
-    private Button back_button;
-
-    @FXML
-    private Label book_tittle;
-
-    @FXML
-    private Label genre_name;
-
-    @FXML
-    private ImageView cover_photo;
-
-    @FXML
-    private TextArea writing_area;
+    @FXML private Button back_button;
+    @FXML private Label book_tittle;
+    @FXML private Label genre_name;
+    @FXML private ImageView cover_photo;
+    @FXML private TextArea writing_area;
 
     private int entryId;
     private int contestId;
@@ -51,6 +39,18 @@ public class contest_read_entry__c {
     private String username;
 
     @FXML private nav_bar__c mainController;
+
+    @FXML
+    public void initialize() {
+        if (cover_photo != null) {
+            cover_photo.setVisible(true);
+            LOGGER.info("cover_photo ImageView initialized: visible=" + cover_photo.isVisible() +
+                    ", fitWidth=" + cover_photo.getFitWidth() +
+                    ", fitHeight=" + cover_photo.getFitHeight());
+        } else {
+            LOGGER.severe("cover_photo ImageView is null in initialize!");
+        }
+    }
 
     public void setMainController(nav_bar__c mainController) {
         this.mainController = mainController;
@@ -90,33 +90,75 @@ public class contest_read_entry__c {
                     writing_area.setText(rs.getString("content"));
                     writing_area.setEditable(false);
                     String coverPhotoUrl = rs.getString("cover_photo");
-                    if (coverPhotoUrl != null && !coverPhotoUrl.isEmpty()) {
-                        String resourcePath = "/images/contest_book_cover/" + coverPhotoUrl;
-                        URL resourceUrl = getClass().getResource(resourcePath);
-                        if (resourceUrl != null) {
-                            try {
-                                cover_photo.setImage(new Image(resourceUrl.toExternalForm()));
-                            } catch (Exception e) {
-                                System.err.println("Failed to load cover photo: " + resourcePath + ", Error: " + e.getMessage());
-                                cover_photo.setImage(new Image(getClass().getResource("/images/contest_book_cover/demo_cover_photo.png").toExternalForm()));
-                            }
-                        } else {
-                            System.err.println("Resource not found: " + resourcePath);
-                            cover_photo.setImage(new Image(getClass().getResource("/images/contest_book_cover/demo_cover_photo.png").toExternalForm()));
-                        }
-                    } else {
-                        System.err.println("Cover photo is null or empty for entry_id: " + entryId);
-                        cover_photo.setImage(new Image(getClass().getResource("/images/contest_book_cover/demo_cover_photo.png").toExternalForm()));
-                    }
+                    LOGGER.info("Loaded cover_photo from database for entryId=" + entryId + ": " + coverPhotoUrl);
+                    updateCoverPhoto(coverPhotoUrl);
                     this.contestId = rs.getInt("contest_id");
                     this.genre = rs.getString("genre");
                 } else {
                     showErrorAlert("Data Error", "Contest entry not found for ID: " + entryId);
+                    loadDefaultCoverPhoto();
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe("Failed to load contest entry details for entryId=" + entryId + ": " + e.getMessage());
             showErrorAlert("Database Error", "Failed to load contest entry details: " + e.getMessage());
+        }
+    }
+
+    private void updateCoverPhoto(String coverPhotoUrl) {
+        if (coverPhotoUrl != null && !coverPhotoUrl.isEmpty()) {
+            if (!coverPhotoUrl.matches(".*\\.(png|jpg|jpeg|gif|bmp)$")) {
+                LOGGER.warning("Invalid image format for cover photo: " + coverPhotoUrl + " for entryId=" + entryId);
+                loadDefaultCoverPhoto();
+                return;
+            }
+
+            // Try loading from Uploads directory first
+            File uploadFile = new File(FILESYSTEM_IMAGE_PATH + coverPhotoUrl);
+            if (uploadFile.exists()) {
+                try {
+                    Image image = new Image("file:" + uploadFile.getAbsolutePath());
+                    cover_photo.setImage(image);
+                    LOGGER.info("Cover photo loaded from filesystem for entryId=" + entryId + ": file:" + uploadFile.getAbsolutePath());
+                    return;
+                } catch (Exception e) {
+                    LOGGER.severe("Failed to load cover photo from filesystem: " + uploadFile.getAbsolutePath() + ", Error: " + e.getMessage());
+                }
+            } else {
+                LOGGER.info("Cover photo not found in filesystem: " + uploadFile.getAbsolutePath() + ", trying classpath");
+            }
+
+            // Fallback to classpath
+            String resourcePath = CLASSPATH_IMAGE_PATH + coverPhotoUrl;
+            URL resourceUrl = getClass().getResource(resourcePath);
+            if (resourceUrl != null) {
+                try {
+                    Image image = new Image(resourceUrl.toExternalForm());
+                    cover_photo.setImage(image);
+                    LOGGER.info("Cover photo loaded from classpath for entryId=" + entryId + ": " + resourceUrl.toExternalForm());
+                } catch (Exception e) {
+                    LOGGER.severe("Failed to load cover photo from classpath: " + resourcePath + ", Error: " + e.getMessage());
+                    loadDefaultCoverPhoto();
+                }
+            } else {
+                LOGGER.warning("Resource not found in classpath: " + resourcePath + " for entryId=" + entryId);
+                loadDefaultCoverPhoto();
+            }
+        } else {
+            LOGGER.info("Cover photo is null or empty for entryId=" + entryId + ", loading default image");
+            loadDefaultCoverPhoto();
+        }
+    }
+
+    private void loadDefaultCoverPhoto() {
+        URL defaultUrl = getClass().getResource(DEFAULT_COVER_PHOTO);
+        if (defaultUrl != null) {
+            Image defaultImage = new Image(defaultUrl.toExternalForm());
+            cover_photo.setImage(defaultImage);
+            LOGGER.info("Loaded default cover photo for entryId=" + entryId + ": " + DEFAULT_COVER_PHOTO);
+        } else {
+            LOGGER.severe("Default cover photo not found: " + DEFAULT_COVER_PHOTO + " for entryId=" + entryId);
+            cover_photo.setImage(null);
         }
     }
 
@@ -153,7 +195,7 @@ public class contest_read_entry__c {
                 contestController.setMainController(mainController);
                 LOGGER.info("Initialized contest__c");
             } else {
-                LOGGER.info("Target controller does not support setMainController: " + controller.getClass().getName());
+                LOGGER.info("Target controller does not support setMainController: " + (controller != null ? controller.getClass().getName() : "null"));
             }
 
             mainController.getCenterPane().getChildren().setAll(root);

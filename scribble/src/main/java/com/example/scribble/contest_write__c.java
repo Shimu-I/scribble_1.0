@@ -1,9 +1,7 @@
 package com.example.scribble;
 
-
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -13,59 +11,42 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.VBox;
-import javafx.stage.FileChooser;
-import javafx.stage.Stage;
-
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
+import javafx.stage.FileChooser;
 import javafx.stage.Modality;
-
+import javafx.stage.Stage;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.logging.Logger;
-import com.example.scribble.AppState_c;
-
+import javafx.fxml.FXMLLoader;
 import java.util.concurrent.atomic.AtomicReference;
-
 
 public class contest_write__c {
 
     private static final Logger LOGGER = Logger.getLogger(contest_write__c.class.getName());
+    private static final String IMAGE_DEST_PATH = "uploads/contest_book_cover/";
 
-
-    @FXML
-    private Button back_button;
-
-    @FXML
-    private Button upload_button;
-
-    @FXML
-    private Button cover_photo_button;
-
-    @FXML
-    private TextField book_tittle;
-
-    @FXML
-    private Label genre_name;
-
-    @FXML
-    private ImageView cover_photo;
-
-    @FXML
-    private TextArea writing_area;
+    @FXML private Button back_button;
+    @FXML private Button upload_button;
+    @FXML private Button cover_photo_button;
+    @FXML private TextField book_tittle;
+    @FXML private Label genre_name;
+    @FXML private ImageView cover_photo;
+    @FXML private TextArea writing_area;
 
     private int contestId;
     private String genre;
@@ -90,7 +71,6 @@ public class contest_write__c {
 
         book_tittle.setText("");
         book_tittle.setPromptText("write the title of this book");
-
         book_tittle.setStyle("-fx-background-color: transparent; -fx-text-fill: white;");
         genre_name.setText("(genre: " + genre.toLowerCase() + ")");
         selectedCoverPhotoPath = null;
@@ -99,12 +79,14 @@ public class contest_write__c {
             java.net.URL resource = getClass().getResource(defaultImagePath);
             if (resource != null) {
                 cover_photo.setImage(new Image(resource.toExternalForm()));
+                LOGGER.info("Loaded default cover photo: " + defaultImagePath);
             } else {
+                LOGGER.severe("Default cover photo not found in classpath: " + defaultImagePath);
                 showErrorAlert("Resource Error", "Default cover photo not found in classpath.");
                 cover_photo.setImage(null);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe("Failed to load default cover photo: " + e.getMessage());
             showErrorAlert("Resource Error", "Failed to load default cover photo.");
             cover_photo.setImage(null);
         }
@@ -120,15 +102,15 @@ public class contest_write__c {
         }
 
         try {
-            // Retrieve previous FXML from AppState_c
             String previousFXML = AppState_c.getInstance().getPreviousFXML();
             if (previousFXML == null || previousFXML.isEmpty()) {
-                previousFXML = "/com/example/scribble/contest_entries.fxml"; // Fallback
+                previousFXML = "/com/example/scribble/contest_entries.fxml";
                 LOGGER.warning("No previous FXML set in AppState_c, using default: " + previousFXML);
             }
 
             FXMLLoader loader = new FXMLLoader(getClass().getResource(previousFXML));
             if (loader.getLocation() == null) {
+                LOGGER.severe("Resource not found: " + previousFXML);
                 showErrorAlert("Resource Error", "Previous page resource not found: " + previousFXML);
                 return;
             }
@@ -136,76 +118,70 @@ public class contest_write__c {
             Parent root = loader.load();
             Object controller = loader.getController();
 
-            // Pass mainController to the target controller if supported
             if (controller instanceof contest_entries__c entriesController) {
                 entriesController.initData(contestId, genre, userId, username);
                 entriesController.setMainController(mainController);
+                LOGGER.info("Initialized contest_entries__c with contestId=" + contestId + ", genre=" + genre);
             } else if (controller instanceof contest__c contestController) {
                 contestController.setMainController(mainController);
+                LOGGER.info("Initialized contest__c");
             } else {
-                LOGGER.info("Target controller does not support setMainController: " + controller.getClass().getName());
+                LOGGER.info("Target controller does not support setMainController: " + (controller != null ? controller.getClass().getName() : "null"));
             }
 
-            // Load into centerPane to preserve nav bar
             mainController.getCenterPane().getChildren().setAll(root);
             LOGGER.info("Navigated back to " + previousFXML);
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.severe("Failed to navigate back to previous page: " + e.getMessage());
             showErrorAlert("Navigation Error", "Failed to return to the previous page: " + e.getMessage());
         }
     }
 
     @FXML
     private void handle_upload_button(ActionEvent event) {
-        System.out.println("Upload button clicked at " + new java.util.Date());
+        LOGGER.info("Upload button clicked at " + new java.util.Date());
         String entryTitle = book_tittle.getText().trim();
         String content = writing_area.getText().trim();
 
         if (entryTitle.isEmpty() || content.isEmpty()) {
             showErrorAlert("Input Error", "Please provide a title and content for your entry.");
-            System.out.println("Validation failed: Empty title or content");
+            LOGGER.warning("Validation failed: Empty title or content");
             return;
         }
 
         if (!UserSession.getInstance().isLoggedIn()) {
             showErrorAlert("Session Error", "You must be logged in to submit an entry.");
-            System.out.println("Validation failed: User not logged in");
+            LOGGER.warning("Validation failed: User not logged in");
             return;
         }
 
         if (userId != UserSession.getInstance().getUserId()) {
             showErrorAlert("Session Error", "User ID mismatch. Please log in with the correct account.");
-            System.out.println("Validation failed: userId " + userId + " does not match session userId " + UserSession.getInstance().getUserId());
+            LOGGER.warning("Validation failed: userId " + userId + " does not match session userId " + UserSession.getInstance().getUserId());
             return;
         }
 
-        if (mainController == null) {
-            LOGGER.severe("Main controller is null, cannot navigate to contest entries page");
-            showErrorAlert("Error", "Navigation failed: main controller is not initialized.");
-            return;
-        }
-
-
-        // New validation: Check for minimum 200 words in content
         String[] words = content.split("\\s+");
         if (words.length < 200) {
             showErrorAlert("Input Error", "Please provide at least 200 words in the content.");
-            System.out.println("Validation failed: Content has only " + words.length + " words");
+            LOGGER.warning("Validation failed: Content has only " + words.length + " words");
             return;
         }
 
-        // New validation: Check for cover photo
         if (selectedCoverPhotoPath == null) {
             showErrorAlert("Input Error", "Please upload a cover photo for your entry.");
-            System.out.println("Validation failed: No cover photo selected");
+            LOGGER.warning("Validation failed: No cover photo selected");
             return;
         }
 
         try (Connection conn = db_connect.getConnection()) {
-            System.out.println("Database connection established: " + (conn != null));
+            if (conn == null) {
+                showErrorAlert("Database Error", "Failed to connect to the database.");
+                LOGGER.severe("Database connection is null");
+                return;
+            }
             conn.setAutoCommit(false);
 
-            // Validate contestId exists and matches genre
             String validateContestSQL = "SELECT contest_id FROM contests WHERE contest_id = ? AND genre = ? COLLATE utf8mb4_bin";
             try (PreparedStatement validateStmt = conn.prepareStatement(validateContestSQL)) {
                 validateStmt.setInt(1, contestId);
@@ -214,12 +190,11 @@ public class contest_write__c {
                 if (!rs.next()) {
                     conn.rollback();
                     showErrorAlert("Contest Error", "Invalid contest ID or genre mismatch.");
-                    System.out.println("Validation failed: Contest ID " + contestId + " not found or genre mismatch for genre " + genre);
+                    LOGGER.warning("Validation failed: Contest ID " + contestId + " not found or genre mismatch for genre " + genre);
                     return;
                 }
             }
 
-            // Check for duplicate entry title for this contest
             String checkDuplicateSQL = "SELECT entry_id FROM contest_entries WHERE contest_id = ? AND entry_title = ?";
             try (PreparedStatement checkStmt = conn.prepareStatement(checkDuplicateSQL)) {
                 checkStmt.setInt(1, contestId);
@@ -228,12 +203,11 @@ public class contest_write__c {
                 if (rs.next()) {
                     conn.rollback();
                     showErrorAlert("Input Error", "An entry with this title already exists for this contest.");
-                    System.out.println("Validation failed: Duplicate entry title '" + entryTitle + "' for contestId " + contestId);
+                    LOGGER.warning("Validation failed: Duplicate entry title '" + entryTitle + "' for contestId " + contestId);
                     return;
                 }
             }
 
-            // Insert entry
             String insertEntrySQL = "INSERT INTO contest_entries (contest_id, user_id, entry_title, content, cover_photo) VALUES (?, ?, ?, ?, ?)";
             try (PreparedStatement stmt = conn.prepareStatement(insertEntrySQL)) {
                 stmt.setInt(1, contestId);
@@ -241,50 +215,40 @@ public class contest_write__c {
                 stmt.setString(3, entryTitle);
                 stmt.setString(4, content);
                 stmt.setString(5, selectedCoverPhotoPath);
-                System.out.println("Executing entry insert with contestId: " + contestId + ", userId: " + userId);
+                LOGGER.info("Executing entry insert with contestId=" + contestId + ", userId=" + userId + ", coverPhoto=" + selectedCoverPhotoPath);
                 int rowsAffected = stmt.executeUpdate();
-                System.out.println("Rows affected for entry: " + rowsAffected);
+                LOGGER.info("Rows affected for entry: " + rowsAffected);
             }
 
             conn.commit();
-            System.out.println("Transaction committed successfully");
+            LOGGER.info("Transaction committed successfully");
             showInfoAlert("Success", "Your entry has been submitted successfully!");
             clearForm();
 
-            // Navigate to contest_entries page using centerPane
             try {
                 java.net.URL resource = getClass().getResource("/com/example/scribble/contest_entries.fxml");
                 if (resource == null) {
-                    System.err.println("Resource not found: /com/example/scribble/contest_entries.fxml");
+                    LOGGER.severe("Resource not found: /com/example/scribble/contest_entries.fxml");
                     showErrorAlert("Resource Error", "Contest entries FXML file not found. Check the file path in src/main/resources.");
                     return;
                 }
-                System.out.println("Resource found at: " + resource);
                 FXMLLoader loader = new FXMLLoader(resource);
                 Parent root = loader.load();
                 contest_entries__c controller = loader.getController();
                 controller.initData(contestId, genre, userId, username);
-                controller.setMainController(mainController); // Pass mainController
-
-                // Set previous FXML in AppState_c
+                controller.setMainController(mainController);
                 AppState_c.getInstance().setPreviousFXML("/com/example/scribble/contest.fxml");
-
-                // Load into centerPane
                 mainController.getCenterPane().getChildren().setAll(root);
                 LOGGER.info("Navigated to contest_entries.fxml");
             } catch (IOException e) {
-                e.printStackTrace();
+                LOGGER.severe("Failed to load contest entries page: " + e.getMessage());
                 showErrorAlert("Navigation Error", "Failed to load the contest entries page: " + e.getMessage());
             }
         } catch (SQLException e) {
-            e.printStackTrace();
-            showErrorAlert("Database Error", "Failed to submit your entry. Error: " + e.getMessage());
-            System.out.println("SQLException caught: " + e.getMessage());
+            LOGGER.severe("Failed to submit entry: " + e.getMessage());
+            showErrorAlert("Database Error", "Failed to submit your entry: " + e.getMessage());
         }
     }
-
-
-
 
     @FXML
     private void handle_cover_photo_button(ActionEvent event) {
@@ -314,7 +278,7 @@ public class contest_write__c {
         imageView.setFitWidth(displayWidth);
         imageView.setFitHeight(displayHeight);
 
-        final double ASPECT_RATIO = 150.0 / 222.0; // Width / Height
+        final double ASPECT_RATIO = 150.0 / 222.0;
         final double MIN_WIDTH = 50.0;
         final double MAX_WIDTH = displayWidth;
 
@@ -359,7 +323,7 @@ public class contest_write__c {
             double deltaX = e.getX() - resizeStart[0];
             double newWidth = initialWidth.get() + deltaX;
             newWidth = Math.max(MIN_WIDTH, Math.min(newWidth, MAX_WIDTH));
-            double newHeight = newWidth * (222.0 / 150.0); // Correct aspect ratio: height = width * (height/width)
+            double newHeight = newWidth * (222.0 / 150.0);
             if (cropRect.getX() + newWidth <= displayWidth && cropRect.getY() + newHeight <= displayHeight) {
                 cropRect.setWidth(newWidth);
                 cropRect.setHeight(newHeight);
@@ -384,7 +348,7 @@ public class contest_write__c {
                 g2d.drawImage(sourceImage, 0, 0, 150, 222, cropX, cropY, cropX + cropWidth, cropY + cropHeight, null);
                 g2d.dispose();
 
-                Path directoryPath = Path.of("src/main/resources/images/contest_book_cover");
+                Path directoryPath = Paths.get(IMAGE_DEST_PATH);
                 Files.createDirectories(directoryPath);
 
                 int nextNumber = 1;
@@ -407,9 +371,10 @@ public class contest_write__c {
                 ImageIO.write(bufferedImage, "png", destinationPath.toFile());
                 selectedCoverPhotoPath = newFilename;
                 cover_photo.setImage(new Image("file:" + destinationPath.toString()));
+                LOGGER.info("Saved cover photo to: " + destinationPath + " for filename: " + newFilename);
                 cropStage.close();
             } catch (IOException ex) {
-                ex.printStackTrace();
+                LOGGER.severe("Failed to crop and save cover photo: " + ex.getMessage());
                 showErrorAlert("Image Error", "Failed to crop and save the cover photo.");
             }
         });
@@ -421,13 +386,6 @@ public class contest_write__c {
         cropStage.showAndWait();
     }
 
-    // Helper method to get file extension
-    private String getFileExtension(String filename) {
-        int lastDotIndex = filename.lastIndexOf('.');
-        return (lastDotIndex == -1) ? "png" : filename.substring(lastDotIndex + 1).toLowerCase();
-    }
-
-
     private void clearForm() {
         book_tittle.setText("");
         writing_area.setText("");
@@ -437,12 +395,14 @@ public class contest_write__c {
             java.net.URL resource = getClass().getResource(defaultImagePath);
             if (resource != null) {
                 cover_photo.setImage(new Image(resource.toExternalForm()));
+                LOGGER.info("Loaded default cover photo after clearing form: " + defaultImagePath);
             } else {
+                LOGGER.severe("Default cover photo not found in classpath: " + defaultImagePath);
                 showErrorAlert("Resource Error", "Default cover photo not found in classpath.");
                 cover_photo.setImage(null);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.severe("Failed to load default cover photo after clearing form: " + e.getMessage());
             showErrorAlert("Resource Error", "Failed to load default cover photo.");
             cover_photo.setImage(null);
         }

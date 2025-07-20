@@ -281,9 +281,6 @@ public class nav_bar__c {
             }else if (controller instanceof contest_write__c) {
                 System.out.println("Injecting main controller into contest_write__c");
                 ((contest_write__c) controller).setMainController(this);
-            }else if (controller instanceof contest_weekly_results__c) {
-                System.out.println("Injecting main controller into contest_weekly_results__c");
-                ((contest_weekly_results__c) controller).setMainController(this);
             }else if (controller instanceof c__c) {
                 System.out.println("Injecting main controller into c__c");
                 ((c__c) controller).setMainController(this);
