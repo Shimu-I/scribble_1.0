@@ -5,19 +5,13 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
-
 import java.io.IOException;
 
-
-public class contest_weekly_results extends Application {
-
+public class c extends Application {
     @Override
     public void start(Stage primaryStage) throws IOException {
-
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("contest_weekly_results.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("c.fxml"));
         BorderPane root = loader.load();
-
-
         Scene scene = new Scene(root, 1400, 660);
         primaryStage.setScene(scene);
         primaryStage.show();

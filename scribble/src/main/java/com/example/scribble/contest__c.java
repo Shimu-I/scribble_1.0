@@ -174,20 +174,34 @@ public class contest__c {
     }
 
     public void handle_spwr_button(ActionEvent actionEvent) {
+        if (mainController == null) {
+            LOGGER.severe("Main controller is null in contest__c, cannot navigate to c.fxml");
+            showErrorAlert("Error", "Navigation failed: main controller is not initialized in contest__c.");
+            return;
+        }
+
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/contest_weekly_results.fxml"));            if (loader.getLocation() == null) {
-                System.err.println("FXML file not found: /com/example/scribble/contest_weekly_results.fxml");
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/scribble/c.fxml"));
+            if (loader.getLocation() == null) {
+                LOGGER.severe("Resource not found: /com/example/scribble/c.fxml");
                 showErrorAlert("Resource Error", "contest_weekly_results resource not found.");
                 return;
             }
 
-            // Load the FXML and create a new scene
             Parent root = loader.load();
-            Stage stage = (Stage) ((Node) actionEvent.getSource()).getScene().getWindow();
-            stage.setScene(new Scene(root));
-            stage.show();
+            c__c controller = loader.getController();
+            controller.setMainController(mainController);
+            LOGGER.info("mainController set in c__c: " + mainController);
+
+            // Set previous FXML in AppState_c
+            AppState_c.getInstance().setPreviousFXML("/com/example/scribble/contest.fxml");
+            LOGGER.info("Set previousFXML to /com/example/scribble/contest.fxml");
+
+            // Load into centerPane
+            mainController.getCenterPane().getChildren().setAll(root);
+            LOGGER.info("Successfully navigated to c.fxml");
         } catch (IOException e) {
-            System.err.println("Error loading FXML: " + e.getMessage());
+            LOGGER.severe("Error loading c.fxml: " + e.getMessage());
             showErrorAlert("Error", "Failed to load contest_weekly_results: " + e.getMessage());
         }
     }

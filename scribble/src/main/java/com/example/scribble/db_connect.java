@@ -1,6 +1,8 @@
 package com.example.scribble;
 
 import java.sql.*;
+import java.time.LocalDate;
+import java.util.List;
 
 public class db_connect {
     private static final String url = "jdbc:mysql://127.0.0.1:3306/scribble_db_2";
