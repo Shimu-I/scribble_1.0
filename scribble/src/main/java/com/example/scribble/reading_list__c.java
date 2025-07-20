@@ -15,6 +15,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.sql.Connection;
@@ -257,17 +258,42 @@ public class reading_list__c {
 
     private void loadBookImage(String coverPhoto, ImageView imageView) {
         try {
-            URL imageUrl = getClass().getResource(
-                    "/images/book_covers/" + (coverPhoto != null && !coverPhoto.isEmpty()
-                            ? coverPhoto
-                            : "demo_cover.png")
-            );
-            imageView.setImage(new Image(imageUrl.toExternalForm()));
+            if (coverPhoto != null && !coverPhoto.isEmpty()) {
+                File uploadFile = new File("Uploads/book_covers/" + coverPhoto);
+                if (uploadFile.exists()) {
+                    Image image = new Image("file:" + uploadFile.getAbsolutePath());
+                    if (!image.isError()) {
+                        imageView.setImage(image);
+                        LOGGER.info("Loaded book cover from filesystem: file:" + uploadFile.getAbsolutePath());
+                        return;
+                    } else {
+                        LOGGER.warning("Failed to load book cover from filesystem (image error): " + coverPhoto);
+                    }
+                }
+                URL resource = getClass().getResource("/images/book_covers/" + coverPhoto);
+                if (resource != null) {
+                    Image image = new Image(resource.toExternalForm());
+                    if (!image.isError()) {
+                        imageView.setImage(image);
+                        LOGGER.info("Loaded book cover from classpath: " + resource.toExternalForm());
+                        return;
+                    } else {
+                        LOGGER.warning("Failed to load book cover from classpath (image error): " + coverPhoto);
+                    }
+                }
+                LOGGER.warning("Book cover not found: " + coverPhoto);
+            }
+            URL defaultUrl = getClass().getResource("/images/book_covers/demo_cover.png");
+            if (defaultUrl != null) {
+                imageView.setImage(new Image(defaultUrl.toExternalForm()));
+                LOGGER.info("Loaded default book cover: /images/book_covers/demo_cover.png");
+            } else {
+                LOGGER.severe("Default book cover not found: /images/book_covers/demo_cover.png");
+                imageView.setImage(null);
+            }
         } catch (Exception e) {
-            System.err.println("Image load failed. Loading default.");
-            imageView.setImage(new Image(getClass()
-                    .getResource("/images/book_covers/demo_cover.png")
-                    .toExternalForm()));
+            LOGGER.severe("Failed to load book cover: " + coverPhoto + " - " + e.getMessage());
+            imageView.setImage(null);
         }
     }
 

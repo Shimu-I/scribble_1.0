@@ -22,6 +22,7 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.*;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -210,11 +211,11 @@ public class write__c {
                 g2d.drawImage(sourceImage, 0, 0, 150, 222, cropX, cropY, cropX + cropWidth, cropY + cropHeight, null);
                 g2d.dispose();
 
-                Path directoryPath = Path.of("src/main/resources/images/book_covers");
+                Path directoryPath = Paths.get("Uploads/book_covers");
                 Files.createDirectories(directoryPath);
 
                 int nextNumber = 1;
-                try (DirectoryStream<Path> stream = Files.newDirectoryStream(directoryPath, "bc_[0-9]*.png")) {
+                try (DirectoryStream<Path> stream = Files.newDirectoryStream(directoryPath, "bc_[0-9]*.{png,jpg,jpeg}")) {
                     for (Path file : stream) {
                         String filename = file.getFileName().toString();
                         String numberPart = filename.replace("bc_", "").replaceAll("\\..*", "");
@@ -448,11 +449,10 @@ public class write__c {
                 }
                 String coverPhoto = rs.getString("cover_photo");
                 if (coverPhoto != null && !coverPhoto.isEmpty() && bookCoverImageView != null) {
-                    try {
-                        Path coverPath = Path.of("src/main/resources/images/book_covers/" + coverPhoto);
-                        if (Files.exists(coverPath)) {
-                            String imagePath = "file:" + coverPath.toString();
-                            Image image = new Image(imagePath);
+                    File uploadFile = new File("Uploads/book_covers/" + coverPhoto);
+                    if (uploadFile.exists()) {
+                        try {
+                            Image image = new Image("file:" + uploadFile.getAbsolutePath());
                             if (!image.isError()) {
                                 bookCoverImageView.setImage(image);
                                 coverPhotoPath = coverPhoto;
@@ -460,16 +460,43 @@ public class write__c {
                                 clip.setArcWidth(30);
                                 clip.setArcHeight(30);
                                 bookCoverImageView.setClip(clip);
-                                LOGGER.info("Loaded cover photo for bookId: " + bookId + ": " + coverPhoto);
+                                LOGGER.info("Loaded cover photo from filesystem: file:" + uploadFile.getAbsolutePath());
                             } else {
-                                LOGGER.warning("Failed to load cover photo (image error): " + coverPhoto);
+                                LOGGER.warning("Failed to load cover photo from filesystem (image error): " + coverPhoto);
+                                loadDefaultCoverPhoto();
+                            }
+                        } catch (Exception e) {
+                            LOGGER.severe("Failed to load cover photo from filesystem: " + coverPhoto + " - " + e.getMessage());
+                            loadDefaultCoverPhoto();
+                        }
+                    } else {
+                        URL resource = getClass().getResource("/images/book_covers/" + coverPhoto);
+                        if (resource != null) {
+                            try {
+                                Image image = new Image(resource.toExternalForm());
+                                if (!image.isError()) {
+                                    bookCoverImageView.setImage(image);
+                                    coverPhotoPath = coverPhoto;
+                                    Rectangle clip = new Rectangle(150, 222);
+                                    clip.setArcWidth(30);
+                                    clip.setArcHeight(30);
+                                    bookCoverImageView.setClip(clip);
+                                    LOGGER.info("Loaded cover photo from classpath: " + resource.toExternalForm());
+                                } else {
+                                    LOGGER.warning("Failed to load cover photo from classpath (image error): " + coverPhoto);
+                                    loadDefaultCoverPhoto();
+                                }
+                            } catch (Exception e) {
+                                LOGGER.severe("Failed to load cover photo from classpath: " + coverPhoto + " - " + e.getMessage());
+                                loadDefaultCoverPhoto();
                             }
                         } else {
-                            LOGGER.warning("Cover photo file does not exist: " + coverPhoto);
+                            LOGGER.warning("Cover photo not found: " + coverPhoto);
+                            loadDefaultCoverPhoto();
                         }
-                    } catch (Exception e) {
-                        LOGGER.severe("Failed to load cover photo: " + coverPhoto + " - " + e.getMessage());
                     }
+                } else {
+                    loadDefaultCoverPhoto();
                 }
                 LOGGER.info("Loaded book details for bookId: " + bookId);
             } else {
@@ -479,6 +506,22 @@ public class write__c {
         } catch (SQLException e) {
             LOGGER.severe("Failed to load book details for bookId: " + bookId + " - " + e.getMessage());
             showAlert("Error", "Failed to load book details: " + e.getMessage());
+        }
+    }
+
+    private void loadDefaultCoverPhoto() {
+        URL defaultUrl = getClass().getResource("/images/book_covers/demo_cover.png");
+        if (defaultUrl != null) {
+            Image image = new Image(defaultUrl.toExternalForm());
+            bookCoverImageView.setImage(image);
+            Rectangle clip = new Rectangle(150, 222);
+            clip.setArcWidth(30);
+            clip.setArcHeight(30);
+            bookCoverImageView.setClip(clip);
+            LOGGER.info("Loaded default cover photo: /images/book_covers/demo_cover.png");
+        } else {
+            LOGGER.severe("Default cover photo not found: /images/book_covers/demo_cover.png");
+            bookCoverImageView.setImage(null);
         }
     }
 

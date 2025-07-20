@@ -14,6 +14,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.geometry.Insets;
 
+import java.io.File;
 import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
@@ -205,18 +206,43 @@ public class read_book__c {
                     if (status != null) status.setText(rs.getString("status") != null ? rs.getString("status") : "N/A");
                     if (genre != null) genre.setText(rs.getString("genre") != null ? rs.getString("genre") : "N/A");
                     if (book_description != null) book_description.setText(rs.getString("description") != null ? rs.getString("description") : "No description");
+                    // Inside fetchBookDetails method, replace the coverImage block with:
                     if (coverImage != null) {
                         String coverPhoto = rs.getString("cover_photo");
                         if (coverPhoto != null && !coverPhoto.isEmpty()) {
-                            try {
-                                Image image = new Image(getClass().getResourceAsStream("/images/book_covers/" + coverPhoto));
-                                coverImage.setImage(image);
-                            } catch (Exception e) {
-                                LOGGER.severe("Error loading cover photo: " + e.getMessage());
-                                coverImage.setImage(new Image(getClass().getResourceAsStream("/images/book_covers/demo_cover.png")));
+                            File uploadFile = new File("Uploads/book_covers/" + coverPhoto);
+                            if (uploadFile.exists()) {
+                                try {
+                                    Image image = new Image("file:" + uploadFile.getAbsolutePath());
+                                    if (!image.isError()) {
+                                        coverImage.setImage(image);
+                                        LOGGER.info("Loaded book cover from filesystem: file:" + uploadFile.getAbsolutePath());
+                                    } else {
+                                        LOGGER.warning("Failed to load book cover from filesystem (image error): " + coverPhoto);
+                                        coverImage.setImage(new Image(getClass().getResourceAsStream("/images/book_covers/demo_cover.png")));
+                                    }
+                                } catch (Exception e) {
+                                    LOGGER.severe("Error loading cover photo from filesystem: " + coverPhoto + " - " + e.getMessage());
+                                    coverImage.setImage(new Image(getClass().getResourceAsStream("/images/book_covers/demo_cover.png")));
+                                }
+                            } else {
+                                try {
+                                    Image image = new Image(getClass().getResourceAsStream("/images/book_covers/" + coverPhoto));
+                                    if (!image.isError()) {
+                                        coverImage.setImage(image);
+                                        LOGGER.info("Loaded book cover from classpath: /images/book_covers/" + coverPhoto);
+                                    } else {
+                                        LOGGER.warning("Failed to load book cover from classpath (image error): " + coverPhoto);
+                                        coverImage.setImage(new Image(getClass().getResourceAsStream("/images/book_covers/demo_cover.png")));
+                                    }
+                                } catch (Exception e) {
+                                    LOGGER.severe("Error loading cover photo from classpath: " + coverPhoto + " - " + e.getMessage());
+                                    coverImage.setImage(new Image(getClass().getResourceAsStream("/images/book_covers/demo_cover.png")));
+                                }
                             }
                         } else {
                             coverImage.setImage(new Image(getClass().getResourceAsStream("/images/book_covers/demo_cover.png")));
+                            LOGGER.info("Loaded default book cover: /images/book_covers/demo_cover.png");
                         }
                     }
                     double avgRating = rs.getDouble("avg_rating");
