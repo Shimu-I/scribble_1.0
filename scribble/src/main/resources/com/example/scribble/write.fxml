@@ -20,11 +20,15 @@
          <children>
             <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" spacing="10.0">
                <children>
-                  <ImageView fx:id="bookCoverImageView" fitHeight="222.0" fitWidth="150.0" pickOnBounds="true" preserveRatio="true">
-                     <image>
-                        <Image url="@../../../images/book_covers/demo_cover.png" />
-                     </image>
-                  </ImageView>
+                  <VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="224.0" prefWidth="152.0" style="-fx-border-color: #fff; -fx-border-radius: 15;">
+                     <children>
+                        <ImageView fx:id="bookCoverImageView" fitHeight="222.0" fitWidth="150.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../../../images/book_covers/demo_cover.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </VBox>
                   <Button fx:id="book_image_button" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#handle_book_cover" prefHeight="30.0" prefWidth="120.0" style="-fx-background-color: transparent; -fx-border-color: #fff; -fx-border-radius: 5;" text="add cover photo" textFill="WHITE" />
                </children>
             </VBox>

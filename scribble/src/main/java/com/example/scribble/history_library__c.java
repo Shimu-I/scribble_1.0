@@ -186,13 +186,44 @@ public class history_library__c implements nav_bar__cAware {
         coverImage.setFitHeight(76.0);
         coverImage.setPreserveRatio(true);
         coverImage.setPickOnBounds(true);
+
         if (coverPath != null && !coverPath.isEmpty()) {
             try {
-                coverImage.setImage(new Image(getClass().getResource("/images/book_covers/" + coverPath).toExternalForm()));
-                LOGGER.info("Loaded book cover: " + coverPath);
-            } catch (NullPointerException e) {
-                LOGGER.warning("Book cover not found: " + coverPath);
+                // Try loading from filesystem first
+                java.io.File uploadFile = new java.io.File("Uploads/book_covers/" + coverPath);
+                if (uploadFile.exists()) {
+                    Image image = new Image("file:" + uploadFile.getAbsolutePath());
+                    if (!image.isError()) {
+                        coverImage.setImage(image);
+                        LOGGER.info("Loaded book cover from filesystem: file:" + uploadFile.getAbsolutePath());
+                    } else {
+                        LOGGER.warning("Failed to load book cover from filesystem (image error): " + coverPath);
+                        coverImage.setImage(new Image(getClass().getResource("/images/book_covers/hollow_rectangle.png").toExternalForm()));
+                        LOGGER.info("Loaded default book cover: hollow_rectangle.png");
+                    }
+                } else {
+                    // Fall back to classpath
+                    java.net.URL resource = getClass().getResource("/images/book_covers/" + coverPath);
+                    if (resource != null) {
+                        Image image = new Image(resource.toExternalForm());
+                        if (!image.isError()) {
+                            coverImage.setImage(image);
+                            LOGGER.info("Loaded book cover from classpath: " + resource.toExternalForm());
+                        } else {
+                            LOGGER.warning("Failed to load book cover from classpath (image error): " + coverPath);
+                            coverImage.setImage(new Image(getClass().getResource("/images/book_covers/hollow_rectangle.png").toExternalForm()));
+                            LOGGER.info("Loaded default book cover: hollow_rectangle.png");
+                        }
+                    } else {
+                        LOGGER.warning("Book cover not found: " + coverPath);
+                        coverImage.setImage(new Image(getClass().getResource("/images/book_covers/hollow_rectangle.png").toExternalForm()));
+                        LOGGER.info("Loaded default book cover: hollow_rectangle.png");
+                    }
+                }
+            } catch (Exception e) {
+                LOGGER.severe("Failed to load book cover: " + coverPath + " - " + e.getMessage());
                 coverImage.setImage(new Image(getClass().getResource("/images/book_covers/hollow_rectangle.png").toExternalForm()));
+                LOGGER.info("Loaded default book cover: hollow_rectangle.png");
             }
         } else {
             coverImage.setImage(new Image(getClass().getResource("/images/book_covers/hollow_rectangle.png").toExternalForm()));
@@ -254,6 +285,7 @@ public class history_library__c implements nav_bar__cAware {
         deleteIcon.setPreserveRatio(true);
         deleteButton.setGraphic(deleteIcon);
         deleteButton.setOnAction(e -> deleteRecord(bookId, readingStatus != null));
+        deleteButton.setUserData(bookId); // Set bookId for handle_delete
 
         // Add delete button to its VBox
         deleteButtonBox.getChildren().add(deleteButton);
@@ -275,7 +307,7 @@ public class history_library__c implements nav_bar__cAware {
             textBox.getChildren().add(statusChoiceBox);
         }
 
-        LOGGER.info("Created book card with FXML-matched styles");
+        LOGGER.info("Created book card with FXML-matched styles for bookId: " + bookId);
         return card;
     }
 

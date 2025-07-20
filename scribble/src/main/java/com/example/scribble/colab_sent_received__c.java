@@ -102,6 +102,46 @@ public class colab_sent_received__c {
         this.conn = conn;
     }
 
+    private Image loadBookCoverImage(String coverPath) {
+        if (coverPath != null && !coverPath.isEmpty()) {
+            try {
+                // Try loading from filesystem first
+                java.io.File uploadFile = new java.io.File("Uploads/book_covers/" + coverPath);
+                if (uploadFile.exists()) {
+                    Image image = new Image("file:" + uploadFile.getAbsolutePath(), true);
+                    if (!image.isError()) {
+                        LOGGER.info("Loaded book cover from filesystem: file:" + uploadFile.getAbsolutePath());
+                        return image;
+                    } else {
+                        LOGGER.warning("Failed to load book cover from filesystem (image error): " + coverPath);
+                    }
+                } else {
+                    // Fall back to classpath
+                    java.net.URL resource = getClass().getResource("/images/book_covers/" + coverPath);
+                    if (resource != null) {
+                        Image image = new Image(resource.toExternalForm(), true);
+                        if (!image.isError()) {
+                            LOGGER.info("Loaded book cover from classpath: " + resource.toExternalForm());
+                            return image;
+                        } else {
+                            LOGGER.warning("Failed to load book cover from classpath (image error): " + coverPath);
+                        }
+                    } else {
+                        LOGGER.warning("Book cover not found: " + coverPath);
+                    }
+                }
+            } catch (Exception e) {
+                LOGGER.severe("Failed to load book cover: " + coverPath + " - " + e.getMessage());
+            }
+        } else {
+            LOGGER.info("No cover path provided, using default book cover");
+        }
+        // Default to hollow_rectangle.png
+        Image defaultImage = new Image(getClass().getResource("/images/book_covers/hollow_rectangle.png").toExternalForm());
+        LOGGER.info("Loaded default book cover: hollow_rectangle.png");
+        return defaultImage;
+    }
+
     private void loadSentRequests() {
         int currentUserId = UserSession.getInstance().getCurrentUserId();
         try (PreparedStatement stmt = conn.prepareStatement(
@@ -138,18 +178,7 @@ public class colab_sent_received__c {
                 bookCover.setFitWidth(50);
                 bookCover.setPreserveRatio(true);
                 bookCover.setPickOnBounds(true);
-                if (coverPath != null && !coverPath.isEmpty()) {
-                    try {
-                        bookCover.setImage(new Image(getClass().getResource("/images/book_covers/" + coverPath).toExternalForm()));
-                        LOGGER.info("Loaded book cover: " + coverPath);
-                    } catch (NullPointerException e) {
-                        LOGGER.warning("Book cover not found: " + coverPath);
-                        bookCover.setImage(loadImage("/images/book_covers/hollow_rectangle.png"));
-                    }
-                } else {
-                    bookCover.setImage(loadImage("/images/book_covers/hollow_rectangle.png"));
-                    LOGGER.info("Loaded default book cover: hollow_rectangle.png");
-                }
+                bookCover.setImage(loadBookCoverImage(coverPath));
                 HBox.setMargin(bookCover, new Insets(5, 5, 5, 5));
 
                 VBox details = new VBox(5);
@@ -255,18 +284,7 @@ public class colab_sent_received__c {
                 bookCover.setFitWidth(50);
                 bookCover.setPreserveRatio(true);
                 bookCover.setPickOnBounds(true);
-                if (coverPath != null && !coverPath.isEmpty()) {
-                    try {
-                        bookCover.setImage(new Image(getClass().getResource("/images/book_covers/" + coverPath).toExternalForm()));
-                        LOGGER.info("Loaded book cover: " + coverPath);
-                    } catch (NullPointerException e) {
-                        LOGGER.warning("Book cover not found: " + coverPath);
-                        bookCover.setImage(loadImage("/images/book_covers/hollow_rectangle.png"));
-                    }
-                } else {
-                    bookCover.setImage(loadImage("/images/book_covers/hollow_rectangle.png"));
-                    LOGGER.info("Loaded default book cover: hollow_rectangle.png");
-                }
+                bookCover.setImage(loadBookCoverImage(coverPath));
                 HBox.setMargin(bookCover, new Insets(5, 5, 5, 5));
 
                 VBox details = new VBox(5);
@@ -345,6 +363,7 @@ public class colab_sent_received__c {
             showAlert(Alert.AlertType.ERROR, "Error", "Failed to load received requests: " + e.getMessage());
         }
     }
+
 
     private void deleteRecord(int inviteId) {
         boolean autoCommit = true;

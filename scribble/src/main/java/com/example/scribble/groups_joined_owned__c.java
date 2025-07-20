@@ -248,6 +248,46 @@ public class groups_joined_owned__c {
         }
     }
 
+    private Image loadBookCoverImage(String coverPhoto) {
+        if (coverPhoto != null && !coverPhoto.isEmpty()) {
+            try {
+                // Try loading from filesystem first
+                java.io.File uploadFile = new java.io.File("Uploads/book_covers/" + coverPhoto);
+                if (uploadFile.exists()) {
+                    Image image = new Image("file:" + uploadFile.getAbsolutePath(), true);
+                    if (!image.isError()) {
+                        LOGGER.info("Loaded book cover from filesystem: file:" + uploadFile.getAbsolutePath());
+                        return image;
+                    } else {
+                        LOGGER.warning("Failed to load book cover from filesystem (image error): " + coverPhoto);
+                    }
+                } else {
+                    // Fall back to classpath
+                    java.net.URL resource = getClass().getResource("/images/book_covers/" + coverPhoto);
+                    if (resource != null) {
+                        Image image = new Image(resource.toExternalForm(), true);
+                        if (!image.isError()) {
+                            LOGGER.info("Loaded book cover from classpath: " + resource.toExternalForm());
+                            return image;
+                        } else {
+                            LOGGER.warning("Failed to load book cover from classpath (image error): " + coverPhoto);
+                        }
+                    } else {
+                        LOGGER.warning("Book cover not found: " + coverPhoto);
+                    }
+                }
+            } catch (Exception e) {
+                LOGGER.severe("Failed to load book cover: " + coverPhoto + " - " + e.getMessage());
+            }
+        } else {
+            LOGGER.info("No cover photo provided, using default book cover");
+        }
+        // Default to hollow_rectangle.png
+        Image defaultImage = new Image(getClass().getResource("/images/book_covers/hollow_rectangle.png").toExternalForm());
+        LOGGER.info("Loaded default book cover: hollow_rectangle.png");
+        return defaultImage;
+    }
+
     private HBox createGroupBox(String bookName, String subtitle, String buttonText, int groupId, boolean isJoined, String coverPhoto) {
         HBox groupBox = new HBox();
         groupBox.setAlignment(javafx.geometry.Pos.CENTER);
@@ -268,18 +308,7 @@ public class groups_joined_owned__c {
         imageView.setFitWidth(50.0);
         imageView.setPickOnBounds(true);
         imageView.setPreserveRatio(true);
-        if (coverPhoto != null && !coverPhoto.isEmpty()) {
-            try {
-                imageView.setImage(new Image(getClass().getResource("/images/book_covers/" + coverPhoto).toExternalForm()));
-                LOGGER.info("Loaded book cover: " + coverPhoto);
-            } catch (NullPointerException e) {
-                LOGGER.warning("Book cover not found: " + coverPhoto);
-                imageView.setImage(loadImage("/images/book_covers/hollow_rectangle.png"));
-            }
-        } else {
-            imageView.setImage(loadImage("/images/book_covers/hollow_rectangle.png"));
-            LOGGER.info("Loaded default book cover: hollow_rectangle.png");
-        }
+        imageView.setImage(loadBookCoverImage(coverPhoto));
         HBox.setMargin(imageView, new Insets(5, 5, 5, 5));
 
         VBox textBox = new VBox();

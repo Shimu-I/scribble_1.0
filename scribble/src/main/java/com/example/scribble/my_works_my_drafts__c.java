@@ -186,11 +186,39 @@ public class my_works_my_drafts__c implements nav_bar__cAware {
         coverImage.setPickOnBounds(true);
         if (coverPath != null && !coverPath.isEmpty()) {
             try {
-                coverImage.setImage(new Image(getClass().getResource("/images/book_covers/" + coverPath).toExternalForm()));
-                LOGGER.info("Loaded book cover: " + coverPath);
-            } catch (NullPointerException e) {
-                LOGGER.warning("Book cover not found: " + coverPath);
+                java.io.File uploadFile = new java.io.File("Uploads/book_covers/" + coverPath);
+                if (uploadFile.exists()) {
+                    Image image = new Image("file:" + uploadFile.getAbsolutePath());
+                    if (!image.isError()) {
+                        coverImage.setImage(image);
+                        LOGGER.info("Loaded book cover from filesystem: file:" + uploadFile.getAbsolutePath());
+                    } else {
+                        LOGGER.warning("Failed to load book cover from filesystem (image error): " + coverPath);
+                        coverImage.setImage(new Image(getClass().getResource("/images/book_covers/hollow_rectangle.png").toExternalForm()));
+                        LOGGER.info("Loaded default book cover: hollow_rectangle.png");
+                    }
+                } else {
+                    java.net.URL resource = getClass().getResource("/images/book_covers/" + coverPath);
+                    if (resource != null) {
+                        Image image = new Image(resource.toExternalForm());
+                        if (!image.isError()) {
+                            coverImage.setImage(image);
+                            LOGGER.info("Loaded book cover from classpath: " + resource.toExternalForm());
+                        } else {
+                            LOGGER.warning("Failed to load book cover from classpath (image error): " + coverPath);
+                            coverImage.setImage(new Image(getClass().getResource("/images/book_covers/hollow_rectangle.png").toExternalForm()));
+                            LOGGER.info("Loaded default book cover: hollow_rectangle.png");
+                        }
+                    } else {
+                        LOGGER.warning("Book cover not found: " + coverPath);
+                        coverImage.setImage(new Image(getClass().getResource("/images/book_covers/hollow_rectangle.png").toExternalForm()));
+                        LOGGER.info("Loaded default book cover: hollow_rectangle.png");
+                    }
+                }
+            } catch (Exception e) {
+                LOGGER.severe("Failed to load book cover: " + coverPath + " - " + e.getMessage());
                 coverImage.setImage(new Image(getClass().getResource("/images/book_covers/hollow_rectangle.png").toExternalForm()));
+                LOGGER.info("Loaded default book cover: hollow_rectangle.png");
             }
         } else {
             coverImage.setImage(new Image(getClass().getResource("/images/book_covers/hollow_rectangle.png").toExternalForm()));
@@ -278,11 +306,39 @@ public class my_works_my_drafts__c implements nav_bar__cAware {
         coverImage.setPickOnBounds(true);
         if (coverPath != null && !coverPath.isEmpty()) {
             try {
-                coverImage.setImage(new Image(getClass().getResource("/images/book_covers/" + coverPath).toExternalForm()));
-                LOGGER.info("Loaded book cover: " + coverPath);
-            } catch (NullPointerException e) {
-                LOGGER.warning("Book cover not found: " + coverPath);
+                java.io.File uploadFile = new java.io.File("Uploads/book_covers/" + coverPath);
+                if (uploadFile.exists()) {
+                    Image image = new Image("file:" + uploadFile.getAbsolutePath());
+                    if (!image.isError()) {
+                        coverImage.setImage(image);
+                        LOGGER.info("Loaded book cover from filesystem: file:" + uploadFile.getAbsolutePath());
+                    } else {
+                        LOGGER.warning("Failed to load book cover from filesystem (image error): " + coverPath);
+                        coverImage.setImage(new Image(getClass().getResource("/images/book_covers/hollow_rectangle.png").toExternalForm()));
+                        LOGGER.info("Loaded default book cover: hollow_rectangle.png");
+                    }
+                } else {
+                    java.net.URL resource = getClass().getResource("/images/book_covers/" + coverPath);
+                    if (resource != null) {
+                        Image image = new Image(resource.toExternalForm());
+                        if (!image.isError()) {
+                            coverImage.setImage(image);
+                            LOGGER.info("Loaded book cover from classpath: " + resource.toExternalForm());
+                        } else {
+                            LOGGER.warning("Failed to load book cover from classpath (image error): " + coverPath);
+                            coverImage.setImage(new Image(getClass().getResource("/images/book_covers/hollow_rectangle.png").toExternalForm()));
+                            LOGGER.info("Loaded default book cover: hollow_rectangle.png");
+                        }
+                    } else {
+                        LOGGER.warning("Book cover not found: " + coverPath);
+                        coverImage.setImage(new Image(getClass().getResource("/images/book_covers/hollow_rectangle.png").toExternalForm()));
+                        LOGGER.info("Loaded default book cover: hollow_rectangle.png");
+                    }
+                }
+            } catch (Exception e) {
+                LOGGER.severe("Failed to load book cover: " + coverPath + " - " + e.getMessage());
                 coverImage.setImage(new Image(getClass().getResource("/images/book_covers/hollow_rectangle.png").toExternalForm()));
+                LOGGER.info("Loaded default book cover: hollow_rectangle.png");
             }
         } else {
             coverImage.setImage(new Image(getClass().getResource("/images/book_covers/hollow_rectangle.png").toExternalForm()));
@@ -353,6 +409,8 @@ public class my_works_my_drafts__c implements nav_bar__cAware {
         LOGGER.info("Created draft card for book_id: " + bookId + ", chapter: " + chapterNumber);
         return card;
     }
+
+
 
     private void deleteRecord(int bookId, boolean isWork, int chapterNumber) {
         try (Connection conn = db_connect.getConnection()) {
