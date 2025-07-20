@@ -1,4 +1,3 @@
-// profile_info_edit__c.java
 package com.example.scribble;
 
 import javafx.event.ActionEvent;
@@ -54,6 +53,7 @@ public class profile_info_edit__c {
     private Button delete_profile_pic;
 
     private profile__c parentController;
+    private nav_bar__c mainController; // Fixed: Changed from boolean to nav_bar__c
     private File selectedImageFile;
     private BufferedImage croppedImage;
     private int userId;
@@ -61,6 +61,11 @@ public class profile_info_edit__c {
     public void setParentController(profile__c parentController) {
         this.parentController = parentController;
         System.out.println("setParentController called in profile_info_edit__c with parentController: " + (parentController != null ? "set" : "null"));
+    }
+
+    public void setMainController(nav_bar__c mainController) {
+        this.mainController = mainController;
+        System.out.println("setMainController called in profile_info_edit__c with mainController: " + (mainController != null ? "set" : "null"));
     }
 
     public void setUserId(int userId) {
@@ -118,19 +123,44 @@ public class profile_info_edit__c {
     }
 
     private void loadProfileImage(String profilePicName) {
-        try {
-            String imagePath = "/images/profiles/" + profilePicName;
-            Image image = new Image(getClass().getResource(imagePath).toExternalForm());
-            if (image.isError()) {
-                throw new IOException("Failed to load profile image: " + image.getException().getMessage());
+        if (profilePicName != null && !profilePicName.isEmpty()) {
+            try {
+                // Try loading from filesystem first
+                java.io.File uploadFile = new java.io.File("Uploads/profiles/" + profilePicName);
+                if (uploadFile.exists()) {
+                    Image image = new Image("file:" + uploadFile.getAbsolutePath(), true);
+                    if (!image.isError()) {
+                        profileImageView.setImage(image);
+                        System.out.println("Loaded profile image from filesystem: file:" + uploadFile.getAbsolutePath());
+                        return;
+                    } else {
+                        System.out.println("Failed to load profile image from filesystem (image error): " + profilePicName);
+                    }
+                } else {
+                    // Fall back to classpath
+                    String imagePath = "/images/profiles/" + profilePicName;
+                    java.net.URL resource = getClass().getResource(imagePath);
+                    if (resource != null) {
+                        Image image = new Image(resource.toExternalForm(), true);
+                        if (!image.isError()) {
+                            profileImageView.setImage(image);
+                            System.out.println("Loaded profile image from classpath: " + imagePath);
+                            return;
+                        } else {
+                            System.out.println("Failed to load profile image from classpath (image error): " + profilePicName);
+                        }
+                    } else {
+                        System.out.println("Profile image not found: " + profilePicName);
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.out.println("Failed to load profile image: " + profilePicName + ", falling back to default");
             }
-            profileImageView.setImage(image);
-            System.out.println("Loaded profile image: " + imagePath);
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println("Failed to load profile image: " + profilePicName + ", falling back to default");
-            setDefaultProfileImage();
+        } else {
+            System.out.println("No profile picture provided, using default");
         }
+        setDefaultProfileImage();
     }
 
     @FXML
@@ -201,7 +231,7 @@ public class profile_info_edit__c {
             updateStmt.executeUpdate();
 
             if (profilePicName != null && !profilePicName.isEmpty()) {
-                File profilePicFile = new File("src/main/resources/images/profiles/" + profilePicName);
+                File profilePicFile = new File("Uploads/profiles/" + profilePicName); // Fixed: Check Uploads/profiles/
                 if (profilePicFile.exists()) {
                     Files.deleteIfExists(profilePicFile.toPath());
                     System.out.println("Deleted profile picture file: " + profilePicFile.getAbsolutePath());
@@ -211,7 +241,15 @@ public class profile_info_edit__c {
             setDefaultProfileImage();
             selectedImageFile = null;
             croppedImage = null;
-            System.out.println("Profile picture deleted for userId: " + userId);
+            UserSession.getInstance().setUserPhotoPath(null);
+            UserSession.getInstance().saveToFile();
+            // Notify nav_bar__c to refresh UI
+            if (mainController != null) {
+                mainController.updateUIVisibility();
+                System.out.println("Notified nav_bar__c to refresh UI after profile picture deletion");
+            } else {
+                System.err.println("mainController is null; cannot notify nav_bar__c to refresh UI");
+            }
 
             showAlert(Alert.AlertType.INFORMATION, "Success", "Profile picture has been deleted.");
         } catch (SQLException | IOException e) {
@@ -252,7 +290,7 @@ public class profile_info_edit__c {
 
             String profilePicPath = null;
             if (croppedImage != null) {
-                String destDirPath = "src/main/resources/images/profiles/";
+                String destDirPath = "Uploads/profiles/";
                 Files.createDirectories(Paths.get(destDirPath));
                 String fileName = "profile_" + userId + "_" + System.currentTimeMillis() + ".png";
                 File outputFile = new File(destDirPath + fileName);
@@ -293,6 +331,25 @@ public class profile_info_edit__c {
                     (name.isEmpty() ? "" : "username=" + name + ", ") +
                     (email.isEmpty() ? "" : "email=" + email + ", ") +
                     (profilePicPath != null ? "profile_picture=" + profilePicPath : ""));
+
+            // Update UserSession with new profile picture path
+            if (profilePicPath != null) {
+                UserSession.getInstance().setUserPhotoPath(profilePicPath);
+                UserSession.getInstance().saveToFile();
+                // Notify nav_bar__c to refresh UI
+                if (mainController != null) {
+                    mainController.updateUIVisibility();
+                    System.out.println("Notified nav_bar__c to refresh UI with new profile picture: " + profilePicPath);
+                } else {
+                    System.err.println("mainController is null; cannot notify nav_bar__c to refresh UI");
+                }
+            }
+
+            // Notify parentController to refresh
+            if (parentController != null) {
+                parentController.loadUserProfile();
+                System.out.println("Notified parentController to refresh profile");
+            }
 
             Stage stage = (Stage) save_button.getScene().getWindow();
             stage.close();

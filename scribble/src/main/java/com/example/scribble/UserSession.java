@@ -151,4 +151,10 @@ public class UserSession {
     private boolean nullSafeEquals(String s1, String s2) {
         return (s1 == null && s2 == null) || (s1 != null && s1.equals(s2));
     }
+
+    public void setUserPhotoPath(String profilePicPath) {
+        this.userPhotoPath = profilePicPath;
+        saveToFile();
+        System.out.println("UserSession userPhotoPath updated: " + profilePicPath);
+    }
 }

@@ -84,53 +84,79 @@ public class nav_bar__c {
         updateUIVisibility();
     }
 
-    private void updateUIVisibility() {
+    private Image loadProfileImage(String path) {
+        if (path != null && !path.isEmpty()) {
+            try {
+                // Remove leading slash for filesystem path consistency
+                String cleanPath = path.startsWith("/") ? path.substring(1) : path;
+                // Try loading from filesystem first
+                java.io.File uploadFile = new java.io.File("Uploads/profiles/" + cleanPath);
+                if (uploadFile.exists()) {
+                    Image image = new Image("file:" + uploadFile.getAbsolutePath(), true);
+                    if (!image.isError()) {
+                        LOGGER.info("Loaded profile image from filesystem: file:" + uploadFile.getAbsolutePath());
+                        return image;
+                    } else {
+                        LOGGER.warning("Failed to load profile image from filesystem (image error): " + cleanPath);
+                    }
+                } else {
+                    // Fall back to classpath
+                    java.net.URL resource = getClass().getResource("/images/profiles/" + cleanPath);
+                    if (resource != null) {
+                        Image image = new Image(resource.toExternalForm(), true);
+                        if (!image.isError()) {
+                            LOGGER.info("Loaded profile image from classpath: " + resource.toExternalForm());
+                            return image;
+                        } else {
+                            LOGGER.warning("Failed to load profile image from classpath (image error): " + cleanPath);
+                        }
+                    } else {
+                        LOGGER.warning("Profile image not found: " + cleanPath);
+                    }
+                }
+            } catch (Exception e) {
+                LOGGER.severe("Failed to load profile image: " + path + " - " + e.getMessage());
+            }
+        } else {
+            LOGGER.info("No profile image path provided, using default profile image");
+        }
+        // Default to hollow_circle2.png
+        Image defaultImage = new Image(getClass().getResource("/images/profiles/hollow_circle2.png").toExternalForm());
+        LOGGER.info("Loaded default profile image: hollow_circle2.png");
+        return defaultImage;
+    }
+
+    public void updateUIVisibility() {
         boolean isLoggedIn = UserSession.getInstance().isLoggedIn();
-        System.out.println("Updating UI: isLoggedIn=" + isLoggedIn + ", userId=" + UserSession.getInstance().getUserId());
+        LOGGER.info("Updating UI: isLoggedIn=" + isLoggedIn + ", userId=" + UserSession.getInstance().getUserId());
         if (user_photo != null) {
             user_photo.setVisible(isLoggedIn);
             if (isLoggedIn) {
                 String photoPath = UserSession.getInstance().getUserPhotoPath();
                 if (photoPath == null || photoPath.isEmpty() || photoPath.equals("demo_profile.png") || photoPath.equals("/images/profiles/demo_profile.png")) {
-                    photoPath = "/images/profiles/hollow_circle2.png";
-                    System.out.println("Using default photo: " + photoPath);
-                } else {
-                    if (!photoPath.startsWith("/")) {
-                        photoPath = "/images/profiles/" + photoPath;
-                    }
-                    System.out.println("Attempting to load user photoPath: " + photoPath);
+                    photoPath = "hollow_circle2.png";
+                    LOGGER.info("Using default photo: hollow_circle2.png");
                 }
-                Image image = loadImage(photoPath);
-                if (image != null) {
-                    user_photo.setImage(image);
-                    System.out.println("User photo set to: " + photoPath);
-                } else {
-                    System.err.println("Failed to load user photo: " + photoPath);
-                    image = loadImage("/images/profiles/hollow_circle2.png");
-                    if (image != null) {
-                        user_photo.setImage(image);
-                        System.out.println("Fallback to default photo: /images/profiles/hollow_circle2.png");
-                    } else {
-                        System.err.println("Failed to load fallback photo: /images/profiles/hollow_circle2.png");
-                    }
-                }
+                Image image = loadProfileImage(photoPath);
+                user_photo.setImage(image);
+                LOGGER.info("User photo set to: " + photoPath);
             }
         } else {
-            System.err.println("user_photo is null in updateUIVisibility");
+            LOGGER.severe("user_photo is null in updateUIVisibility");
         }
         if (signOutButton != null) {
             signOutButton.setVisible(isLoggedIn);
-            System.out.println("signOutButton visibility set to: " + isLoggedIn);
+            LOGGER.info("signOutButton visibility set to: " + isLoggedIn);
         } else {
-            System.err.println("signOutButton is null in updateUIVisibility");
+            LOGGER.severe("signOutButton is null in updateUIVisibility");
         }
         if (user_sign_in != null) {
             user_sign_in.setVisible(!isLoggedIn);
-            System.out.println("user_sign_in visibility set to: " + !isLoggedIn);
+            LOGGER.info("user_sign_in visibility set to: " + !isLoggedIn);
         }
         if (testSignOutButton != null) {
             testSignOutButton.setVisible(isLoggedIn);
-            System.out.println("testSignOutButton visibility set to: " + isLoggedIn);
+            LOGGER.info("testSignOutButton visibility set to: " + isLoggedIn);
         }
     }
 

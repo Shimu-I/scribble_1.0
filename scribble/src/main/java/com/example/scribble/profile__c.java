@@ -76,7 +76,50 @@ public class profile__c {
         handle_history_library(new ActionEvent(history_library_button, null));
     }
 
-    private void loadUserProfile() {
+    private void loadProfileImage(String profilePicName) {
+        if (profilePicName != null && !profilePicName.isEmpty()) {
+            try {
+                // Try loading from filesystem first
+                java.io.File uploadFile = new java.io.File("Uploads/profiles/" + profilePicName);
+                if (uploadFile.exists()) {
+                    Image image = new Image("file:" + uploadFile.getAbsolutePath(), true);
+                    if (!image.isError()) {
+                        cover_photo.setImage(image);
+                        LOGGER.info("Loaded profile image from filesystem: file:" + uploadFile.getAbsolutePath());
+                        return;
+                    } else {
+                        LOGGER.warning("Failed to load profile image from filesystem (image error): " + profilePicName);
+                    }
+                } else {
+                    // Fall back to classpath
+                    String imagePath = "/images/profiles/" + profilePicName;
+                    java.net.URL resource = getClass().getResource(imagePath);
+                    if (resource != null) {
+                        Image image = new Image(resource.toExternalForm(), true);
+                        if (!image.isError()) {
+                            cover_photo.setImage(image);
+                            LOGGER.info("Loaded profile image from classpath: " + imagePath);
+                            return;
+                        } else {
+                            LOGGER.warning("Failed to load profile image from classpath (image error): " + profilePicName);
+                        }
+                    } else {
+                        LOGGER.warning("Profile picture not found: " + imagePath);
+                    }
+                }
+            } catch (Exception e) {
+                LOGGER.severe("Failed to load profile image: " + profilePicName + " - " + e.getMessage());
+            }
+        } else {
+            LOGGER.info("No profile picture provided, using default");
+        }
+        // Default to hollow_circle.png
+        Image defaultImage = new Image(getClass().getResource("/images/profiles/hollow_circle.png").toExternalForm());
+        cover_photo.setImage(defaultImage);
+        LOGGER.info("Loaded default profile image: hollow_circle.png");
+    }
+
+    public void loadUserProfile() {
         try (Connection conn = db_connect.getConnection();
              PreparedStatement stmt = conn.prepareStatement(
                      "SELECT username, email, profile_picture, created_at, " +
@@ -89,17 +132,7 @@ public class profile__c {
                 user_name.setText(userId + " : " + rs.getString("username"));
                 user_email.setText(rs.getString("email"));
                 String profilePic = rs.getString("profile_picture");
-                if (profilePic != null && !profilePic.isEmpty()) {
-                    String resourcePath = "/images/profiles/" + profilePic;
-                    try {
-                        cover_photo.setImage(new Image(getClass().getResource(resourcePath).toExternalForm()));
-                    } catch (NullPointerException e) {
-                        LOGGER.warning("Profile picture not found: " + resourcePath);
-                        cover_photo.setImage(new Image(getClass().getResource("/images/profiles/green_circle.png").toExternalForm()));
-                    }
-                } else {
-                    cover_photo.setImage(new Image(getClass().getResource("/images/profiles/green_circle.png").toExternalForm()));
-                }
+                loadProfileImage(profilePic);
                 Timestamp createdAt = rs.getTimestamp("created_at");
                 if (createdAt != null) {
                     joined_at.setText("Member since " + new java.text.SimpleDateFormat("MMMM dd, yyyy").format(createdAt));
@@ -181,6 +214,7 @@ public class profile__c {
             Parent editPage = loader.load();
             profile_info_edit__c editController = loader.getController();
             editController.setParentController(this);
+            editController.setMainController(mainController); // Pass nav_bar__c to profile_info_edit__c
             editController.setUserId(userId);
 
             // Create a new modal stage
