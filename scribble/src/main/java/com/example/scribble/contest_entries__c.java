@@ -1,6 +1,8 @@
 package com.example.scribble;
 
 import javafx.event.ActionEvent;
+
+import java.time.temporal.ChronoUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -26,24 +28,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.Timer;
 import java.util.TimerTask;
 import javafx.fxml.Initializable;
-import java.net.URL;
 import java.util.ResourceBundle;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.ChronoUnit;
 import java.util.logging.Logger;
 import java.sql.Timestamp;
-import java.time.*;
-import java.time.format.DateTimeFormatter;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import javafx.fxml.Initializable;
-import java.net.URL;
-import java.util.ResourceBundle;
 
-public class contest_entries__c implements Initializable{
+public class contest_entries__c implements Initializable {
 
     private static final Logger LOGGER = Logger.getLogger(contest_entries__c.class.getName());
 
@@ -55,11 +44,25 @@ public class contest_entries__c implements Initializable{
     @FXML private Button current_week_button;
     @FXML private Label weekly_session;
     @FXML private Label countdown;
+    @FXML private ComboBox<String> filter_combo_box;
+    @FXML private HBox entry_hbox; // Added for FXML alignment
+    @FXML private HBox entry_no_hbox; // Added for FXML alignment
+    @FXML private Label entry_no; // Added for FXML alignment
+    @FXML private Label title_of_the_content; // Added for FXML alignment
+    @FXML private Label author_name; // Added for FXML alignment
+    @FXML private Label submited_date; // Added for FXML alignment
+    @FXML private Label voted_by_no_of_people; // Added for FXML alignment
+    @FXML private Button open_entry; // Added for FXML alignment
+    @FXML private Button not_voted_button; // Added for FXML alignment
+    @FXML private Button voted_button; // Added for FXML alignment
+
     private int contestId;
     private String genre;
     private int userId;
     private String username;
     private boolean isCurrentWeekView = true;
+    private String currentSortField = "submission_date";
+    private boolean isAscending = false;
 
     @FXML private nav_bar__c mainController;
 
@@ -92,16 +95,50 @@ public class contest_entries__c implements Initializable{
         loadEntries();
     }
 
-        @Override
-        public void initialize(URL location, ResourceBundle resources) {
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+        if (previous_week_button != null) {
             previous_week_button.setOnMouseEntered(e -> previous_week_button.setStyle("-fx-background-color: #C9B8A9; -fx-background-radius: 10 0 0 10; -fx-text-fill: #014237; -fx-translate-y: -2px;"));
             previous_week_button.setOnMouseExited(e -> previous_week_button.setStyle(isCurrentWeekView ? "-fx-background-color: #F5E0CD; -fx-background-radius: 10 0 0 10; -fx-text-fill: #014237;" : "-fx-background-color: #C9B8A9; -fx-background-radius: 10 0 0 10; -fx-text-fill: #014237;"));
-            current_week_button.setOnMouseEntered(e -> current_week_button.setStyle("-fx-background-color: #C9B8A9; -fx-background-radius: 0 10 10 0; -fx-text-fill: #014237; -fx-translate-y: -2px;"));
-            current_week_button.setOnMouseExited(e -> current_week_button.setStyle(isCurrentWeekView ? "-fx-background-color: #C9B8A9; -fx-background-radius: 0 10 10 0; -fx-text-fill: #014237;" : "-fx-background-color: #F5E0CD; -fx-background-radius: 0 10 10 0; -fx-text-fill: #014237;"));
-            initializeComboBox();
-
         }
+        if (current_week_button != null) {
+            current_week_button.setOnMouseEntered(e -> current_week_button.setStyle("-fx-background-color: #C9B8A9; -fx-background-radius: 0 10 10 0; -fx-text-fill: #014237; -fx-translateji-y: -2px;"));
+            current_week_button.setOnMouseExited(e -> current_week_button.setStyle(isCurrentWeekView ? "-fx-background-color: #C9B8A9; -fx-background-radius: 0 10 10 0; -fx-text-fill: #014237;" : "-fx-background-color: #F5E0CD; -fx-background-radius: 0 10 10 0; -fx-text-fill: #014237;"));
+        }
+        initializeComboBox();
+        // Initialize sample entry if present
+        if (entry_hbox != null) {
+            setupSampleEntry();
+        }
+    }
 
+    private void setupSampleEntry() {
+        // Configure the sample entry_hbox from FXML as a template
+        if (entry_no != null) {
+            entry_no.setText("1");
+        }
+        if (title_of_the_content != null) {
+            title_of_the_content.setText("Sample Title");
+        }
+        if (author_name != null) {
+            author_name.setText("by Sample Author");
+        }
+        if (submited_date != null) {
+            submited_date.setText("Uploaded on " + new SimpleDateFormat("MM/dd/yyyy").format(new java.util.Date()));
+        }
+        if (voted_by_no_of_people != null) {
+            voted_by_no_of_people.setText("Received 0 votes");
+        }
+        if (not_voted_button != null && voted_button != null) {
+            not_voted_button.setVisible(true);
+            voted_button.setVisible(false);
+        }
+        // Ensure entry_hbox is not added to entryContainer unless needed
+        if (entryContainer != null && !entryContainer.getChildren().contains(entry_hbox)) {
+            entryContainer.getChildren().clear();
+            entryContainer.getChildren().add(entry_hbox);
+        }
+    }
 
     private void updateGenreLabel() {
         if (genre_name != null && genre != null) {
@@ -139,7 +176,6 @@ public class contest_entries__c implements Initializable{
             Parent root = loader.load();
             Object controller = loader.getController();
 
-            // Use reflection to call setMainController safely
             try {
                 if (controller != null) {
                     java.lang.reflect.Method setMainControllerMethod = controller.getClass().getMethod("setMainController", nav_bar__c.class);
@@ -160,8 +196,6 @@ public class contest_entries__c implements Initializable{
         }
     }
 
-
-
     @FXML
     private void handle_add_entry(ActionEvent event) {
         if (!UserSession.getInstance().isLoggedIn()) {
@@ -175,7 +209,6 @@ public class contest_entries__c implements Initializable{
             return;
         }
 
-        // Check for existing entry in current week for this genre (contestId)
         LocalDateTime weekStart = getCurrentWeekStart();
         LocalDateTime weekEnd = weekStart.plusDays(6).withHour(23).withMinute(59).withSecond(59);
         try (Connection conn = db_connect.getConnection()) {
@@ -203,17 +236,15 @@ public class contest_entries__c implements Initializable{
             return;
         }
 
-        // Check for winner cooldown in this genre (contestId)
-        // Check for winner cooldown in this genre (contestId)
         try (Connection conn = db_connect.getConnection()) {
             if (conn == null) {
                 LOGGER.severe("Database connection is null, cannot check winner cooldown.");
                 showErrorAlert("Database Error", "Failed to connect to the database.");
                 return;
             }
-            LocalDateTime currentWeekStart = getCurrentWeekStart(); // Saturday of current week (June 28, 2025)
-            LocalDateTime previousWeekStart = currentWeekStart.minusWeeks(1); // Saturday of previous week (June 21, 2025)
-            LocalDateTime previousWeekEnd = previousWeekStart.plusDays(6); // Friday of previous week (June 27, 2025)
+            LocalDateTime currentWeekStart = getCurrentWeekStart();
+            LocalDateTime previousWeekStart = currentWeekStart.minusWeeks(1);
+            LocalDateTime previousWeekEnd = previousWeekStart.plusDays(6);
             String query = "SELECT ce.submission_date FROM contest_entries ce " +
                     "JOIN (SELECT contest_id, submission_date, vote_count, " +
                     "RANK() OVER (PARTITION BY contest_id ORDER BY vote_count DESC, (SELECT MIN(created_at) FROM contest_votes cv WHERE cv.contest_entry_id = ce.entry_id) ASC) as rnk " +
@@ -227,10 +258,9 @@ public class contest_entries__c implements Initializable{
                 ResultSet rs = stmt.executeQuery();
                 if (rs.next()) {
                     LocalDateTime winDate = rs.getTimestamp("submission_date").toLocalDateTime();
-                    LocalDateTime cooldownStart = currentWeekStart; // Start cooldown from current week's Saturday
-                    LocalDateTime eligibleDate = cooldownStart.plusDays(14); // 14 days from current week's Saturday
+                    LocalDateTime cooldownStart = currentWeekStart;
+                    LocalDateTime eligibleDate = cooldownStart.plusDays(14);
                     LocalDateTime now = LocalDateTime.now(ZoneOffset.ofHours(6));
-                    LOGGER.info("Debug - Now: " + now.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + ", WinDate: " + winDate.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + ", CooldownStart: " + cooldownStart.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + ", EligibleDate: " + eligibleDate.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
                     if (now.isBefore(eligibleDate)) {
                         long daysRemaining = ChronoUnit.DAYS.between(now, eligibleDate);
                         String fullMessage = "You achieved a top position last week. Please wait 2 weeks from " + cooldownStart.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + " before submitting a new entry. Days remaining: " + daysRemaining;
@@ -238,11 +268,7 @@ public class contest_entries__c implements Initializable{
                         showErrorAlert("Submission Error", fullMessage);
                         LOGGER.warning("User " + userId + " is in cooldown until " + eligibleDate + " for contestId=" + contestId);
                         return;
-                    } else {
-                        LOGGER.info("Cooldown expired. Now: " + now + " is after EligibleDate: " + eligibleDate);
                     }
-                } else {
-                    LOGGER.info("No top 3 position found in previous week for user " + userId + " in contestId " + contestId);
                 }
             }
         } catch (SQLException e) {
@@ -305,28 +331,6 @@ public class contest_entries__c implements Initializable{
         addVote(entryId, entryHBox);
     }
 
-    private boolean isOwnEntry(int entryId) {
-        try (Connection conn = db_connect.getConnection()) {
-            if (conn == null) {
-                LOGGER.severe("Database connection is null, cannot check entry ownership for entryId=" + entryId);
-                return false;
-            }
-            String query = "SELECT user_id FROM contest_entries WHERE entry_id = ?";
-            try (PreparedStatement stmt = conn.prepareStatement(query)) {
-                stmt.setInt(1, entryId);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
-                        return rs.getInt("user_id") == UserSession.getInstance().getUserId();
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            LOGGER.severe("Failed to check entry ownership for entryId=" + entryId + ": " + e.getMessage());
-            showErrorAlert("Database Error", "Unable to verify entry ownership: " + e.getMessage());
-        }
-        return false;
-    }
-
     @FXML
     private void handle_voted_button(ActionEvent event) {
         if (!UserSession.getInstance().isLoggedIn()) {
@@ -350,16 +354,6 @@ public class contest_entries__c implements Initializable{
         removeVote(entryId, entryHBox);
     }
 
-    private HBox findEntryHBox(Node node) {
-        while (node != null) {
-            if (node instanceof HBox && "entry_hbox".equals(node.getId())) {
-                return (HBox) node;
-            }
-            node = node.getParent();
-        }
-        return null;
-    }
-
     @FXML
     private void handle_open_entry(ActionEvent event) {
         if (!UserSession.getInstance().isLoggedIn()) {
@@ -374,7 +368,12 @@ public class contest_entries__c implements Initializable{
         }
 
         Button source = (Button) event.getSource();
-        HBox entryHBox = (HBox) source.getParent();
+        HBox entryHBox = findEntryHBox(source);
+        if (entryHBox == null) {
+            LOGGER.severe("Failed to find entry HBox for open button.");
+            showErrorAlert("UI Error", "Unable to open entry due to UI structure issue.");
+            return;
+        }
         int entryId = getEntryIdFromHBox(entryHBox);
 
         LOGGER.info("Initiating navigation to contest_read_entry.fxml for entryId: " + entryId + " with mainController: " + mainController);
@@ -398,8 +397,6 @@ public class contest_entries__c implements Initializable{
             showErrorAlert("Navigation Error", "Failed to open the entry page: " + e.getMessage());
         }
     }
-
-
 
     private void loadEntries() {
         if (entryContainer == null) {
@@ -455,15 +452,14 @@ public class contest_entries__c implements Initializable{
                         HBox numberBox = (HBox) entryHBox.getChildren().get(0);
                         String backgroundColor;
                         if (entryNumber == 1) {
-                            backgroundColor = "#721415"; // 1st position
+                            backgroundColor = "#721415";
                         } else if (entryNumber == 2) {
-                            backgroundColor = "#AC2324"; // 2nd position
+                            backgroundColor = "#AC2324";
                         } else {
-                            backgroundColor = "#BA3D3E"; // 3rd position
+                            backgroundColor = "#BA3D3E";
                         }
-                       numberBox.setStyle("-fx-background-color: " + backgroundColor + "; -fx-background-radius: 20; -fx-border-width: 2;");
+                        numberBox.setStyle("-fx-background-color: " + backgroundColor + "; -fx-background-radius: 20; -fx-border-width: 2;");
                     }
-
                     entryContainer.getChildren().add(entryHBox);
                     entryNumber++;
                 }
@@ -477,10 +473,6 @@ public class contest_entries__c implements Initializable{
         }
     }
 
-    @FXML private ComboBox<String> filter_combo_box;
-    private String currentSortField = "submission_date";
-    private boolean isAscending = false;
-
     private void initializeComboBox() {
         if (filter_combo_box == null) {
             LOGGER.severe("filter_combo_box is null; cannot initialize ComboBox.");
@@ -488,14 +480,14 @@ public class contest_entries__c implements Initializable{
         }
         filter_combo_box.getItems().clear();
         filter_combo_box.getItems().addAll(
-                "Submission Date (Des)",
+                "Submission Date (Desc)",
                 "Submission Date (Asc)",
                 "Book Name (Asc)",
-                "Book Name (Des)",
+                "Book Name (Desc)",
                 "Votes (Asc)",
-                "Votes (Des)"
+                "Votes (Desc)"
         );
-        filter_combo_box.setValue("Submission Date (Des)");
+        filter_combo_box.setValue("Submission Date (Desc)"); // Corrected typo from FXML prompt
         currentSortField = "submission_date";
         isAscending = false;
         filter_combo_box.setOnAction(event -> {
@@ -506,7 +498,7 @@ public class contest_entries__c implements Initializable{
                         currentSortField = "submission_date";
                         isAscending = true;
                         break;
-                    case "Submission Date (Des)":
+                    case "Submission Date (Desc)":
                         currentSortField = "submission_date";
                         isAscending = false;
                         break;
@@ -514,7 +506,7 @@ public class contest_entries__c implements Initializable{
                         currentSortField = "entry_title";
                         isAscending = true;
                         break;
-                    case "Book Name (Des)":
+                    case "Book Name (Desc)":
                         currentSortField = "entry_title";
                         isAscending = false;
                         break;
@@ -522,7 +514,7 @@ public class contest_entries__c implements Initializable{
                         currentSortField = "vote_count";
                         isAscending = true;
                         break;
-                    case "Votes (Des)":
+                    case "Votes (Desc)":
                         currentSortField = "vote_count";
                         isAscending = false;
                         break;
@@ -602,7 +594,6 @@ public class contest_entries__c implements Initializable{
                         }
                         numberBox.setStyle("-fx-background-color: " + backgroundColor + "; -fx-background-radius: 20; -fx-border-width: 2;");
                     }
-
                     entryContainer.getChildren().add(entryHBox);
                     entryNumber++;
                 }
@@ -643,29 +634,40 @@ public class contest_entries__c implements Initializable{
         Label numberLabel = new Label(String.valueOf(entryNumber));
         numberLabel.setTextFill(javafx.scene.paint.Color.WHITE);
         numberLabel.setFont(new Font("System Bold", 20.0));
+        numberLabel.setId("entry_no");
         numberBox.getChildren().add(numberLabel);
 
         VBox titleAuthorBox = new VBox();
         titleAuthorBox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
         titleAuthorBox.setPrefHeight(95.0);
-        titleAuthorBox.setPrefWidth(266.0);
+        titleAuthorBox.setPrefWidth(378.0);
         Label titleLabel = new Label(title);
-        titleLabel.setFont(new Font("System Bold", 24.0));
+        titleLabel.setFont(new Font("System Bold", 20.0));
+        titleLabel.setId("title_of_the_content");
         Label authorLabel = new Label("by " + author);
         authorLabel.setFont(new Font("System Bold", 14.0));
+        authorLabel.setId("author_name");
         titleAuthorBox.getChildren().addAll(titleLabel, authorLabel);
+
+        HBox infoBox = new HBox();
+        infoBox.setAlignment(javafx.geometry.Pos.CENTER);
+        infoBox.setPrefHeight(95.0);
+        infoBox.setPrefWidth(424.0);
+        infoBox.setSpacing(15.0);
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
         Label dateLabel = new Label("Uploaded on " + dateFormat.format(submissionDate));
-        dateLabel.setFont(new Font(14.0));
+        dateLabel.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+        dateLabel.setWrapText(true);
+        dateLabel.setId("submited_date");
 
         HBox voteBox = new HBox();
         voteBox.setAlignment(javafx.geometry.Pos.CENTER);
         voteBox.setPrefHeight(95.0);
-        voteBox.setPrefWidth(232.0);
+        voteBox.setPrefWidth(169.0);
         voteBox.setSpacing(10.0);
 
-        StackPane voteButtonsPane = new StackPane();
+        StackPane voteButtonsPane = new StackPane(); // Changed to StackPane for stacking buttons
         voteButtonsPane.setAlignment(javafx.geometry.Pos.CENTER);
         voteButtonsPane.setPrefHeight(30.0);
         voteButtonsPane.setPrefWidth(60.0);
@@ -679,11 +681,10 @@ public class contest_entries__c implements Initializable{
         notVotedButton.setGraphic(notVotedIcon);
         notVotedButton.setPrefHeight(30.0);
         notVotedButton.setPrefWidth(30.0);
-        notVotedButton.setStyle("-fx-background-color: transparent; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 5, 0, 0, 2); -fx-cursor: hand;");
+        notVotedButton.setStyle("-fx-background-color: transparent;");
+        notVotedButton.setId("not_voted_button");
         notVotedButton.setOnAction(this::handle_not_voted_button);
         notVotedButton.setDisable(!isCurrentWeekView);
-        notVotedButton.setOnMouseEntered(e -> notVotedButton.setStyle("-fx-background-color: transparent; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 5, 0, 0, 2); -fx-scale-x: 1.05; -fx-scale-y: 1.05; -fx-cursor: hand;"));
-        notVotedButton.setOnMouseExited(e -> notVotedButton.setStyle("-fx-background-color: transparent; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 5, 0, 0, 2); -fx-cursor: hand;"));
 
         Button votedButton = new Button();
         ImageView votedIcon = new ImageView(new Image(getClass().getResource("/images/icons/star6.png").toExternalForm()));
@@ -692,34 +693,57 @@ public class contest_entries__c implements Initializable{
         votedButton.setGraphic(votedIcon);
         votedButton.setPrefHeight(30.0);
         votedButton.setPrefWidth(30.0);
-        votedButton.setStyle("-fx-background-color: transparent; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 5, 0, 0, 2); -fx-cursor: hand;");
+        votedButton.setStyle("-fx-background-color: transparent;");
+        votedButton.setId("voted_button");
         votedButton.setOnAction(this::handle_voted_button);
         votedButton.setDisable(!isCurrentWeekView);
-        votedButton.setOnMouseEntered(e -> votedButton.setStyle("-fx-background-color: transparent; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 5, 0, 0, 2); -fx-scale-x: 1.05; -fx-scale-y: 1.05; -fx-cursor: hand;"));
-        votedButton.setOnMouseExited(e -> votedButton.setStyle("-fx-background-color: transparent; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 5, 0, 0, 2); -fx-cursor: hand;"));
 
         boolean hasVoted = UserSession.getInstance().isLoggedIn() && hasUserVoted(entryId);
         notVotedButton.setVisible(!hasVoted);
         votedButton.setVisible(hasVoted);
-        voteButtonsPane.getChildren().addAll(notVotedButton, votedButton);
+        voteButtonsPane.getChildren().addAll(notVotedButton, votedButton); // Stacked in StackPane
 
-        Label voteCountLabel = new Label("Voted by " + voteCount + " people");
-        voteCountLabel.setFont(new Font(14.0));
+        Label voteCountLabel = new Label("Received " + voteCount + " votes");
+        voteCountLabel.setWrapText(true);
+        voteCountLabel.setId("voted_by_no_of_people");
+
         voteBox.getChildren().addAll(voteButtonsPane, voteCountLabel);
 
         Button openButton = new Button("open");
         openButton.setPrefHeight(30.0);
         openButton.setPrefWidth(120.0);
-        openButton.setStyle("-fx-background-color: #F5E0CD; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0, 0, 0); -fx-cursor: hand;");
+        openButton.setStyle("-fx-background-color: #F5E0CD; -fx-background-radius: 5;");
         openButton.setTextFill(javafx.scene.paint.Color.valueOf("#014237"));
         openButton.setFont(new Font("System Bold", 14.0));
+        openButton.setId("open_entry");
         openButton.setOnAction(this::handle_open_entry);
-        openButton.setOnMouseEntered(e -> openButton.setStyle("-fx-background-color: #F5E0CD; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 10, 0, 0, 1); -fx-translate-y: -2px; -fx-cursor: hand;"));
-        openButton.setOnMouseExited(e -> openButton.setStyle("-fx-background-color: #F5E0CD; -fx-background-radius: 5; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0, 0, 0); -fx-cursor: hand;"));
 
-        hbox.getChildren().addAll(numberBox, titleAuthorBox, dateLabel, voteBox, openButton);
+        infoBox.getChildren().addAll(dateLabel, voteBox, openButton);
+        hbox.getChildren().addAll(numberBox, titleAuthorBox, infoBox);
         hbox.getProperties().put("entryId", entryId);
         return hbox;
+    }
+
+    private boolean isOwnEntry(int entryId) {
+        try (Connection conn = db_connect.getConnection()) {
+            if (conn == null) {
+                LOGGER.severe("Database connection is null, cannot check entry ownership for entryId=" + entryId);
+                return false;
+            }
+            String query = "SELECT user_id FROM contest_entries WHERE entry_id = ?";
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setInt(1, entryId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getInt("user_id") == UserSession.getInstance().getUserId();
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.severe("Failed to check entry ownership for entryId=" + entryId + ": " + e.getMessage());
+            showErrorAlert("Database Error", "Unable to verify entry ownership: " + e.getMessage());
+        }
+        return false;
     }
 
     private boolean hasUserVoted(int entryId) {
@@ -773,7 +797,7 @@ public class contest_entries__c implements Initializable{
 
             conn.commit();
             updateVoteDisplay(entryHBox, true);
-            loadEntries(); // Refresh entry order
+            loadEntries();
             LOGGER.info("Vote added for entryId=" + entryId + " by userId=" + UserSession.getInstance().getUserId());
         } catch (SQLException e) {
             LOGGER.severe("Failed to add vote for entryId=" + entryId + ": " + e.getMessage());
@@ -828,7 +852,7 @@ public class contest_entries__c implements Initializable{
 
             conn.commit();
             updateVoteDisplay(entryHBox, false);
-            loadEntries(); // Refresh entry order
+            loadEntries();
             LOGGER.info("Vote removed for entryId=" + entryId + " by userId=" + UserSession.getInstance().getUserId());
         } catch (SQLException e) {
             LOGGER.severe("Failed to remove vote for entryId=" + entryId + ": " + e.getMessage());
@@ -855,8 +879,9 @@ public class contest_entries__c implements Initializable{
 
     private void updateVoteDisplay(HBox entryHBox, boolean hasVoted) {
         try {
-            HBox voteBox = (HBox) entryHBox.getChildren().get(3);
-            StackPane voteButtonsPane = (StackPane) voteBox.getChildren().get(0);
+            HBox infoBox = (HBox) entryHBox.getChildren().get(2);
+            HBox voteBox = (HBox) infoBox.getChildren().get(1);
+            StackPane voteButtonsPane = (StackPane) voteBox.getChildren().get(0); // Updated to StackPane
             Button notVotedButton = (Button) voteButtonsPane.getChildren().get(0);
             Button votedButton = (Button) voteButtonsPane.getChildren().get(1);
             notVotedButton.setVisible(!hasVoted);
@@ -865,7 +890,7 @@ public class contest_entries__c implements Initializable{
             Label voteCountLabel = (Label) voteBox.getChildren().get(1);
             int entryId = getEntryIdFromHBox(entryHBox);
             int currentVoteCount = getCurrentVoteCount(entryId);
-            voteCountLabel.setText("Voted by " + currentVoteCount + " people");
+            voteCountLabel.setText("Received " + currentVoteCount + " votes");
         } catch (Exception e) {
             LOGGER.severe("Failed to update vote display for entryId=" + getEntryIdFromHBox(entryHBox) + ": " + e.getMessage());
             showErrorAlert("UI Error", "Failed to update vote display: " + e.getMessage());
@@ -898,20 +923,27 @@ public class contest_entries__c implements Initializable{
         return (int) hbox.getProperties().get("entryId");
     }
 
+    private HBox findEntryHBox(Node node) {
+        while (node != null) {
+            if (node instanceof HBox && "entry_hbox".equals(node.getId())) {
+                return (HBox) node;
+            }
+            node = node.getParent();
+        }
+        return null;
+    }
+
     private void showErrorAlert(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle(title);
         alert.setHeaderText(null);
-        // Use a Label with wrapText enabled instead of relying on TextArea
         Label contentLabel = new Label(message);
         contentLabel.setWrapText(true);
         alert.getDialogPane().setContent(contentLabel);
-        // Increase width to ensure full text is visible
-        alert.getDialogPane().setMinWidth(450); // Increased from 300
-        alert.getDialogPane().setPrefWidth(500); // Increased from 350
+        alert.getDialogPane().setMinWidth(450);
+        alert.getDialogPane().setPrefWidth(500);
         alert.showAndWait();
     }
-
 
     private LocalDateTime getCurrentWeekStart() {
         LocalDateTime now = LocalDateTime.now(ZoneOffset.ofHours(6));
@@ -930,9 +962,10 @@ public class contest_entries__c implements Initializable{
         LocalDateTime weekStart = isCurrentWeek ? getCurrentWeekStart() : getPreviousWeekStart();
         LocalDateTime weekEnd = weekStart.plusDays(6).withHour(23).withMinute(59).withSecond(59);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy");
-        weekly_session.setText(weekStart.format(formatter) + " - " + weekEnd.format(formatter));
+        if (weekly_session != null) {
+            weekly_session.setText(weekStart.format(formatter) + " - " + weekEnd.format(formatter));
+        }
     }
-
 
     private void startCountdownTimer() {
         AtomicReference<LocalDateTime> nextSaturdayRef = new AtomicReference<>(getCurrentWeekStart().plusWeeks(1));
@@ -952,29 +985,41 @@ public class contest_entries__c implements Initializable{
                     long hours = duration.toHoursPart();
                     long minutes = duration.toMinutesPart();
                     long seconds = duration.toSecondsPart();
-                    countdown.setText(String.format("Next reset in: %dd: %02dh: %02dm: %02ds", days, hours, minutes, seconds));
+                    if (countdown != null) {
+                        countdown.setText(String.format("Next reset in: %dd: %02dh: %02dm: %02ds", days, hours, minutes, seconds));
+                    }
                 });
             }
         }, 0, 1000);
     }
 
-
-
     public void handle_previous_week_button(ActionEvent actionEvent) {
         isCurrentWeekView = false;
         updateWeeklySessionLabel(false);
-        previous_week_button.setStyle("-fx-background-color: #C9B8A9; -fx-background-radius: 10 0 0 10; -fx-text-fill: #014237;");
-        current_week_button.setStyle("-fx-background-color: #F5E0CD; -fx-background-radius: 0 10 10 0; -fx-text-fill: #014237;");
-        add_entry.setDisable(true);
+        if (previous_week_button != null) {
+            previous_week_button.setStyle("-fx-background-color: #C9B8A9; -fx-background-radius: 10 0 0 10; -fx-text-fill: #014237;");
+        }
+        if (current_week_button != null) {
+            current_week_button.setStyle("-fx-background-color: #F5E0CD; -fx-background-radius: 0 10 10 0; -fx-text-fill: #014237;");
+        }
+        if (add_entry != null) {
+            add_entry.setDisable(true);
+        }
         loadEntries();
     }
 
     public void handle_current_week_button(ActionEvent actionEvent) {
         isCurrentWeekView = true;
         updateWeeklySessionLabel(true);
-        current_week_button.setStyle("-fx-background-color: #C9B8A9; -fx-background-radius: 0 10 10 0; -fx-text-fill: #014237;");
-        previous_week_button.setStyle("-fx-background-color: #F5E0CD; -fx-background-radius: 10 0 0 10; -fx-text-fill: #014237;");
-        add_entry.setDisable(false);
+        if (current_week_button != null) {
+            current_week_button.setStyle("-fx-background-color: #C9B8A9; -fx-background-radius: 0 10 10 0; -fx-text-fill: #014237;");
+        }
+        if (previous_week_button != null) {
+            previous_week_button.setStyle("-fx-background-color: #F5E0CD; -fx-background-radius: 10 0 0 10; -fx-text-fill: #014237;");
+        }
+        if (add_entry != null) {
+            add_entry.setDisable(false);
+        }
         loadEntries();
     }
 }

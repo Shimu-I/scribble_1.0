@@ -116,9 +116,9 @@
                                     </Label>
                                  </children>
                               </HBox>
-                              <VBox alignment="CENTER_LEFT" prefHeight="95.0" prefWidth="266.0">
+                              <VBox alignment="CENTER_LEFT" prefHeight="95.0" prefWidth="378.0">
                                  <children>
-                                    <Label fx:id="title_of_the_content" text="Tittle of the content">
+                                    <Label fx:id="title_of_the_content" prefHeight="35.0" prefWidth="407.0" text="Tittle of the content">
                                        <font>
                                           <Font name="System Bold" size="24.0" />
                                        </font>
@@ -130,47 +130,43 @@
                                     </Label>
                                  </children>
                               </VBox>
-                              <Label fx:id="submited_date" text="Uploaded on 12/12/2023">
-                                 <font>
-                                    <Font size="14.0" />
-                                 </font>
-                              </Label>
-                              <HBox alignment="CENTER" prefHeight="95.0" prefWidth="232.0" spacing="10.0">
+                              <HBox alignment="CENTER" prefHeight="95.0" prefWidth="424.0" spacing="15.0">
                                  <children>
-                                    <HBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="30.0" prefWidth="60.0">
+                                    <Label fx:id="submited_date" text="Uploaded on &#10;12/12/2023" textAlignment="CENTER" wrapText="true" />
+                                    <HBox alignment="CENTER" prefHeight="95.0" prefWidth="169.0" spacing="10.0">
                                        <children>
-                                          <Button fx:id="not_voted_button" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#handle_not_voted_button" prefHeight="30.0" prefWidth="30.0" style="-fx-background-color: transparent;">
-                                             <graphic>
-                                                <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
-                                                   <image>
-                                                      <Image url="@../../../images/icons/star5.png" />
-                                                   </image>
-                                                </ImageView>
-                                             </graphic>
-                                          </Button>
-                                          <Button fx:id="voted_button" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#handle_voted_button" prefHeight="30.0" prefWidth="30.0" style="-fx-background-color: transparent;">
-                                             <graphic>
-                                                <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
-                                                   <image>
-                                                      <Image url="@../../../images/icons/star6.png" />
-                                                   </image>
-                                                </ImageView>
-                                             </graphic>
-                                          </Button>
+                                          <HBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="30.0" prefWidth="60.0">
+                                             <children>
+                                                <Button fx:id="not_voted_button" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#handle_not_voted_button" prefHeight="30.0" prefWidth="30.0" style="-fx-background-color: transparent;">
+                                                   <graphic>
+                                                      <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
+                                                         <image>
+                                                            <Image url="@../../../images/icons/star5.png" />
+                                                         </image>
+                                                      </ImageView>
+                                                   </graphic>
+                                                </Button>
+                                                <Button fx:id="voted_button" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#handle_voted_button" prefHeight="30.0" prefWidth="30.0" style="-fx-background-color: transparent;">
+                                                   <graphic>
+                                                      <ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
+                                                         <image>
+                                                            <Image url="@../../../images/icons/star6.png" />
+                                                         </image>
+                                                      </ImageView>
+                                                   </graphic>
+                                                </Button>
+                                             </children>
+                                          </HBox>
+                                          <Label fx:id="voted_by_no_of_people" text="Received &#10;12 votes" wrapText="true" />
                                        </children>
                                     </HBox>
-                                    <Label fx:id="voted_by_no_of_people" text="Voted by  12 people">
+                                    <Button fx:id="open_entry" mnemonicParsing="false" onAction="#handle_open_entry" prefHeight="30.0" prefWidth="120.0" style="-fx-background-color: #F5E0CD; -fx-background-radius: 5;" text="open" textFill="#014237">
                                        <font>
-                                          <Font size="14.0" />
+                                          <Font name="System Bold" size="14.0" />
                                        </font>
-                                    </Label>
+                                    </Button>
                                  </children>
                               </HBox>
-                              <Button fx:id="open_entry" mnemonicParsing="false" onAction="#handle_open_entry" prefHeight="30.0" prefWidth="120.0" style="-fx-background-color: #F5E0CD; -fx-background-radius: 5;" text="open" textFill="#014237">
-                                 <font>
-                                    <Font name="System Bold" size="14.0" />
-                                 </font>
-                              </Button>
                            </children>
                         </HBox>
                      </children>
