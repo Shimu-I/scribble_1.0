@@ -37,6 +37,7 @@ public class contest_read_entry__c {
     private String genre;
     private int userId;
     private String username;
+    private boolean isCurrentWeekView; // Added to store week view state
 
     @FXML private nav_bar__c mainController;
 
@@ -57,8 +58,9 @@ public class contest_read_entry__c {
         LOGGER.info("Set mainController in contest_read_entry__c");
     }
 
-    public void initData(int entryId) {
+    public void initData(int entryId, boolean isCurrentWeekView) { // Updated to accept isCurrentWeekView
         this.entryId = entryId;
+        this.isCurrentWeekView = isCurrentWeekView; // Store the week view state
         this.userId = UserSession.getInstance().getUserId();
         this.username = UserSession.getInstance().getUsername();
         loadEntryDetails();
@@ -188,9 +190,9 @@ public class contest_read_entry__c {
             Object controller = loader.getController();
 
             if (controller instanceof contest_entries__c entriesController) {
-                entriesController.initData(contestId, genre, userId, username);
+                entriesController.initData(contestId, genre, userId, username, isCurrentWeekView); // Pass isCurrentWeekView
                 entriesController.setMainController(mainController);
-                LOGGER.info("Initialized contest_entries__c with contestId=" + contestId + ", genre=" + genre);
+                LOGGER.info("Initialized contest_entries__c with contestId=" + contestId + ", genre=" + genre + ", isCurrentWeekView=" + isCurrentWeekView);
             } else if (controller instanceof contest__c contestController) {
                 contestController.setMainController(mainController);
                 LOGGER.info("Initialized contest__c");

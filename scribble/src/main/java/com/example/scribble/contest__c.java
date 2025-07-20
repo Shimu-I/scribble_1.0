@@ -147,9 +147,9 @@ public class contest__c {
             }
             Parent root = loader.load();
             contest_entries__c controller = loader.getController();
-            controller.initData(contestId, genre, UserSession.getInstance().getUserId(), UserSession.getInstance().getUsername());
-            controller.setMainController(mainController); // Pass mainController
-            LOGGER.info("mainController set in contest_entries__c: " + mainController);
+            controller.initData(contestId, genre, UserSession.getInstance().getUserId(), UserSession.getInstance().getUsername(), true); // Default to current week
+            controller.setMainController(mainController);
+            LOGGER.info("mainController set in contest_entries__c: " + mainController + ", contestId=" + contestId + ", genre=" + genre + ", isCurrentWeekView=true");
 
             // Set previous FXML in AppState_c
             AppState_c.getInstance().setPreviousFXML("/com/example/scribble/contest.fxml");

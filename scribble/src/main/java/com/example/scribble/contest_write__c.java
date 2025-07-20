@@ -119,9 +119,9 @@ public class contest_write__c {
             Object controller = loader.getController();
 
             if (controller instanceof contest_entries__c entriesController) {
-                entriesController.initData(contestId, genre, userId, username);
+                entriesController.initData(contestId, genre, userId, username, true); // Default to current week
                 entriesController.setMainController(mainController);
-                LOGGER.info("Initialized contest_entries__c with contestId=" + contestId + ", genre=" + genre);
+                LOGGER.info("Initialized contest_entries__c with contestId=" + contestId + ", genre=" + genre + ", isCurrentWeekView=true");
             } else if (controller instanceof contest__c contestController) {
                 contestController.setMainController(mainController);
                 LOGGER.info("Initialized contest__c");
@@ -235,8 +235,8 @@ public class contest_write__c {
                 FXMLLoader loader = new FXMLLoader(resource);
                 Parent root = loader.load();
                 contest_entries__c controller = loader.getController();
-                controller.initData(contestId, genre, userId, username);
-                controller.setMainController(mainController);
+                controller.initData(contestId, genre, userId, username, true); // Default to current week
+                controller.setMainController(mainController);//              
                 AppState_c.getInstance().setPreviousFXML("/com/example/scribble/contest.fxml");
                 mainController.getCenterPane().getChildren().setAll(root);
                 LOGGER.info("Navigated to contest_entries.fxml");

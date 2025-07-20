@@ -71,16 +71,33 @@ public class contest_entries__c implements Initializable {
         LOGGER.info("Set mainController in contest_entries__c: " + mainController);
     }
 
-    public void initData(int contestId, String genre, int userId, String username) {
+    public void initData(int contestId, String genre, int userId, String username, boolean isCurrentWeekView) {
         this.contestId = contestId;
         this.genre = genre;
         this.userId = userId;
         this.username = username;
-        updateWeeklySessionLabel(true);
-        updateGenreLabel();
+        this.isCurrentWeekView = isCurrentWeekView; // Set the view state
+        updateWeeklySessionLabel(isCurrentWeekView);
+        updateButtonStyles(); // Update button styles based on view state
         startCountdownTimer();
         initializeComboBox();
         loadEntries();
+    }
+
+    private void updateButtonStyles() {
+        if (current_week_button != null) {
+            current_week_button.setStyle(isCurrentWeekView
+                    ? "-fx-background-color: #C9B8A9; -fx-background-radius: 0 10 10 0; -fx-text-fill: #014237;"
+                    : "-fx-background-color: #F5E0CD; -fx-background-radius: 0 10 10 0; -fx-text-fill: #014237;");
+        }
+        if (previous_week_button != null) {
+            previous_week_button.setStyle(isCurrentWeekView
+                    ? "-fx-background-color: #F5E0CD; -fx-background-radius: 10 0 0 10; -fx-text-fill: #014237;"
+                    : "-fx-background-color: #C9B8A9; -fx-background-radius: 10 0 0 10; -fx-text-fill: #014237;");
+        }
+        if (add_entry != null) {
+            add_entry.setDisable(!isCurrentWeekView); // Disable add_entry button for previous week
+        }
     }
 
     public void setContestId(int contestId, String genre) {
@@ -176,16 +193,22 @@ public class contest_entries__c implements Initializable {
             Parent root = loader.load();
             Object controller = loader.getController();
 
-            try {
-                if (controller != null) {
+            if (controller != null) {
+                try {
                     java.lang.reflect.Method setMainControllerMethod = controller.getClass().getMethod("setMainController", nav_bar__c.class);
                     setMainControllerMethod.invoke(controller, mainController);
                     LOGGER.info("setMainController called on controller: " + controller.getClass().getName());
-                } else {
-                    LOGGER.warning("Controller is null for FXML: " + previousFXML);
+
+                    // Initialize contest_entries__c with preserved state
+                    if (controller instanceof contest_entries__c entriesController && previousFXML.equals("/com/example/scribble/contest_entries.fxml")) {
+                        entriesController.initData(contestId, genre, userId, username, isCurrentWeekView);
+                        LOGGER.info("Initialized contest_entries__c with contestId=" + contestId + ", genre=" + genre + ", isCurrentWeekView=" + isCurrentWeekView);
+                    }
+                } catch (NoSuchMethodException | IllegalAccessException | java.lang.reflect.InvocationTargetException e) {
+                    LOGGER.info("Target controller does not support setMainController: " + (controller != null ? controller.getClass().getName() : "null") + ", error: " + e.getMessage());
                 }
-            } catch (NoSuchMethodException | IllegalAccessException | java.lang.reflect.InvocationTargetException e) {
-                LOGGER.info("Target controller does not support setMainController: " + (controller != null ? controller.getClass().getName() : "null") + ", error: " + e.getMessage());
+            } else {
+                LOGGER.warning("Controller is null for FXML: " + previousFXML);
             }
 
             mainController.getCenterPane().getChildren().setAll(root);
@@ -386,9 +409,9 @@ public class contest_entries__c implements Initializable {
             }
             Parent root = loader.load();
             contest_read_entry__c controller = loader.getController();
-            controller.initData(entryId);
+            controller.initData(entryId, isCurrentWeekView); // Pass isCurrentWeekView
             controller.setMainController(mainController);
-            LOGGER.info("mainController set in contest_read_entry__c: " + mainController);
+            LOGGER.info("mainController set in contest_read_entry__c: " + mainController + ", isCurrentWeekView=" + isCurrentWeekView);
             AppState_c.getInstance().setPreviousFXML("/com/example/scribble/contest_entries.fxml");
             mainController.getCenterPane().getChildren().setAll(root);
             LOGGER.info("Successfully navigated to contest_read_entry.fxml for entryId: " + entryId);
@@ -996,30 +1019,14 @@ public class contest_entries__c implements Initializable {
     public void handle_previous_week_button(ActionEvent actionEvent) {
         isCurrentWeekView = false;
         updateWeeklySessionLabel(false);
-        if (previous_week_button != null) {
-            previous_week_button.setStyle("-fx-background-color: #C9B8A9; -fx-background-radius: 10 0 0 10; -fx-text-fill: #014237;");
-        }
-        if (current_week_button != null) {
-            current_week_button.setStyle("-fx-background-color: #F5E0CD; -fx-background-radius: 0 10 10 0; -fx-text-fill: #014237;");
-        }
-        if (add_entry != null) {
-            add_entry.setDisable(true);
-        }
+        updateButtonStyles();
         loadEntries();
     }
 
     public void handle_current_week_button(ActionEvent actionEvent) {
         isCurrentWeekView = true;
         updateWeeklySessionLabel(true);
-        if (current_week_button != null) {
-            current_week_button.setStyle("-fx-background-color: #C9B8A9; -fx-background-radius: 0 10 10 0; -fx-text-fill: #014237;");
-        }
-        if (previous_week_button != null) {
-            previous_week_button.setStyle("-fx-background-color: #F5E0CD; -fx-background-radius: 10 0 0 10; -fx-text-fill: #014237;");
-        }
-        if (add_entry != null) {
-            add_entry.setDisable(false);
-        }
+        updateButtonStyles();
         loadEntries();
     }
 }
