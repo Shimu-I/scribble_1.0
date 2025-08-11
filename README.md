@@ -16,6 +16,17 @@ As avid readers and users of platforms like Goodreads, Fable, Wattpad, and Webno
 - Implement real-time communication using multithreading and socket programming.
 - Provide gamified experiences to keep users engaged.
 
+## Technologies Used
+### Front-End
+-  **JavaFX**: Builds the responsive desktop UI (sign-in, profiles, contests, games).
+-  **CSS**: Styles JavaFX components for enhanced visuals.
+-  **Figma**: Used for UI/UX design and prototyping.
+
+### Back-End
+- **Java**: Powers server-side logic, multithreading (thread pool for client handling), and socket programming (TCP-based real-time chat).
+
+### Database
+- **MySQL**: Stores user data, messages, contests, profiles, books, and groups.
 ## Features
 ### Core Platform Features
 - **Support System**: Users can support writers whose work they find compelling.
