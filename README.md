@@ -1,3 +1,5 @@
+![GitHub repo size](https://img.shields.io/github/repo-size/Shimu-I/scribble_1.0)
+
 🎬 [Watch Full Video on YouTube](https://youtu.be/PdtZroIYYjE)
 
 # Scribble: A Story Sharing & Writing Platform
