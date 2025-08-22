@@ -1,4 +1,6 @@
 ![GitHub repo size](https://img.shields.io/github/repo-size/Shimu-I/scribble_1.0)
+![GitHub last commit](https://img.shields.io/github/last-commit/shimu-i/scribble_1.0)
+![Visitor Count](https://visitor-badge.laobi.icu/badge?page_id=shimu-i/scribble_1.0)
 
 🎬 [Watch Full Video on YouTube](https://youtu.be/PdtZroIYYjE)
 
